@@ -682,10 +682,10 @@ let cart=[], prods=[], settings={}, design={...DEFAULT_DESIGN}, orders=[], featu
 let editId=null, shopFilter='All', detFrom='home', currency='$';
 let toastTimer=null;
 
-// ══ STORAGE ══
-async function sget(k){try{const r=await window.storage.get(k);return r?JSON.parse(r.value):null;}catch(e){return null;}}
-async function sset(k,v){try{await window.storage.set(k,JSON.stringify(v));}catch(e){}}
-async function sdel(k){try{await window.storage.delete(k);}catch(e){}}
+// ══ STORAGE — localStorage (works on any hosted site) ══
+async function sget(k){try{const v=localStorage.getItem(k);return v?JSON.parse(v):null;}catch(e){return null;}}
+async function sset(k,v){try{localStorage.setItem(k,JSON.stringify(v));}catch(e){}}
+async function sdel(k){try{localStorage.removeItem(k);}catch(e){}}
 
 // ══ BOOT ══
 window.addEventListener('load',async()=>{
