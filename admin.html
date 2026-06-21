@@ -545,7 +545,12 @@
 const SUPABASE_URL  = 'https://rmnufhsfuaycpkdzwfgj.supabase.co';
 const SUPABASE_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJtbnVmaHNmdWF5Y3BrZHp3ZmdqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODE5Njc3NjksImV4cCI6MjA5NzU0Mzc2OX0.rnBgL4fAowZrimTP3LZMSZwcOBcTW-kraPnupqyidU4';
 
-const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON);
+const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON, {
+  db: { schema: 'public' },
+  global: { headers: { 'Accept-Profile': 'public', 'Content-Profile': 'public' } }
+});
+
+let appInitialised = false;
 
 const PROPERTIES = [
   { name:'KAHA',              type:'Management' },
@@ -572,15 +577,20 @@ async function signIn() {
 
 async function signOut() {
   await sb.auth.signOut();
+  appInitialised = false;
   document.getElementById('app-screen').classList.remove('visible');
   document.getElementById('auth-screen').classList.remove('hidden');
 }
 
 sb.auth.onAuthStateChange((event, session) => {
-  if (event === 'SIGNED_IN' && session) showApp(session.user.email);
+  if (event === 'SIGNED_IN' && session && !appInitialised) {
+    showApp(session.user.email);
+  }
 });
 
 function showApp(email) {
+  if (appInitialised) return;
+  appInitialised = true;
   document.getElementById('auth-screen').classList.add('hidden');
   document.getElementById('app-screen').classList.add('visible');
   if (email) {
