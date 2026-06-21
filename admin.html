@@ -1208,16 +1208,17 @@ async function saveWidget() {
   const { data: existing } = await sb.from('dashboard_widgets').select('sort_order').order('sort_order', { ascending: false }).limit(1);
   const nextOrder = existing?.length ? (existing[0].sort_order + 1) : 0;
 
-  const { error } = await sb.from('dashboard_widgets').insert({
-    title, widget_type: type,
-    x_field: xField || null,
-    y_field: yField || 'count',
-    y_aggregation: agg,
-    filters: JSON.stringify(filters),
-    date_from: dateFrom || null,
-    date_to: dateTo || null,
-    date_cluster: cluster || 'week',
-    sort_order: nextOrder
+  const { error } = await sb.rpc('insert_dashboard_widget', {
+    p_title:         title,
+    p_widget_type:   type,
+    p_x_field:       xField || '',
+    p_y_field:       yField || 'count',
+    p_y_aggregation: agg,
+    p_filters:       JSON.stringify(filters),
+    p_date_from:     dateFrom || '',
+    p_date_to:       dateTo || '',
+    p_date_cluster:  cluster || 'week',
+    p_sort_order:    nextOrder
   });
 
   if (error) { showToast('Error: ' + error.message, true); return; }
