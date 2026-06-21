@@ -1,0 +1,1312 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="Tonik Admin" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <meta name="theme-color" content="#1a1a18" />
+  <link rel="manifest" href="manifest.json" />
+  <link rel="apple-touch-icon" href="icon-192.png" />
+  <title>Tonik Admin — Update Statistics</title>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    html, body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: #f5f4f0;
+      color: #1a1a18;
+      min-height: 100vh;
+    }
+
+    /* ── Auth ── */
+    #auth-screen {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      padding: 1rem;
+    }
+    #auth-screen.hidden { display: none; }
+
+    .auth-card { background:#fff; border-radius:16px; border:1px solid #e8e7e1; padding:2rem; width:100%; max-width:380px; }
+    .auth-logo { font-size:13px; font-weight:600; letter-spacing:0.15em; text-transform:uppercase; color:#185FA5; margin-bottom:1.5rem; }
+    .auth-title { font-size:20px; font-weight:500; margin-bottom:0.375rem; }
+    .auth-sub { font-size:12px; color:#73726c; margin-bottom:1.5rem; }
+    .auth-error { background:#fff0ed; border:1px solid #f5c4b3; border-radius:6px; padding:0.625rem 0.75rem; font-size:12px; color:#993C1D; margin-bottom:1rem; display:none; }
+
+    /* ── App ── */
+    #app-screen { display: none; }
+    #app-screen.visible { display: block; }
+
+    .topbar {
+      width: 100%;
+      background: #1a1a18;
+      color: #f5f4f0;
+      padding: 0.875rem 1.5rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      position: sticky;
+      top: 0;
+      z-index: 10;
+    }
+    .topbar-brand { font-size:12px; font-weight:600; letter-spacing:0.12em; text-transform:uppercase; color:#B5D4F4; }
+    .topbar-right { display:flex; align-items:center; gap:1rem; }
+    .topbar-user { font-size:11px; color:#888780; }
+    .topbar a { font-size:11px; color:#B5D4F4; text-decoration:none; }
+
+    .page-body {
+      width: 100%;
+      display: flex;
+      justify-content: center;
+      padding: 1.5rem 1rem 4rem;
+    }
+
+    .main {
+      width: 100%;
+      max-width: 780px;
+    }
+
+    /* ── Tabs ── */
+    .nav-tabs { display:flex; gap:6px; margin-bottom:1.75rem; flex-wrap:wrap; }
+    .nav-tabs.hidden { display:none; }
+    .nav-tab { font-size:12px; padding:7px 16px; border-radius:6px; border:1px solid #d3d1c7; cursor:pointer; background:#fff; color:#73726c; font-family:inherit; transition:all 0.15s; -webkit-tap-highlight-color:transparent; }
+    .nav-tab.active { background:#185FA5; color:#fff; border-color:#185FA5; }
+
+    /* ── Home screen ── */
+    .home-welcome { margin-bottom:2rem; }
+    .home-welcome-title { font-size:22px; font-weight:500; color:#1a1a18; margin-bottom:4px; }
+    .home-welcome-sub { font-size:13px; color:#73726c; }
+    .home-cards { display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-bottom:1.5rem; }
+    .home-card {
+      background:#fff; border:1px solid #e8e7e1; border-radius:12px;
+      padding:1.25rem 1.25rem 1rem; cursor:pointer;
+      transition:border-color 0.15s, box-shadow 0.15s;
+      text-align:left; font-family:inherit;
+      display:flex; flex-direction:column; gap:10px;
+    }
+    .home-card:hover { border-color:#185FA5; box-shadow:0 2px 12px rgba(24,95,165,0.08); }
+    .home-card-icon { width:36px; height:36px; border-radius:8px; display:flex; align-items:center; justify-content:center; flex-shrink:0; }
+    .home-card-icon.blue  { background:#EBF3FC; }
+    .home-card-icon.dark  { background:#EEEEED; }
+    .home-card-icon.green { background:#E6F6F1; }
+    .home-card-icon.amber { background:#FDF3E6; }
+    .home-card-title { font-size:13px; font-weight:600; color:#1a1a18; margin-bottom:2px; }
+    .home-card-desc  { font-size:11px; color:#73726c; line-height:1.4; }
+    @media (max-width:480px) { .home-cards { grid-template-columns:1fr; } }
+
+    /* ── Section headers ── */
+    .section-header { font-size:10px; font-weight:600; text-transform:uppercase; letter-spacing:0.1em; color:#888780; margin-bottom:1rem; padding-bottom:0.5rem; border-bottom:1px solid #d3d1c7; }
+
+    /* ── Month selector ── */
+    .month-bar { display:flex; gap:8px; align-items:flex-end; flex-wrap:wrap; margin-bottom:1.5rem; }
+    .field { display:flex; flex-direction:column; gap:4px; }
+    label { font-size:11px; color:#73726c; font-weight:500; }
+
+    /* ── Property cards ── */
+    .prop-grid { display:flex; flex-direction:column; gap:0.625rem; margin-bottom:1.25rem; }
+    .prop-card { background:#fff; border:1px solid #e8e7e1; border-radius:10px; padding:0.875rem 1rem; }
+    .prop-card-header { display:flex; justify-content:space-between; align-items:center; margin-bottom:0.75rem; }
+    .prop-name { font-size:13px; font-weight:600; }
+    .prop-type { font-size:10px; background:#f5f4f0; border:1px solid #e8e7e1; border-radius:4px; padding:2px 7px; color:#73726c; }
+    .stat-grid { display:grid; grid-template-columns:1fr 1fr; gap:6px; }
+    .stat-label { font-size:9px; color:#888780; margin-bottom:2px; text-transform:uppercase; letter-spacing:0.05em; }
+    .stat-inputs { display:grid; grid-template-columns:1fr 1fr; gap:4px; }
+    .input-sub { font-size:9px; color:#b4b2a9; margin-bottom:2px; }
+    select, input[type=number], input[type=text], input[type=email], input[type=password] {
+      font-family:inherit; font-size:12px; padding:6px 8px;
+      border:1px solid #d3d1c7; border-radius:5px;
+      background:#fff; color:#1a1a18; outline:none; transition:border-color 0.15s; width:100%;
+    }
+    select:focus, input:focus { border-color:#185FA5; }
+
+    /* ── Segment cards ── */
+    .seg-grid { display:flex; flex-direction:column; gap:0.625rem; margin-bottom:1.25rem; }
+    .seg-card { background:#fff; border:1px solid #e8e7e1; border-radius:10px; padding:0.875rem 1rem; }
+    .seg-name { font-size:13px; font-weight:600; margin-bottom:0.75rem; }
+    .seg-stats { display:grid; grid-template-columns:1fr 1fr; gap:6px; }
+
+    /* ── Save bar ── */
+    .save-bar { position:sticky; bottom:0; background:#f5f4f0; padding:1rem 0; border-top:1px solid #d3d1c7; margin-top:0.5rem; }
+
+    /* ── Buttons ── */
+    .btn { display:inline-flex; align-items:center; gap:6px; font-size:13px; font-weight:500; padding:10px 20px; border-radius:8px; border:none; cursor:pointer; font-family:inherit; transition:all 0.15s; -webkit-tap-highlight-color:transparent; }
+    .btn-primary { background:#185FA5; color:#fff; }
+    .btn-primary:disabled { background:#b4b2a9; cursor:not-allowed; }
+    .btn-secondary { background:#fff; color:#1a1a18; border:1px solid #d3d1c7; }
+    .btn-secondary:hover { border-color:#185FA5; color:#185FA5; }
+    .btn-danger { background:#fff0ed; color:#993C1D; border:1px solid #f5c4b3; }
+    .btn-sm { font-size:11px; padding:5px 12px; }
+
+    /* ── Toast ── */
+    .toast { position:fixed; bottom:1.5rem; right:1.5rem; background:#1a1a18; color:#f5f4f0; font-size:12px; padding:0.75rem 1.125rem; border-radius:8px; opacity:0; transform:translateY(6px); transition:all 0.2s; pointer-events:none; z-index:100; max-width:280px; }
+    .toast.show { opacity:1; transform:translateY(0); }
+    .toast.error { background:#993C1D; }
+
+    /* ── Records ── */
+    .loading-overlay { text-align:center; padding:2rem; color:#73726c; font-size:13px; }
+    .records-list { display:flex; flex-direction:column; gap:6px; }
+    .record-row { background:#fff; border:1px solid #e8e7e1; border-radius:8px; padding:0.75rem 1rem; display:flex; justify-content:space-between; align-items:center; gap:8px; flex-wrap:wrap; }
+    .record-info { font-size:12px; font-weight:500; }
+    .record-meta { font-size:11px; color:#73726c; margin-top:2px; }
+    .record-actions { display:flex; gap:6px; flex-shrink:0; }
+
+    /* ── Settings ── */
+    .settings-card { background:#fff; border:1px solid #e8e7e1; border-radius:12px; padding:1.125rem; margin-bottom:1rem; }
+    .settings-row { display:flex; gap:10px; align-items:flex-end; flex-wrap:wrap; }
+    .settings-hint { font-size:11px; color:#888780; line-height:1.5; }
+    .settings-list { display:flex; flex-direction:column; gap:6px; margin-top:0.75rem; }
+    .settings-list-item { display:flex; justify-content:space-between; align-items:center; padding:8px 10px; background:#f9f8f5; border:1px solid #e8e7e1; border-radius:6px; font-size:12px; gap:8px; }
+    .prop-badge { font-size:10px; background:#fff; border:1px solid #e8e7e1; border-radius:4px; padding:2px 8px; color:#73726c; }
+    .section-subheader { font-size:10px; font-weight:600; text-transform:uppercase; letter-spacing:0.08em; color:#b4b2a9; margin-bottom:0.5rem; }
+    #preview-modal.open { display:flex !important; }
+
+    @media (min-width:640px) {
+      .stat-grid { grid-template-columns:repeat(4, 1fr); }
+      .seg-stats { grid-template-columns:repeat(4, 1fr); }
+    }
+  </style>
+</head>
+<body>
+
+<!-- AUTH -->
+<div id="auth-screen">
+  <div class="auth-card">
+    <div class="auth-logo">Tonik</div>
+    <div class="auth-title">Admin sign in</div>
+    <div class="auth-sub">Enter your credentials to manage dashboard statistics.</div>
+    <div class="auth-error" id="auth-error"></div>
+    <div class="field" style="margin-bottom:0.75rem;">
+      <label for="email">Email</label>
+      <input type="email" id="email" placeholder="you@example.com" autocomplete="email" />
+    </div>
+    <div class="field" style="margin-bottom:1.25rem;">
+      <label for="password">Password</label>
+      <input type="password" id="password" placeholder="••••••••" autocomplete="current-password" />
+    </div>
+    <button class="btn btn-primary" id="sign-in-btn" style="width:100%;justify-content:center;" onclick="signIn()">Sign in</button>
+  </div>
+</div>
+
+<!-- APP -->
+<div id="app-screen">
+  <div class="topbar">
+    <div class="topbar-brand" onclick="showTab('home')" style="cursor:pointer;">Tonik Admin</div>
+    <div class="topbar-right">
+      <span class="topbar-user" id="user-email"></span>
+      <a href="dashboard.html">Dashboard</a>
+      <a href="#" onclick="signOut();return false;">Sign out</a>
+    </div>
+  </div>
+
+  <div class="page-body">
+    <div class="main">
+      <div class="nav-tabs">
+        <button class="nav-tab" onclick="showTab('home')" style="background:transparent;border-color:transparent;color:#73726c;padding-left:0;">← Home</button>
+        <button class="nav-tab active" onclick="showTab('entry')">Add / Edit Month</button>
+        <button class="nav-tab" onclick="showTab('records')">View All Records</button>
+        <button class="nav-tab" onclick="showTab('pace')">📈 Pace</button>
+        <button class="nav-tab" onclick="showTab('widgets')">🧩 Widgets</button>
+        <button class="nav-tab" onclick="showTab('settings')" style="margin-left:auto;">⚙ Settings</button>
+      </div>
+
+      <!-- HOME TAB -->
+      <div id="tab-home" style="display:none;">
+        <div class="home-welcome">
+          <div class="home-welcome-title" id="home-greeting">Welcome back</div>
+          <div class="home-welcome-sub">What would you like to do today?</div>
+        </div>
+        <div class="home-cards">
+          <button class="home-card" onclick="showTab('entry')">
+            <div class="home-card-icon blue">
+              <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#185FA5" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+            </div>
+            <div>
+              <div class="home-card-title">Add / Edit Month</div>
+              <div class="home-card-desc">Enter or update actuals and budgets for any property and month.</div>
+            </div>
+          </button>
+          <button class="home-card" onclick="showTab('records')">
+            <div class="home-card-icon dark">
+              <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#5f5e5a" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>
+            </div>
+            <div>
+              <div class="home-card-title">View All Records</div>
+              <div class="home-card-desc">Browse and edit all previously saved monthly records.</div>
+            </div>
+          </button>
+          <button class="home-card" onclick="showTab('widgets')">
+            <div class="home-card-icon blue">
+              <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#185FA5" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
+            </div>
+            <div>
+              <div class="home-card-title">Widget Builder</div>
+              <div class="home-card-desc">Create and manage custom widgets for the Inquiries dashboard.</div>
+            </div>
+          </button>
+          <button class="home-card" onclick="showTab('pace')">
+            <div class="home-card-icon blue">
+              <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#185FA5" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+            </div>
+            <div>
+              <div class="home-card-title">Booking Pace</div>
+              <div class="home-card-desc">Enter weekly room night booking pace for all properties.</div>
+            </div>
+          </button>
+          <button class="home-card" onclick="window.location.href='dashboard.html'">
+            <div class="home-card-icon green">
+              <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#1D9E75" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+            </div>
+            <div>
+              <div class="home-card-title">View Dashboard</div>
+              <div class="home-card-desc">Go to the live performance dashboard to see charts and data.</div>
+            </div>
+          </button>
+          <button class="home-card" onclick="showTab('settings')">
+            <div class="home-card-icon amber">
+              <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#D97706" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+            </div>
+            <div>
+              <div class="home-card-title">Settings</div>
+              <div class="home-card-desc">Manage properties, set the financial year, and override YTD data.</div>
+            </div>
+          </button>
+        </div>
+      </div>
+
+      <!-- ENTRY TAB -->
+      <div id="tab-entry">
+        <div class="section-header">Select month</div>
+        <div class="month-bar">
+          <div class="field">
+            <label for="sel-month">Month</label>
+            <select id="sel-month">
+              <option value="1">January</option><option value="2">February</option>
+              <option value="3">March</option><option value="4">April</option>
+              <option value="5">May</option><option value="6" selected>June</option>
+              <option value="7">July</option><option value="8">August</option>
+              <option value="9">September</option><option value="10">October</option>
+              <option value="11">November</option><option value="12">December</option>
+            </select>
+          </div>
+          <div class="field">
+            <label for="sel-year">Year</label>
+            <input type="number" id="sel-year" value="2026" min="2020" max="2040" style="width:90px;" />
+          </div>
+          <button class="btn btn-secondary" onclick="loadMonth()">Load</button>
+        </div>
+        <div id="entry-form"></div>
+      </div>
+
+      <!-- RECORDS TAB -->
+      <div id="tab-records" style="display:none;">
+        <div class="section-header">All property records</div>
+        <div id="all-records" class="loading-overlay">Loading…</div>
+      </div>
+
+      <!-- PACE TAB -->
+      <div id="tab-pace" style="display:none;">
+        <div class="section-header">Enter weekly booking pace</div>
+        <div class="settings-card">
+          <p class="settings-hint" style="margin-bottom:1rem;">Enter the week label (e.g. "15 Jun – 21 Jun"), the week start date, and room nights booked per property.</p>
+          <div class="settings-row" style="margin-bottom:1rem;">
+            <div class="field" style="flex:2;">
+              <label for="pace-week-label">Week label</label>
+              <input type="text" id="pace-week-label" placeholder="e.g. 15 Jun – 21 Jun" />
+            </div>
+            <div class="field" style="flex:1;">
+              <label for="pace-week-start">Week start date</label>
+              <input type="date" id="pace-week-start" />
+            </div>
+            <div class="field">
+              <label>&nbsp;</label>
+              <button class="btn btn-secondary" onclick="loadPaceWeek()">Load</button>
+            </div>
+          </div>
+          <div id="pace-entry-form"></div>
+        </div>
+
+        <div class="section-header" style="margin-top:1.5rem;">Recent weeks</div>
+        <div id="pace-recent" class="loading-overlay">Loading…</div>
+      </div>
+
+      <!-- WIDGETS TAB -->
+      <div id="tab-widgets" style="display:none;">
+
+        <div class="section-header">Create a new widget</div>
+        <div class="settings-card">
+
+          <!-- Row 1: Title + Type -->
+          <div class="settings-row" style="margin-bottom:1rem;">
+            <div class="field" style="flex:2;">
+              <label for="w-title">Widget title</label>
+              <input type="text" id="w-title" placeholder="e.g. Inquiries by Property" />
+            </div>
+            <div class="field" style="flex:1;">
+              <label for="w-type">Widget type</label>
+              <select id="w-type" onchange="onWidgetTypeChange()">
+                <option value="kpi">KPI Card</option>
+                <option value="bar">Bar Chart</option>
+                <option value="line">Line Chart</option>
+                <option value="timeseries">Time-Series Line (by date)</option>
+                <option value="doughnut">Doughnut Chart</option>
+                <option value="table">Data Table</option>
+              </select>
+            </div>
+            <div class="field">
+              <label>&nbsp;</label>
+              <button class="btn btn-secondary btn-sm" onclick="loadSheetFields()">Load fields</button>
+            </div>
+          </div>
+
+          <!-- Row 2: X axis + Y axis -->
+          <div class="settings-row" style="margin-bottom:1rem;" id="w-axis-row">
+            <div class="field" style="flex:1;" id="w-x-wrap">
+              <label for="w-x">X axis — group by</label>
+              <select id="w-x"><option value="">— select field —</option></select>
+            </div>
+            <div class="field" style="flex:1;" id="w-cluster-wrap" style="display:none;">
+              <label for="w-cluster">Date clustering</label>
+              <select id="w-cluster">
+                <option value="day">By day</option>
+                <option value="week" selected>By week</option>
+                <option value="month">By month</option>
+              </select>
+            </div>
+            <div class="field" style="flex:1;" id="w-y-wrap">
+              <label for="w-y">Y axis — measure</label>
+              <select id="w-y">
+                <option value="count">Count of records</option>
+              </select>
+            </div>
+            <div class="field" style="flex:1;" id="w-agg-wrap">
+              <label for="w-agg">Aggregation</label>
+              <select id="w-agg">
+                <option value="count">Count</option>
+                <option value="sum">Sum</option>
+              </select>
+            </div>
+          </div>
+
+          <!-- Row 3: Date filter -->
+          <div class="section-subheader" style="margin-bottom:0.5rem;">Date filter (uses Inquiry Date)</div>
+          <div class="settings-row" style="margin-bottom:1rem;">
+            <div class="field">
+              <label for="w-date-from">From date</label>
+              <input type="date" id="w-date-from" />
+            </div>
+            <div class="field">
+              <label for="w-date-to">To date</label>
+              <input type="date" id="w-date-to" />
+            </div>
+          </div>
+
+          <!-- Row 4: Field filters -->
+          <div class="section-subheader" style="margin-bottom:0.5rem;">Field filters</div>
+          <div id="w-filters"></div>
+          <button class="btn btn-secondary btn-sm" onclick="addFilterRow()" style="margin-bottom:1rem;">+ Add filter</button>
+
+          <!-- Actions -->
+          <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
+            <button class="btn btn-primary" onclick="saveWidget()">Add widget</button>
+            <span id="w-status" style="font-size:11px;color:#73726c;"></span>
+          </div>
+        </div>
+
+        <div class="section-header" style="margin-top:1.5rem;">Current widgets <span id="widget-count" style="font-weight:400;color:#888780;"></span></div>
+        <div id="widget-list" class="loading-overlay">Loading…</div>
+
+      </div>
+
+      <!-- SETTINGS TAB -->
+      <div id="tab-settings" style="display:none;">
+        <div class="section-header">Add a new property</div>
+        <div class="settings-card">
+          <div class="settings-row">
+            <div class="field" style="flex:2;">
+              <label for="new-prop-name">Property name</label>
+              <input type="text" id="new-prop-name" placeholder="e.g. Mount Cinnamon" />
+            </div>
+            <div class="field" style="flex:1;">
+              <label for="new-prop-type">Type</label>
+              <select id="new-prop-type">
+                <option value="Management">Management</option>
+                <option value="Franchise">Franchise</option>
+              </select>
+            </div>
+            <div class="field">
+              <label>&nbsp;</label>
+              <button class="btn btn-primary" onclick="addProperty()">Add property</button>
+            </div>
+          </div>
+          <div class="section-subheader" style="margin-top:1.25rem;">Current properties</div>
+          <div id="prop-list" class="settings-list"></div>
+        </div>
+
+        <div class="section-header" style="margin-top:1.75rem;">YTD period</div>
+        <div class="settings-card">
+          <p class="settings-hint">Set the financial year start month. The dashboard YTD tab sums all months from this month onwards within the same financial year.</p>
+          <div class="settings-row" style="margin-top:1rem;">
+            <div class="field">
+              <label for="fy-start">Financial year start month</label>
+              <select id="fy-start">
+                <option value="1">January</option><option value="2">February</option>
+                <option value="3">March</option><option value="4" selected>April</option>
+                <option value="5">May</option><option value="6">June</option>
+                <option value="7">July</option><option value="8">August</option>
+                <option value="9">September</option><option value="10">October</option>
+                <option value="11">November</option><option value="12">December</option>
+              </select>
+            </div>
+            <div class="field">
+              <label>&nbsp;</label>
+              <button class="btn btn-primary" onclick="saveFySetting()">Save</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="section-header" style="margin-top:1.75rem;">Override YTD data</div>
+        <div class="settings-card">
+          <p class="settings-hint">Zero out budget or actual figures for all months in a financial year.</p>
+          <div class="settings-row" style="margin-top:1rem;">
+            <div class="field">
+              <label for="zero-fy">Financial year starting</label>
+              <select id="zero-fy">
+                <option value="2026">April 2026 – March 2027</option>
+                <option value="2027">April 2027 – March 2028</option>
+              </select>
+            </div>
+            <div class="field">
+              <label for="zero-field">Field to zero</label>
+              <select id="zero-field">
+                <option value="budgets">All budgets</option>
+                <option value="actuals">All actuals</option>
+                <option value="both">Both actuals and budgets</option>
+              </select>
+            </div>
+            <div class="field">
+              <label for="zero-table">Apply to</label>
+              <select id="zero-table">
+                <option value="both">Properties + Portfolio</option>
+                <option value="property">Properties only</option>
+                <option value="tonik">Portfolio only</option>
+              </select>
+            </div>
+          </div>
+          <div style="margin-top:1rem;display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
+            <button class="btn btn-danger" onclick="confirmZero()">Zero selected data</button>
+            <span class="settings-hint" id="zero-status"></span>
+          </div>
+        </div>
+
+        <div class="section-header" style="margin-top:1.75rem;">YTD hardcoded override</div>
+        <div class="settings-card">
+          <p class="settings-hint">The dashboard currently uses hardcoded YTD figures (stored as a special override row). Once you have entered all individual monthly actuals, clear the override and the dashboard will calculate YTD automatically by summing your monthly entries.</p>
+          <div class="settings-row" style="margin-top:1rem;">
+            <div class="field">
+              <label for="ytd-override-fy">Financial year</label>
+              <select id="ytd-override-fy">
+                <option value="2026">April 2026 – March 2027</option>
+                <option value="2027">April 2027 – March 2028</option>
+              </select>
+            </div>
+          </div>
+          <div style="margin-top:1rem;display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
+            <button class="btn btn-danger" onclick="clearYtdOverride()">Clear YTD override</button>
+            <span class="settings-hint" id="ytd-override-status"></span>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<!-- WIDGET PREVIEW MODAL -->
+<div id="preview-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:200;display:none;align-items:center;justify-content:center;padding:1rem;">
+  <div style="background:#fff;border-radius:16px;width:100%;max-width:600px;max-height:90vh;overflow-y:auto;box-shadow:0 20px 60px rgba(0,0,0,0.3);">
+    <div style="display:flex;align-items:center;justify-content:space-between;padding:1.25rem 1.5rem;border-bottom:1px solid #e8e7e1;">
+      <div style="font-size:14px;font-weight:600;color:#1a1a18;" id="preview-title">Widget Preview</div>
+      <button onclick="closePreview()" style="background:none;border:none;font-size:20px;cursor:pointer;color:#73726c;line-height:1;">✕</button>
+    </div>
+    <div style="padding:1.5rem;" id="preview-body">
+      <div style="text-align:center;color:#73726c;font-size:13px;">Loading preview…</div>
+    </div>
+  </div>
+</div>
+
+<script>
+const SUPABASE_URL  = 'https://rmnufhsfuaycpkdzwfgj.supabase.co';
+const SUPABASE_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJtbnVmaHNmdWF5Y3BrZHp3ZmdqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODE5Njc3NjksImV4cCI6MjA5NzU0Mzc2OX0.rnBgL4fAowZrimTP3LZMSZwcOBcTW-kraPnupqyidU4';
+
+const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON);
+
+const PROPERTIES = [
+  { name:'KAHA',              type:'Management' },
+  { name:'Villa Sayura',      type:'Management' },
+  { name:'Garfield Bungalow', type:'Franchise'  },
+  { name:'Garfield Cottage',  type:'Franchise'  },
+];
+const SEGMENTS = ['Franchise', 'Management'];
+const MONTH_NAMES = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+
+// ── Auth ──────────────────────────────────────────────────────────────────────
+async function signIn() {
+  const email = document.getElementById('email').value.trim();
+  const pass  = document.getElementById('password').value;
+  const btn   = document.getElementById('sign-in-btn');
+  const err   = document.getElementById('auth-error');
+  err.style.display = 'none';
+  btn.disabled = true; btn.textContent = 'Signing in…';
+  const { data, error } = await sb.auth.signInWithPassword({ email, password: pass });
+  btn.disabled = false; btn.textContent = 'Sign in';
+  if (error) { err.textContent = error.message; err.style.display = 'block'; return; }
+  showApp(data.user.email);
+}
+
+async function signOut() {
+  await sb.auth.signOut();
+  document.getElementById('app-screen').classList.remove('visible');
+  document.getElementById('auth-screen').classList.remove('hidden');
+}
+
+sb.auth.onAuthStateChange((event, session) => {
+  if (event === 'SIGNED_IN' && session) showApp(session.user.email);
+});
+
+function showApp(email) {
+  document.getElementById('auth-screen').classList.add('hidden');
+  document.getElementById('app-screen').classList.add('visible');
+  if (email) {
+    document.getElementById('user-email').textContent = email;
+    const firstName = (email.split('.')[0] || '');
+    const cap = firstName.charAt(0).toUpperCase() + firstName.slice(1);
+    const greetEl = document.getElementById('home-greeting');
+    if (greetEl) greetEl.textContent = `Welcome back, ${cap}`;
+  }
+  showTab('home');
+}
+
+// ── Tabs ──────────────────────────────────────────────────────────────────────
+function showTab(tab) {
+  const navTabs = document.querySelector('.nav-tabs');
+  if (navTabs) navTabs.classList.toggle('hidden', tab === 'home');
+
+  document.querySelectorAll('.nav-tab').forEach((t,i) => {
+    t.classList.toggle('active',
+      (i===0&&tab==='entry') || (i===1&&tab==='records') || (i===2&&tab==='pace') || (i===3&&tab==='settings')
+    );
+  });
+
+  ['tab-home','tab-entry','tab-records','tab-pace','tab-widgets','tab-settings'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.style.display = id === `tab-${tab}` ? '' : 'none';
+  });
+
+  if (tab === 'records')  loadAllRecords();
+  if (tab === 'settings') loadSettings();
+  if (tab === 'pace')     loadPaceRecent();
+  if (tab === 'widgets')  loadWidgets();
+  if (tab === 'entry' && document.getElementById('entry-form')) loadMonth();
+}
+
+// ── Load month ────────────────────────────────────────────────────────────────
+async function loadMonth() {
+  const month = +document.getElementById('sel-month').value;
+  const year  = +document.getElementById('sel-year').value;
+  const form  = document.getElementById('entry-form');
+  form.innerHTML = '<div class="loading-overlay">Loading existing data…</div>';
+
+  const [{ data: ps }, { data: ts }] = await Promise.all([
+    sb.from('property_stats').select('*').eq('stat_year', year).eq('stat_month', month),
+    sb.from('tonik_stats').select('*').eq('stat_year', year).eq('stat_month', month),
+  ]);
+
+  const propMap = {}; (ps||[]).forEach(r => propMap[r.property_name] = r);
+  const segMap  = {}; (ts||[]).forEach(r => segMap[r.segment] = r);
+
+  const fi = (name, label, val) =>
+    `<div><div class="input-sub">${label}</div><input type="number" name="${name}" value="${val||''}" placeholder="0" step="any" /></div>`;
+
+  const propCards = PROPERTIES.map(p => {
+    const d = propMap[p.name] || {};
+    return `<div class="prop-card" data-prop="${p.name}" data-type="${p.type}">
+      <div class="prop-card-header"><div class="prop-name">${p.name}</div><div class="prop-type">${p.type}</div></div>
+      <div class="stat-grid">
+        <div><div class="stat-label">Revenue (LKR)</div><div class="stat-inputs">${fi('rev_actual','Actual',d.rev_actual)}${fi('rev_budget','Budget',d.rev_budget)}</div></div>
+        <div><div class="stat-label">Room nights</div><div class="stat-inputs">${fi('rn_actual','Actual',d.rn_actual)}${fi('rn_budget','Budget',d.rn_budget)}</div></div>
+        <div><div class="stat-label">ARR (LKR)</div><div class="stat-inputs">${fi('arr_actual','Actual',d.arr_actual)}${fi('arr_budget','Budget',d.arr_budget)}</div></div>
+        <div><div class="stat-label">Occupancy (%)</div><div class="stat-inputs">${fi('occu_actual','Actual',d.occu_actual)}${fi('occu_budget','Budget',d.occu_budget)}</div></div>
+      </div>
+    </div>`;
+  }).join('');
+
+  const segCards = SEGMENTS.map(seg => {
+    const d = segMap[seg] || {};
+    const isMgmt = seg === 'Management';
+    return `<div class="seg-card" data-seg="${seg}">
+      <div class="seg-name">${seg}</div>
+      <div class="seg-stats">
+        <div><div class="stat-label">Revenue (LKR)</div><div class="stat-inputs">${fi('rev_actual','Actual',d.rev_actual)}${fi('rev_budget','Budget',d.rev_budget)}</div></div>
+        <div><div class="stat-label">Room nights</div><div class="stat-inputs">${fi('rn_actual','Actual',d.rn_actual)}${fi('rn_budget','Budget',d.rn_budget)}</div></div>
+        <div><div class="stat-label">ARR (LKR)</div><div class="stat-inputs">${fi('arr_actual','Actual',d.arr_actual)}${fi('arr_budget','Budget',d.arr_budget)}</div></div>
+        <div><div class="stat-label">Occupancy (%)</div><div class="stat-inputs">${fi('occu_actual','Actual',d.occu_actual)}${fi('occu_budget','Budget',d.occu_budget)}</div></div>
+        <div><div class="stat-label">Tonik Share (LKR)</div><div class="stat-inputs">${fi('share_actual','Actual',d.share_actual)}${fi('share_budget','Budget',d.share_budget)}</div></div>
+        <div><div class="stat-label">Active villas</div><div class="stat-inputs">${fi('villas_actual','Actual',d.villas_actual)}${fi('villas_budget','Budget',d.villas_budget)}</div></div>
+        ${isMgmt ? `<div><div class="stat-label">Room nights sellable</div><div class="stat-inputs">${fi('rooms_actual','Actual',d.rooms_actual)}${fi('rooms_budget','Budget',d.rooms_budget)}</div></div>` : ''}
+      </div>
+    </div>`;
+  }).join('');
+
+  form.innerHTML = `
+    <div class="section-header" style="margin-top:0.25rem;">Property statistics — ${MONTH_NAMES[month-1]} ${year}</div>
+    <div class="prop-grid">${propCards}</div>
+    <div class="section-header">TONIK portfolio statistics — ${MONTH_NAMES[month-1]} ${year}</div>
+    <div class="seg-grid">${segCards}</div>
+    <div class="save-bar">
+      <button class="btn btn-primary" id="save-btn" onclick="saveMonth(${month},${year})">Save ${MONTH_NAMES[month-1]} ${year}</button>
+    </div>`;
+}
+
+// ── Save month ────────────────────────────────────────────────────────────────
+function getInputs(container) {
+  const result = {};
+  container.querySelectorAll('input[name]').forEach(i => { result[i.name] = i.value === '' ? null : +i.value; });
+  return result;
+}
+
+async function saveMonth(month, year) {
+  const btn = document.getElementById('save-btn');
+  btn.disabled = true; btn.textContent = 'Saving…';
+  try {
+    const propUpserts = [...document.querySelectorAll('.prop-card')].map(c => ({
+      property_name: c.dataset.prop, property_type: c.dataset.type,
+      stat_year: year, stat_month: month, ...getInputs(c)
+    }));
+    const segUpserts = [...document.querySelectorAll('.seg-card')].map(c => ({
+      segment: c.dataset.seg, stat_year: year, stat_month: month, ...getInputs(c)
+    }));
+    const [{ error: e1 }, { error: e2 }] = await Promise.all([
+      sb.from('property_stats').upsert(propUpserts, { onConflict: 'property_name,stat_year,stat_month' }),
+      sb.from('tonik_stats').upsert(segUpserts, { onConflict: 'segment,stat_year,stat_month' }),
+    ]);
+    if (e1 || e2) throw new Error(e1?.message || e2?.message);
+    showToast('Saved successfully ✓');
+    setTimeout(() => showTab('home'), 800);
+  } catch(err) {
+    showToast('Error: ' + err.message, true);
+  } finally {
+    btn.disabled = false; btn.textContent = `Save ${MONTH_NAMES[month-1]} ${year}`;
+  }
+}
+
+// ── All records ───────────────────────────────────────────────────────────────
+async function loadAllRecords() {
+  const el = document.getElementById('all-records');
+  el.innerHTML = '<div class="loading-overlay">Loading…</div>';
+  const { data, error } = await sb.from('property_stats').select('*')
+    .order('stat_year', { ascending: false }).order('stat_month', { ascending: false });
+  if (error) { el.innerHTML = `<div style="color:#993C1D;font-size:12px;">${error.message}</div>`; return; }
+  if (!data.length) { el.innerHTML = '<div class="loading-overlay">No records yet.</div>'; return; }
+  el.innerHTML = '<div class="records-list">' + data.map(r => `
+    <div class="record-row">
+      <div>
+        <div class="record-info">${r.property_name} — ${MONTH_NAMES[r.stat_month-1]} ${r.stat_year}</div>
+        <div class="record-meta">Rev: LKR ${Math.round(r.rev_actual||0).toLocaleString('en-US')} · RN: ${r.rn_actual||0} · Occ: ${(r.occu_actual||0).toFixed(1)}%</div>
+        <div class="record-meta" style="color:#b4b2a9;">Created: ${new Date(r.created_at).toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'numeric'})} · Updated: ${new Date(r.updated_at).toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'numeric'})}</div>
+      </div>
+      <div class="record-actions">
+        <button class="btn btn-secondary btn-sm" onclick="jumpToMonth(${r.stat_month},${r.stat_year})">Edit</button>
+      </div>
+    </div>`).join('') + '</div>';
+}
+
+function jumpToMonth(month, year) {
+  document.getElementById('sel-month').value = month;
+  document.getElementById('sel-year').value  = year;
+  showTab('entry');
+  loadMonth();
+}
+
+// ── Toast ─────────────────────────────────────────────────────────────────────
+function showToast(msg, isError=false) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.className = 'toast show' + (isError ? ' error' : '');
+  setTimeout(() => { t.className = 'toast'; }, 3000);
+}
+
+// ── Settings ──────────────────────────────────────────────────────────────────
+function getProperties() {
+  const stored = localStorage.getItem('tonik_properties');
+  if (stored) return JSON.parse(stored);
+  return [
+    { name:'KAHA', type:'Management' }, { name:'Villa Sayura', type:'Management' },
+    { name:'Garfield Bungalow', type:'Franchise' }, { name:'Garfield Cottage', type:'Franchise' },
+  ];
+}
+function saveProperties(props) {
+  localStorage.setItem('tonik_properties', JSON.stringify(props));
+  PROPERTIES.length = 0; props.forEach(p => PROPERTIES.push(p));
+}
+function getFySetting() { return parseInt(localStorage.getItem('tonik_fy_start') || '4'); }
+
+function loadSettings() {
+  const props = getProperties();
+  document.getElementById('prop-list').innerHTML = props.length
+    ? props.map((p,i) => `<div class="settings-list-item"><span>${p.name}</span><span class="prop-badge">${p.type}</span><button class="btn btn-danger btn-sm" onclick="removeProperty(${i})">Remove</button></div>`).join('')
+    : '<div style="font-size:12px;color:#b4b2a9;">No properties yet.</div>';
+  document.getElementById('fy-start').value = getFySetting();
+}
+
+function addProperty() {
+  const name = document.getElementById('new-prop-name').value.trim();
+  const type = document.getElementById('new-prop-type').value;
+  if (!name) { showToast('Please enter a property name.', true); return; }
+  const props = getProperties();
+  if (props.find(p => p.name.toLowerCase() === name.toLowerCase())) { showToast('Property already exists.', true); return; }
+  props.push({ name, type }); saveProperties(props);
+  document.getElementById('new-prop-name').value = '';
+  loadSettings(); showToast(`${name} added ✓`);
+}
+
+function removeProperty(index) {
+  const props = getProperties();
+  const name = props[index].name;
+  if (!confirm(`Remove "${name}"? This won't delete its historical data.`)) return;
+  props.splice(index, 1); saveProperties(props); loadSettings(); showToast(`${name} removed`);
+}
+
+function saveFySetting() {
+  const val = document.getElementById('fy-start').value;
+  localStorage.setItem('tonik_fy_start', val);
+  showToast(`FY start set to ${MONTH_NAMES[+val-1]} ✓`);
+}
+
+async function confirmZero() {
+  const fyYear  = +document.getElementById('zero-fy').value;
+  const field   = document.getElementById('zero-field').value;
+  const table   = document.getElementById('zero-table').value;
+  const status  = document.getElementById('zero-status');
+  if (!confirm(`Zero ${field} for ${table} in FY${String(fyYear).slice(2)}–${String(fyYear+1).slice(2)}? This cannot be undone.`)) return;
+  const fyStart = getFySetting();
+  const months  = [];
+  for (let m=1; m<=12; m++) months.push({ stat_year: m>=fyStart?fyYear:fyYear+1, stat_month:m });
+  const pPay = {}, tPay = {};
+  if (field==='budgets'||field==='both') { Object.assign(pPay,{rev_budget:0,arr_budget:0,rn_budget:0,occu_budget:0}); Object.assign(tPay,{rev_budget:0,arr_budget:0,rn_budget:0,occu_budget:0,share_budget:0,rooms_budget:0,villas_budget:0}); }
+  if (field==='actuals'||field==='both') { Object.assign(pPay,{rev_actual:0,arr_actual:0,rn_actual:0,occu_actual:0}); Object.assign(tPay,{rev_actual:0,arr_actual:0,rn_actual:0,occu_actual:0,share_actual:0,rooms_actual:0,villas_actual:0}); }
+  status.textContent = 'Zeroing…';
+  try {
+    const tasks = [];
+    for (const {stat_year,stat_month} of months) {
+      if (table==='property'||table==='both') tasks.push(sb.from('property_stats').update(pPay).eq('stat_year',stat_year).eq('stat_month',stat_month));
+      if (table==='tonik'||table==='both')    tasks.push(sb.from('tonik_stats').update(tPay).eq('stat_year',stat_year).eq('stat_month',stat_month));
+    }
+    const results = await Promise.all(tasks);
+    const errs = results.filter(r=>r.error).map(r=>r.error.message);
+    if (errs.length) throw new Error(errs[0]);
+    status.textContent = ''; showToast('Data zeroed successfully ✓');
+  } catch(err) { status.textContent=''; showToast('Error: '+err.message, true); }
+}
+
+(function() {
+  const stored = localStorage.getItem('tonik_properties');
+  if (stored) { const props=JSON.parse(stored); PROPERTIES.length=0; props.forEach(p=>PROPERTIES.push(p)); }
+})();
+
+// ── Pace ──────────────────────────────────────────────────────────────────────
+const PACE_PROPS = ['KAHA','Villa Sayura','Garfield Bungalow','Garfield Cottage'];
+
+async function loadPaceRecent() {
+  const el = document.getElementById('pace-recent');
+  el.innerHTML = '<div class="loading-overlay">Loading…</div>';
+  const { data, error } = await sb.from('pace_stats')
+    .select('*').order('week_start', { ascending: false }).limit(70); // last 10 weeks × 7 props
+  if (error) { el.innerHTML = `<div style="color:#993C1D;font-size:12px;">${error.message}</div>`; return; }
+
+  // Group by week
+  const weeks = {};
+  (data||[]).forEach(r => {
+    if (!weeks[r.week_start]) weeks[r.week_start] = { label: r.week_label, props: {} };
+    weeks[r.week_start].props[r.property_name] = r.room_nights;
+  });
+
+  const sorted = Object.entries(weeks).sort((a,b) => b[0].localeCompare(a[0])).slice(0,10);
+  if (!sorted.length) { el.innerHTML = '<div class="loading-overlay">No pace records yet.</div>'; return; }
+
+  el.innerHTML = '<div class="records-list">' + sorted.map(([ws, w]) => {
+    const total = PACE_PROPS.reduce((s,p) => s + (w.props[p]||0), 0);
+    const details = PACE_PROPS.filter(p => w.props[p] > 0).map(p => `${p}: ${w.props[p]}`).join(' · ');
+    return `<div class="record-row">
+      <div>
+        <div class="record-info">${w.label} <span style="color:#185FA5;font-weight:600;">Total: ${total} RN</span></div>
+        <div class="record-meta">${details || 'No bookings'}</div>
+      </div>
+      <div class="record-actions">
+        <button class="btn btn-secondary btn-sm" onclick="loadPaceWeekFromDate('${ws}','${w.label}')">Edit</button>
+      </div>
+    </div>`;
+  }).join('') + '</div>';
+}
+
+async function loadPaceWeek() {
+  const label = document.getElementById('pace-week-label').value.trim();
+  const start = document.getElementById('pace-week-start').value;
+  if (!label || !start) { showToast('Please enter both a week label and start date.', true); return; }
+  await loadPaceWeekFromDate(start, label);
+}
+
+async function loadPaceWeekFromDate(weekStart, weekLabel) {
+  document.getElementById('pace-week-label').value = weekLabel;
+  document.getElementById('pace-week-start').value = weekStart;
+
+  const { data } = await sb.from('pace_stats').select('*').eq('week_start', weekStart);
+  const existing = {};
+  (data||[]).forEach(r => existing[r.property_name] = r.room_nights || 0);
+
+  const fi = (prop) => `
+    <div class="prop-card" style="padding:0.75rem 1rem;">
+      <div class="prop-card-header" style="margin-bottom:0.5rem;">
+        <div class="prop-name" style="font-size:12px;">${prop}</div>
+      </div>
+      <div class="field">
+        <label>Room nights booked</label>
+        <input type="number" name="${prop}" value="${existing[prop]||0}" min="0" step="1" style="max-width:120px;" />
+      </div>
+    </div>`;
+
+  document.getElementById('pace-entry-form').innerHTML = `
+    <div class="prop-grid" style="gap:0.5rem;">${PACE_PROPS.map(fi).join('')}</div>
+    <div class="save-bar">
+      <button class="btn btn-primary" onclick="savePaceWeek()">Save ${weekLabel}</button>
+    </div>`;
+}
+
+async function savePaceWeek() {
+  const label = document.getElementById('pace-week-label').value.trim();
+  const start = document.getElementById('pace-week-start').value;
+  if (!label || !start) { showToast('Missing week label or date.', true); return; }
+
+  const upserts = PACE_PROPS.map(prop => {
+    const input = document.querySelector(`#pace-entry-form input[name="${prop}"]`);
+    return { week_label: label, week_start: start, property_name: prop, room_nights: input ? +input.value : 0 };
+  });
+
+  const { error } = await sb.from('pace_stats').upsert(upserts, { onConflict: 'week_start,property_name' });
+  if (error) { showToast('Error: ' + error.message, true); return; }
+  showToast('Pace saved ✓');
+  setTimeout(() => showTab('home'), 800);
+}
+
+// ── Widget Builder ────────────────────────────────────────────────────────────
+const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbw08zBzu_dl66FF460NFvemEtYy7smqKJNoxdDhWdnNm5101sAlPITauwuFWO-zM46_/exec';
+let sheetFields = [];
+let sheetFieldValues = {}; // field -> unique values for filter dropdowns
+
+const WIDGET_TYPE_LABELS = { kpi:'KPI Card', bar:'Bar Chart', line:'Line Chart', doughnut:'Doughnut', table:'Table' };
+const WIDGET_TYPE_ICONS  = { kpi:'🔢', bar:'📊', line:'📈', doughnut:'🍩', table:'📋' };
+
+async function loadSheetFields() {
+  const status = document.getElementById('w-status');
+  status.textContent = 'Loading fields…';
+  try {
+    const resp = await fetch(APPS_SCRIPT_URL);
+    const json = await resp.json();
+    if (!json.length) throw new Error('No data returned');
+    sheetFields = Object.keys(json[0]).filter(k => k.trim());
+
+    // Cache unique values per field for filter dropdowns
+    sheetFields.forEach(f => {
+      sheetFieldValues[f] = [...new Set(json.map(r => String(r[f] || '').trim()).filter(Boolean))].sort();
+    });
+
+    const opts = sheetFields.map(f => `<option value="${f}">${f}</option>`).join('');
+    document.getElementById('w-x').innerHTML = '<option value="">— select field —</option>' + opts;
+
+    // Y axis: count + numeric fields
+    const yOpts = '<option value="count">Count of records</option>' +
+      sheetFields.map(f => `<option value="${f}">${f}</option>`).join('');
+    document.getElementById('w-y').innerHTML = yOpts;
+
+    // Refresh any existing filter rows
+    document.querySelectorAll('.w-filter-field').forEach(sel => {
+      const cur = sel.value;
+      sel.innerHTML = opts;
+      sel.value = cur;
+    });
+
+    status.textContent = `✓ ${sheetFields.length} fields loaded`;
+  } catch(e) {
+    status.textContent = 'Error: ' + e.message;
+  }
+}
+
+function onWidgetTypeChange() {
+  const type = document.getElementById('w-type').value;
+  document.getElementById('w-x-wrap').style.display      = type === 'kpi' ? 'none' : '';
+  document.getElementById('w-cluster-wrap').style.display = type === 'timeseries' ? '' : 'none';
+  document.getElementById('w-agg-wrap').style.display     = type === 'table' ? 'none' : '';
+  // For time-series, auto-set x to Inquiry Date
+  if (type === 'timeseries' && document.getElementById('w-x').options.length > 1) {
+    const sel = document.getElementById('w-x');
+    const opt = [...sel.options].find(o => o.value === 'Inquiry Date');
+    if (opt) sel.value = 'Inquiry Date';
+  }
+}
+
+// ── Date clustering helper ────────────────────────────────────────────────────
+function clusterDate(dateStr, unit) {
+  const d = new Date(dateStr);
+  if (isNaN(d)) return 'Unknown';
+  if (unit === 'day') return d.toISOString().slice(0,10);
+  if (unit === 'month') return d.toLocaleString('en-GB', { month:'short', year:'numeric' });
+  if (unit === 'week') {
+    // ISO week start (Monday)
+    const day = d.getDay() || 7;
+    const mon = new Date(d); mon.setDate(d.getDate() - day + 1);
+    const sun = new Date(mon); sun.setDate(mon.getDate() + 6);
+    const fmt = (dt) => dt.getDate() + ' ' + dt.toLocaleString('en-GB',{month:'short'});
+    return fmt(mon) + ' – ' + fmt(sun);
+  }
+  return dateStr;
+}
+
+// ── Widget preview ────────────────────────────────────────────────────────────
+let previewChartInstance = null;
+let cachedSheetData = null;
+
+async function previewWidget(id) {
+  const modal = document.getElementById('preview-modal');
+  const body  = document.getElementById('preview-body');
+  const titleEl = document.getElementById('preview-title');
+  modal.classList.add('open');
+  body.innerHTML = '<div style="text-align:center;color:#73726c;font-size:13px;padding:2rem;">Loading data…</div>';
+
+  // Fetch widget config
+  const { data: w, error } = await sb.from('dashboard_widgets').select('*').eq('id', id).single();
+  if (error || !w) { body.innerHTML = '<div style="color:#993C1D;">Could not load widget.</div>'; return; }
+  titleEl.textContent = '🔍 Preview — ' + w.title;
+
+  // Fetch sheet data if not cached
+  if (!cachedSheetData) {
+    try {
+      const resp = await fetch(APPS_SCRIPT_URL);
+      cachedSheetData = await resp.json();
+    } catch(e) {
+      body.innerHTML = `<div style="color:#993C1D;font-size:12px;">Could not load sheet data: ${e.message}</div>`;
+      return;
+    }
+  }
+
+  // Apply filters
+  const filters = (typeof w.filters === 'string' ? JSON.parse(w.filters) : w.filters) || [];
+  let rows = cachedSheetData.filter(r => {
+    if (w.date_from || w.date_to) {
+      const d = new Date(r['Inquiry Date']);
+      if (w.date_from && d < new Date(w.date_from)) return false;
+      if (w.date_to   && d > new Date(w.date_to))   return false;
+    }
+    return filters.every(f => {
+      const val = String(r[f.field]||'').trim().toLowerCase();
+      const fv  = String(f.value||'').toLowerCase();
+      if (f.operator === 'equals')     return val === fv;
+      if (f.operator === 'not_equals') return val !== fv;
+      if (f.operator === 'contains')   return val.includes(fv);
+      return true;
+    });
+  });
+
+  const filterSummary = filters.length
+    ? '<div style="font-size:11px;color:#73726c;margin-bottom:1rem;">Filters: ' + filters.map(f=>`<strong>${f.field}</strong> ${f.operator} "${f.value}"`).join(' AND ') + '</div>'
+    : '';
+  const dateSummary = (w.date_from||w.date_to)
+    ? `<div style="font-size:11px;color:#73726c;margin-bottom:0.5rem;">Date: ${w.date_from||'any'} → ${w.date_to||'any'}</div>` : '';
+
+  // Aggregate
+  const counts = {};
+  const isTimeSeries = w.widget_type === 'timeseries';
+  const cluster = w.date_cluster || 'week';
+  const xField = isTimeSeries ? 'Inquiry Date' : w.x_field;
+
+  if (xField) {
+    rows.forEach(r => {
+      const key = isTimeSeries
+        ? clusterDate(String(r[xField]||''), cluster)
+        : String(r[xField]||'Unknown').trim()||'Unknown';
+      if (w.y_aggregation === 'sum' && w.y_field !== 'count') {
+        counts[key] = (counts[key]||0) + (parseFloat(r[w.y_field])||0);
+      } else {
+        counts[key] = (counts[key]||0) + 1;
+      }
+    });
+  }
+
+  // Sort time-series by date key
+  let entries = Object.entries(counts);
+  if (isTimeSeries) entries.sort((a,b) => a[0].localeCompare(b[0]));
+  const labels = entries.map(e=>e[0]);
+  const data   = entries.map(e=>e[1]);
+
+  const COLORS = ['#185FA5','#1D9E75','#534AB7','#D85A30','#C9A84C','#888780','#E06C9F','#2C7BB6'];
+
+  if (w.widget_type === 'kpi') {
+    const val = w.y_aggregation === 'sum' && w.y_field !== 'count'
+      ? rows.reduce((s,r) => s+(parseFloat(r[w.y_field])||0),0)
+      : rows.length;
+    body.innerHTML = `${filterSummary}${dateSummary}
+      <div style="text-align:center;padding:2rem 0;">
+        <div style="font-size:11px;color:#888780;margin-bottom:8px;text-transform:uppercase;letter-spacing:0.08em;">${w.title}</div>
+        <div style="font-size:48px;font-weight:500;color:#185FA5;">${Math.round(val).toLocaleString('en-US')}</div>
+        <div style="font-size:12px;color:#b4b2a9;margin-top:4px;">from ${rows.length} records</div>
+      </div>`;
+    return;
+  }
+
+  if (w.widget_type === 'table') {
+    const tableRows = entries.sort((a,b)=>b[1]-a[1]);
+    body.innerHTML = `${filterSummary}${dateSummary}
+      <table style="width:100%;border-collapse:collapse;font-size:12px;">
+        <thead><tr>
+          <th style="text-align:left;padding:6px 8px;background:#f9f8f5;border-bottom:1px solid #e8e7e1;">${xField}</th>
+          <th style="text-align:right;padding:6px 8px;background:#f9f8f5;border-bottom:1px solid #e8e7e1;">Count</th>
+        </tr></thead>
+        <tbody>${tableRows.map(([k,v])=>`<tr><td style="padding:6px 8px;border-bottom:1px solid #f1efe8;">${k}</td><td style="text-align:right;padding:6px 8px;border-bottom:1px solid #f1efe8;">${Math.round(v).toLocaleString('en-US')}</td></tr>`).join('')}</tbody>
+      </table>`;
+    return;
+  }
+
+  // Chart types
+  body.innerHTML = `${filterSummary}${dateSummary}<div style="position:relative;height:280px;"><canvas id="preview-chart"></canvas></div>`;
+
+  if (previewChartInstance) { previewChartInstance.destroy(); previewChartInstance = null; }
+
+  setTimeout(() => {
+    const canvas = document.getElementById('preview-chart');
+    if (!canvas) return;
+    const type = (w.widget_type === 'timeseries' || w.widget_type === 'line') ? 'line' : w.widget_type === 'doughnut' ? 'doughnut' : 'bar';
+    const colors = COLORS.slice(0, labels.length);
+    previewChartInstance = new Chart(canvas, {
+      type,
+      data: { labels, datasets: [{ label: w.title, data,
+        backgroundColor: type==='line' ? colors[0]+'20' : colors,
+        borderColor: type==='line' ? colors[0] : colors,
+        borderWidth: type==='line' ? 2 : 1,
+        fill: type==='line', tension: 0.3,
+        pointBackgroundColor: type==='line' ? colors[0] : undefined,
+        pointRadius: type==='line' ? 4 : undefined,
+      }]},
+      options: {
+        responsive: true, maintainAspectRatio: false,
+        layout: { padding: { top: 20 } },
+        plugins: {
+          legend: { display: type==='doughnut', position:'right', labels:{font:{size:10},boxWidth:12} },
+          datalabels: {
+            display: true, anchor:'end', align: type==='doughnut'?'center':'end',
+            font:{size:9,weight:'600'}, color: type==='doughnut'?'#fff':'#444',
+            formatter: (v,ctx) => {
+              if (type==='doughnut') { const t=ctx.dataset.data.reduce((a,b)=>a+b,0); return t>0?Math.round(v/t*100)+'%':''; }
+              return v===0?'':v;
+            }
+          }
+        },
+        scales: type==='doughnut'?{}:{
+          x:{ticks:{font:{size:9},maxRotation:45,autoSkip:labels.length>12}},
+          y:{beginAtZero:true,ticks:{font:{size:10}}}
+        }
+      }
+    });
+  }, 50);
+}
+
+function closePreview() {
+  document.getElementById('preview-modal').classList.remove('open');
+  if (previewChartInstance) { previewChartInstance.destroy(); previewChartInstance = null; }
+}
+
+// Close modal on backdrop click
+document.getElementById('preview-modal').addEventListener('click', function(e) {
+  if (e.target === this) closePreview();
+});
+
+let filterCount = 0;
+function addFilterRow() {
+  filterCount++;
+  const id = filterCount;
+  const opts = sheetFields.map(f => `<option value="${f}">${f}</option>`).join('');
+  const div = document.createElement('div');
+  div.id = `filter-row-${id}`;
+  div.style.cssText = 'display:flex;gap:8px;align-items:flex-end;flex-wrap:wrap;margin-bottom:8px;';
+  div.innerHTML = `
+    <div class="field" style="flex:2;">
+      <label>Field</label>
+      <select class="w-filter-field" onchange="updateFilterValues(${id})" style="width:100%;">
+        <option value="">— select —</option>${opts}
+      </select>
+    </div>
+    <div class="field" style="flex:1;">
+      <label>Operator</label>
+      <select class="w-filter-op" style="width:100%;">
+        <option value="equals">equals</option>
+        <option value="not_equals">not equals</option>
+        <option value="contains">contains</option>
+      </select>
+    </div>
+    <div class="field" style="flex:2;">
+      <label>Value</label>
+      <select class="w-filter-val" id="filter-val-${id}" style="width:100%;"><option value="">— select field first —</option></select>
+    </div>
+    <button class="btn btn-danger btn-sm" onclick="document.getElementById('filter-row-${id}').remove()" style="margin-bottom:1px;">✕</button>`;
+  document.getElementById('w-filters').appendChild(div);
+}
+
+function updateFilterValues(id) {
+  const field = document.querySelector(`#filter-row-${id} .w-filter-field`).value;
+  const vals  = sheetFieldValues[field] || [];
+  const sel   = document.getElementById(`filter-val-${id}`);
+  sel.innerHTML = '<option value="">— any —</option>' + vals.map(v => `<option value="${v}">${v}</option>`).join('');
+}
+
+async function saveWidget() {
+  const title    = document.getElementById('w-title').value.trim();
+  const type     = document.getElementById('w-type').value;
+  const xField   = document.getElementById('w-x').value;
+  const yField   = document.getElementById('w-y').value;
+  const agg      = document.getElementById('w-agg').value;
+  const dateFrom = document.getElementById('w-date-from').value;
+  const dateTo   = document.getElementById('w-date-to').value;
+  const cluster  = document.getElementById('w-cluster').value;
+  const status   = document.getElementById('w-status');
+
+  if (!title) { showToast('Please enter a widget title.', true); return; }
+  if (type !== 'kpi' && !xField) { showToast('Please select an X axis field.', true); return; }
+
+  // Collect filters
+  const filters = [];
+  document.querySelectorAll('[id^="filter-row-"]').forEach(row => {
+    const field = row.querySelector('.w-filter-field').value;
+    const op    = row.querySelector('.w-filter-op').value;
+    const val   = row.querySelector('.w-filter-val').value;
+    if (field && val) filters.push({ field, operator: op, value: val });
+  });
+
+  const { data: existing } = await sb.from('dashboard_widgets').select('sort_order').order('sort_order', { ascending: false }).limit(1);
+  const nextOrder = existing?.length ? (existing[0].sort_order + 1) : 0;
+
+  const { error } = await sb.from('dashboard_widgets').insert({
+    title, widget_type: type,
+    x_field: xField || null,
+    y_field: yField || 'count',
+    y_aggregation: agg,
+    filters: JSON.stringify(filters),
+    date_from: dateFrom || null,
+    date_to: dateTo || null,
+    date_cluster: cluster || 'week',
+    sort_order: nextOrder
+  });
+
+  if (error) { showToast('Error: ' + error.message, true); return; }
+
+  // Reset form
+  document.getElementById('w-title').value = '';
+  document.getElementById('w-date-from').value = '';
+  document.getElementById('w-date-to').value = '';
+  document.getElementById('w-filters').innerHTML = '';
+  filterCount = 0;
+  showToast('Widget added ✓');
+  loadWidgets();
+}
+
+async function loadWidgets() {
+  const el = document.getElementById('widget-list');
+  if (!el) return;
+  el.innerHTML = '<div class="loading-overlay">Loading…</div>';
+
+  const { data, error } = await sb.from('dashboard_widgets').select('*').order('sort_order');
+  if (error) { el.innerHTML = `<div style="color:#993C1D;font-size:12px;">${error.message}</div>`; return; }
+
+  document.getElementById('widget-count').textContent = `(${data?.length || 0})`;
+
+  if (!data?.length) {
+    el.innerHTML = '<div class="loading-overlay">No widgets yet — create your first one above.</div>';
+    return;
+  }
+
+  el.innerHTML = '<div class="records-list">' + data.map(w => {
+    const filters = (typeof w.filters === 'string' ? JSON.parse(w.filters) : w.filters) || [];
+    const filterStr = filters.length ? filters.map(f => `${f.field} ${f.operator} "${f.value}"`).join(', ') : 'No filters';
+    const dateStr = (w.date_from || w.date_to) ? ` · ${w.date_from||'any'} → ${w.date_to||'any'}` : '';
+    return `<div class="record-row" id="widget-row-${w.id}">
+      <div style="flex:1;">
+        <div class="record-info">${WIDGET_TYPE_ICONS[w.widget_type]} ${w.title}</div>
+        <div class="record-meta">${WIDGET_TYPE_LABELS[w.widget_type]} · X: ${w.x_field||'—'} · Y: ${w.y_field} (${w.y_aggregation})</div>
+        <div class="record-meta" style="color:#b4b2a9;">Filters: ${filterStr}${dateStr}</div>
+      </div>
+      <div class="record-actions">
+        <button class="btn btn-secondary btn-sm" onclick="previewWidget('${w.id}')">Preview</button>
+        <button class="btn btn-secondary btn-sm" onclick="moveWidget('${w.id}',${w.sort_order},-1)">↑</button>
+        <button class="btn btn-secondary btn-sm" onclick="moveWidget('${w.id}',${w.sort_order},1)">↓</button>
+        <button class="btn btn-secondary btn-sm" onclick="toggleWidget('${w.id}',${w.active})">${w.active?'Hide':'Show'}</button>
+        <button class="btn btn-danger btn-sm" onclick="deleteWidget('${w.id}')">Delete</button>
+      </div>
+    </div>`;
+  }).join('') + '</div>';
+}
+
+async function deleteWidget(id) {
+  if (!confirm('Delete this widget?')) return;
+  const { error } = await sb.from('dashboard_widgets').delete().eq('id', id);
+  if (error) { showToast('Error: ' + error.message, true); return; }
+  showToast('Widget deleted'); loadWidgets();
+}
+
+async function toggleWidget(id, currentActive) {
+  const { error } = await sb.from('dashboard_widgets').update({ active: !currentActive }).eq('id', id);
+  if (error) { showToast('Error: ' + error.message, true); return; }
+  showToast(currentActive ? 'Widget hidden' : 'Widget shown'); loadWidgets();
+}
+
+async function moveWidget(id, currentOrder, direction) {
+  const { data: all } = await sb.from('dashboard_widgets').select('id,sort_order').order('sort_order');
+  const idx = all.findIndex(w => w.id === id);
+  const swapIdx = idx + direction;
+  if (swapIdx < 0 || swapIdx >= all.length) return;
+  const swapWith = all[swapIdx];
+  await Promise.all([
+    sb.from('dashboard_widgets').update({ sort_order: swapWith.sort_order }).eq('id', id),
+    sb.from('dashboard_widgets').update({ sort_order: currentOrder }).eq('id', swapWith.id),
+  ]);
+  loadWidgets();
+}
+
+// ── Clear YTD override ────────────────────────────────────────────────────────
+async function clearYtdOverride() {
+  const fyYear = +document.getElementById('ytd-override-fy').value;
+  const status = document.getElementById('ytd-override-status');
+  if (!confirm(`This will remove the hardcoded YTD override for FY${String(fyYear).slice(2)}–${String(fyYear+1).slice(2)}. The dashboard will then calculate YTD by summing your individual monthly entries. Continue?`)) return;
+  status.textContent = 'Clearing…';
+  try {
+    const [{ error: e1 }, { error: e2 }] = await Promise.all([
+      sb.from('property_stats').delete().eq('stat_year', fyYear).eq('stat_month', 99),
+      sb.from('tonik_stats').delete().eq('stat_year', fyYear).eq('stat_month', 99),
+    ]);
+    if (e1 || e2) throw new Error(e1?.message || e2?.message);
+    status.textContent = '';
+    showToast('YTD override cleared ✓ — dashboard now uses monthly totals');
+  } catch(err) {
+    status.textContent = '';
+    showToast('Error: ' + err.message, true);
+  }
+}
+
+document.addEventListener('keydown', e => {
+  if (e.key==='Enter' && !document.getElementById('auth-screen').classList.contains('hidden')) signIn();
+});
+</script>
+</body>
+</html>
