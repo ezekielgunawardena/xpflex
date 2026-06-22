@@ -334,6 +334,19 @@ body{background:var(--bg);color:var(--col-body);font-family:var(--font-body);min
 /* STOCK LIMIT BADGE */
 .stock-count{position:absolute;bottom:7px;right:7px;font-size:9px;font-weight:700;padding:2px 6px;border-radius:4px;z-index:4;background:rgba(0,0,0,.6);color:#eab308;border:1px solid rgba(234,179,8,.3);backdrop-filter:blur(2px)}
 
+/* BNPL */
+.bnpl-strip{display:flex;align-items:center;gap:6px;margin-top:5px;flex-wrap:wrap}
+.bnpl-instalment{font-size:11px;color:#a78bfa;font-weight:600;white-space:nowrap}
+.bnpl-logo{height:16px;width:auto;max-width:44px;object-fit:contain;border-radius:3px;background:#fff;padding:1px 3px}
+.bnpl-logos{display:flex;align-items:center;gap:4px;flex-wrap:wrap}
+/* BNPL on detail page */
+.bnpl-detail{background:rgba(139,92,246,.07);border:1px solid rgba(139,92,246,.2);border-radius:9px;padding:12px 14px;margin:10px 0}
+.bnpl-detail-title{font-size:11px;font-weight:600;letter-spacing:.5px;text-transform:uppercase;color:#a78bfa;margin-bottom:8px}
+.bnpl-detail-row{display:flex;align-items:center;justify-content:space-between;margin-bottom:4px;font-size:13px}
+.bnpl-detail-val{font-family:var(--font-price);font-size:16px;font-weight:700;color:#a78bfa}
+.bnpl-detail-logos{display:flex;gap:6px;margin-top:8px;flex-wrap:wrap;align-items:center}
+.bnpl-detail-logos img{height:20px;width:auto;max-width:56px;object-fit:contain;border-radius:4px;background:#fff;padding:2px 4px}
+
 /* ══ STORE MOBILE ══ */
 @media(max-width:600px){
   .hero h1{font-size:34px}
@@ -582,8 +595,11 @@ const DEFAULT_DESIGN = {fontHead:"'Rajdhani',sans-serif",fontBody:"'Barlow',sans
 
 let cart=[], prods=[], settings={}, design={...DEFAULT_DESIGN}, orders=[], featured=[], ejsConfig={};
 let discounts={}, bannerSlides=[], activityLog=[];
-let editId=null, shopFilter='All', detFrom='home', currency='$';
-let toastTimer=null;
+let editId=null, shopFilter='All', detFrom='home', currency='Rs.';
+function priceFmt(n){
+  const num=parseFloat(n);
+  return currency+' '+Math.round(num).toLocaleString('en-LK');
+}let toastTimer=null;
 
 // ══ SUPABASE HELPERS ══
 async function sbGet(table){
@@ -697,6 +713,28 @@ function genOrderId(){return 'ORD-'+Date.now().toString(36).toUpperCase();}
 function showCartToast(msg){const el=document.getElementById('cart-toast');document.getElementById('cart-toast-msg').textContent=msg;el.classList.add('show');if(toastTimer)clearTimeout(toastTimer);toastTimer=setTimeout(()=>el.classList.remove('show'),3000);}
 function hideToast(){document.getElementById('cart-toast').classList.remove('show');}
 
+// ══ BNPL HELPERS ══
+function bnplCardStrip(p,effectivePrice){
+  if(!p.bnpl) return '';
+  const inst=Math.round(effectivePrice/3);
+  const logos=(p.bnplLogos||[]).filter(Boolean);
+  return `<div class="bnpl-strip">
+    <span class="bnpl-instalment">3 × ${priceFmt(inst)}</span>
+    ${logos.length?`<div class="bnpl-logos">${logos.map(l=>`<img class="bnpl-logo" src="${l}" alt="BNPL partner" onerror="this.style.display='none'"/>`).join('')}</div>`:''}
+  </div>`;
+}
+function bnplDetailBlock(p,effectivePrice){
+  if(!p.bnpl) return '';
+  const inst=Math.round(effectivePrice/3);
+  const logos=(p.bnplLogos||[]).filter(Boolean);
+  return `<div class="bnpl-detail">
+    <div class="bnpl-detail-title">&#128179; Buy Now, Pay Later</div>
+    <div class="bnpl-detail-row"><span>Total amount</span><span class="bnpl-detail-val">${priceFmt(effectivePrice)}</span></div>
+    <div class="bnpl-detail-row"><span>3 equal instalments</span><span class="bnpl-detail-val">3 × ${priceFmt(inst)}</span></div>
+    ${logos.length?`<div class="bnpl-detail-logos">${logos.map(l=>`<img src="${l}" alt="BNPL partner" onerror="this.style.display='none'"/>`).join('')}</div>`:''}
+  </div>`;
+}
+
 // ══ CARD HTML ══
 function stockCountBadge(p){
   if(!p.stockLimit||!p.stockQty&&p.stockQty!==0) return '';
@@ -714,7 +752,7 @@ function cardHTML(p,isFeat=false){
   const stockTag=p.stock==='low'?'<span class="stock-tag stock-low">Low Stock</span>':isOut?'<span class="stock-tag stock-out">Out of Stock</span>':isPreorder?'<span class="preorder-tag">Pre-Order</span>':'';
   const countBadge=stockCountBadge(p);
   const discBadge=dl?`<span class="disc-badge">${dl}</span>`:'';
-  const priceHTML=dp!=null?`<div class="price-wrap"><div class="pprice-orig">${priceFmt(p.price)}</div><div class="pprice">${priceFmt(dp)}</div><div class="pprice-save">Save ${priceFmt(p.price-dp)}</div></div>`:`<div class="pprice">${priceFmt(p.price)}</div>`;
+  const priceHTML=dp!=null?`<div class="price-wrap"><div class="pprice-orig">${priceFmt(p.price)}</div><div class="pprice">${priceFmt(dp)}</div><div class="pprice-save">Save ${priceFmt(p.price-dp)}</div>${bnplCardStrip(p,dp)}</div>`:`<div class="price-wrap"><div class="pprice">${priceFmt(p.price)}</div>${bnplCardStrip(p,p.price)}</div>`;
   // CTA button logic
   let atc;
   if(isOut){
@@ -729,7 +767,7 @@ function cardHTML(p,isFeat=false){
       :`<div class="atc-wrap" id="atc-${p.id}"><button class="atc-add" style="display:none" onclick="event.stopPropagation();addCart('${p.id}')">+</button><div class="atc-ctrl show" id="atcc-${p.id}"><button class="atc-btn" onclick="event.stopPropagation();decCart('${p.id}')">&#8722;</button><span class="atc-qty" id="atcq-${p.id}">${qty}</span><button class="atc-btn" onclick="event.stopPropagation();incCart('${p.id}')">+</button></div></div>`;
   }
   if(isFeat){
-    const fPrice=dp!=null?`<div class="price-wrap"><div class="pprice-orig" style="font-size:12px">${priceFmt(p.price)}</div><div style="font-family:var(--font-price);font-size:20px;font-weight:700;color:var(--col-price)">${priceFmt(dp)}</div></div>`:`<div style="font-family:var(--font-price);font-size:20px;font-weight:700;color:var(--col-price)">${priceFmt(p.price)}</div>`;
+    const fPrice=dp!=null?`<div class="price-wrap"><div class="pprice-orig" style="font-size:12px">${priceFmt(p.price)}</div><div style="font-family:var(--font-price);font-size:20px;font-weight:700;color:var(--col-price)">${priceFmt(dp)}</div>${bnplCardStrip(p,dp)}</div>`:`<div class="price-wrap"><div style="font-family:var(--font-price);font-size:20px;font-weight:700;color:var(--col-price)">${priceFmt(p.price)}</div>${bnplCardStrip(p,p.price)}</div>`;
     return `<div class="feat-card" onclick="showDetail('${p.id}')">
       <div class="feat-ribbon">Featured</div>${dl?`<span class="disc-badge" style="top:10px;right:10px;left:auto">${dl}</span>`:''}
       <div class="feat-img ${bgClass(p.platform)}">${img}<span class="feat-emoji">${p.icon||'🎮'}</span><span class="plat-tag ${platClass(p.platform)}">${p.platform}</span>${stockTag}${countBadge}</div>
@@ -837,10 +875,11 @@ function showDetail(id){
   document.getElementById('det-name').textContent=p.name;
   // Pricing
   const dp=discountedPrice(p); const dl=discountLabel(p);
+  const ep=dp!=null?dp:p.price;
   if(dp!=null){
-    document.getElementById('det-price').innerHTML=`<div class="det-price-block"><div class="det-orig">${priceFmt(p.price)}</div><div style="font-family:var(--font-price);font-size:34px;color:var(--col-price);font-weight:700">${priceFmt(dp)}</div><span class="det-save">${dl} &nbsp; Save ${priceFmt(p.price-dp)}</span></div>`;
+    document.getElementById('det-price').innerHTML=`<div class="det-price-block"><div class="det-orig">${priceFmt(p.price)}</div><div style="font-family:var(--font-price);font-size:34px;color:var(--col-price);font-weight:700">${priceFmt(dp)}</div><span class="det-save">${dl} &nbsp; Save ${priceFmt(p.price-dp)}</span></div>${bnplDetailBlock(p,ep)}`;
   } else {
-    document.getElementById('det-price').innerHTML=`<div style="font-family:var(--font-price);font-size:34px;color:var(--col-price);font-weight:700;margin:14px 0">${priceFmt(p.price)}</div>`;
+    document.getElementById('det-price').innerHTML=`<div style="font-family:var(--font-price);font-size:34px;color:var(--col-price);font-weight:700;margin:14px 0">${priceFmt(p.price)}</div>${bnplDetailBlock(p,ep)}`;
   }
   // Pre-order note
   let descText=p.desc||p.description||'';
@@ -913,7 +952,7 @@ async function sendOrderEmail(order){
   if(!svcId||!tplId||!pubKey){console.warn('EmailJS not configured — skipping email.');return;}
   try{
     emailjs.init(pubKey);
-    const itemsText=order.items.map(i=>`${i.name} x${i.qty} — ${currency}${(i.price*i.qty).toFixed(2)}`).join('\n');
+    const itemsText=order.items.map(i=>`${i.name} x${i.qty} — ${priceFmt(i.price*i.qty)}`).join('\n');
     const params = {
       to_email:order.email,
       cc_email:cfg.adminEmail||ADMIN_EMAIL,
@@ -923,7 +962,7 @@ async function sendOrderEmail(order){
       customer_country:order.country||'N/A',
       customer_phone:order.phone||'N/A',
       order_items:itemsText,
-      order_total:currency+order.total.toFixed(2),
+      order_total:priceFmt(order.total),
       order_date:order.date+' '+order.time,
       admin_email:cfg.adminEmail||ADMIN_EMAIL,
       reply_to:order.email,
@@ -937,7 +976,7 @@ async function sendOrderEmail(order){
 
 // ══ SETTINGS ══
 function applySettings(){
-  currency=settings.currency||'$';
+  currency=settings.currency||'Rs.';
   if(settings.hero) document.getElementById('hero-title').innerHTML=settings.hero;
   if(settings.sub) document.getElementById('hero-sub').textContent=settings.sub;
   if(settings.footer) document.getElementById('store-footer').textContent=settings.footer;

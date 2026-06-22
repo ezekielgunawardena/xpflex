@@ -306,6 +306,27 @@ body{background:var(--bg);color:var(--text);font-family:var(--font-body);min-hei
           </div>
           <div class="cf"><label>Pre-Order Release Note (optional)</label><input type="text" id="f-preorder-note" placeholder="e.g. Expected release: Q3 2026"/></div>
         </div>
+        <!-- BNPL -->
+        <div style="background:rgba(139,92,246,.07);border:1px solid rgba(139,92,246,.2);border-radius:9px;padding:14px;margin-bottom:14px">
+          <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px">
+            <label class="toggle-wrap"><input type="checkbox" id="f-bnpl" onchange="toggleBNPLFields()"/><span class="toggle-slider"></span></label>
+            <span style="font-size:13px;font-weight:500;color:#a78bfa">Enable Buy Now, Pay Later (BNPL)</span>
+            <span style="font-size:11px;color:var(--muted)">— splits price into 3 equal instalments on the storefront</span>
+          </div>
+          <div id="bnpl-fields" style="display:none">
+            <div class="img-guide" style="margin-bottom:12px;border-color:rgba(139,92,246,.2)">
+              <strong style="color:#a78bfa">&#128444; BNPL partner logo guidelines</strong>
+              Recommended size: <strong>120 × 40px</strong> (horizontal) &middot; Max: <strong>100KB</strong> &middot; Format: <strong>PNG or WebP (transparent background preferred)</strong><br/>
+              Up to 3 logos &middot; Host on Imgur, Cloudinary or any public URL &middot; Will display as small inline badges on product cards
+            </div>
+            <div class="fr3" style="gap:10px">
+              <div class="cf" style="margin:0"><label style="font-size:11px">Logo 1 URL</label><input type="url" id="f-bnpl-logo-0" placeholder="https://..." style="font-size:12px" oninput="updateBNPLPreview()"/></div>
+              <div class="cf" style="margin:0"><label style="font-size:11px">Logo 2 URL (optional)</label><input type="url" id="f-bnpl-logo-1" placeholder="https://..." style="font-size:12px" oninput="updateBNPLPreview()"/></div>
+              <div class="cf" style="margin:0"><label style="font-size:11px">Logo 3 URL (optional)</label><input type="url" id="f-bnpl-logo-2" placeholder="https://..." style="font-size:12px" oninput="updateBNPLPreview()"/></div>
+            </div>
+            <div id="bnpl-logo-preview" style="display:flex;gap:8px;align-items:center;margin-top:10px;min-height:28px"></div>
+          </div>
+        </div>
         <div class="cf">
           <label>Product Image URL</label>
           <div class="img-guide"><strong>&#128444; Image guidelines</strong>Recommended: <strong>600×400px</strong> (3:2 ratio) &middot; Max: <strong>500KB</strong> &middot; Formats: <strong>JPG, PNG, WebP</strong><br/>Host on Imgur, Cloudinary, or any public image URL</div>
@@ -435,7 +456,7 @@ body{background:var(--bg);color:var(--text);font-family:var(--font-body);min-hei
         <div class="cf"><label>Hero Subtext</label><input type="text" id="s-sub" placeholder="Instant digital delivery · Steam · PSN · Xbox"/></div>
         <div class="fr2">
           <div class="cf"><label>Currency Symbol</label>
-            <select id="s-currency"><option value="$">USD ($)</option><option value="Rs.">LKR (Rs.)</option><option value="£">GBP (£)</option><option value="€">EUR (€)</option></select>
+            <select id="s-currency"><option value="Rs.">LKR (Rs.)</option><option value="$">USD ($)</option><option value="£">GBP (£)</option><option value="€">EUR (€)</option></select>
           </div>
           <div class="cf"><label>Payment Gateway Note</label><input type="text" id="s-pay" placeholder="e.g. PayHere, Stripe, PayPal..."/></div>
         </div>
@@ -583,8 +604,11 @@ const DEFAULT_DESIGN = {fontHead:"'Rajdhani',sans-serif",fontBody:"'Barlow',sans
 
 let cart=[], prods=[], settings={}, design={...DEFAULT_DESIGN}, orders=[], featured=[], ejsConfig={};
 let discounts={}, bannerSlides=[], activityLog=[];
-let editId=null, shopFilter='All', detFrom='home', currency='$';
-let toastTimer=null;
+let editId=null, shopFilter='All', detFrom='home', currency='Rs.';
+function priceFmt(n){
+  const num=parseFloat(n);
+  return currency+' '+Math.round(num).toLocaleString('en-LK');
+}let toastTimer=null;
 
 // ══ SUPABASE HELPERS ══
 async function sbGet(table){
@@ -945,7 +969,7 @@ async function sendOrderEmail(order){
 
 // ══ SETTINGS ══
 function applySettings(){
-  currency=settings.currency||'$';
+  currency=settings.currency||'Rs.';
   if(settings.hero) document.getElementById('hero-title').innerHTML=settings.hero;
   if(settings.sub) document.getElementById('hero-sub').textContent=settings.sub;
   if(settings.footer) document.getElementById('store-footer').textContent=settings.footer;
@@ -1249,6 +1273,8 @@ async function saveProd(){
   const preorderNote=document.getElementById('f-preorder-note')?.value.trim()||'';
   // Auto-mark out of stock if limit active and qty is 0
   const finalStock=(stockLimit&&stockQty===0)?'out':stockVal;
+  const bnpl=document.getElementById('f-bnpl')?.checked||false;
+  const bnplLogos=bnpl?[0,1,2].map(i=>(document.getElementById(`f-bnpl-logo-${i}`)?.value||'').trim()).filter(Boolean):[];
   const p={
     id:editId||('p'+Date.now()),name,price,
     cat:document.getElementById('f-cat').value,
@@ -1259,6 +1285,7 @@ async function saveProd(){
     tags:document.getElementById('f-tags').value.trim(),
     stock:finalStock,
     stockLimit,stockQty,preorderNote,
+    bnpl,bnplLogos,
   };
   await sbUpsert('products',p);
   const actor=currentUser?.display_name||currentUser?.displayName||currentUser?.username||'Unknown';
@@ -1288,6 +1315,11 @@ function editProd(id){
   if(sqEl)sqEl.value=p.stockQty||0;
   const pnEl=document.getElementById('f-preorder-note');
   if(pnEl)pnEl.value=p.preorderNote||'';
+  const bnplEl=document.getElementById('f-bnpl');
+  if(bnplEl){bnplEl.checked=!!p.bnpl;toggleBNPLFields();}
+  const logos=p.bnplLogos||[];
+  [0,1,2].forEach(i=>{const el=document.getElementById(`f-bnpl-logo-${i}`);if(el)el.value=logos[i]||'';});
+  updateBNPLPreview();
   document.getElementById('add-title').textContent='Edit Product';
   toggleStockFields();
   cmsTab('add');
@@ -1305,14 +1337,29 @@ async function delProd(id){
 
 function clearForm(){
   editId=null;
-  ['f-name','f-price','f-icon','f-img','f-desc','f-tags','f-preorder-note'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
+  ['f-name','f-price','f-icon','f-img','f-desc','f-tags','f-preorder-note','f-bnpl-logo-0','f-bnpl-logo-1','f-bnpl-logo-2'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
   document.getElementById('f-cat').value='Gift Cards';
   document.getElementById('f-plat').value='Steam';
   document.getElementById('f-stock').value='in';
   const sl=document.getElementById('f-stock-limit');if(sl)sl.checked=false;
   const sq=document.getElementById('f-stock-qty');if(sq)sq.value='';
+  const bnplEl=document.getElementById('f-bnpl');if(bnplEl)bnplEl.checked=false;
   document.getElementById('add-title').textContent='Add Product';
   toggleStockFields();
+  toggleBNPLFields();
+}
+function toggleBNPLFields(){
+  const on=document.getElementById('f-bnpl')?.checked||false;
+  const fields=document.getElementById('bnpl-fields');
+  if(fields)fields.style.display=on?'block':'none';
+  if(on)updateBNPLPreview();
+}
+function updateBNPLPreview(){
+  const prev=document.getElementById('bnpl-logo-preview');if(!prev)return;
+  const logos=[0,1,2].map(i=>(document.getElementById(`f-bnpl-logo-${i}`)?.value||'').trim()).filter(Boolean);
+  prev.innerHTML=logos.length
+    ?`<span style="font-size:11px;color:var(--muted)">Preview:</span>`+logos.map(l=>`<img src="${l}" style="height:24px;width:auto;max-width:60px;object-fit:contain;border-radius:4px;background:#fff;padding:2px 4px" onerror="this.style.opacity='.3'"/>`).join('')
+    :`<span style="font-size:11px;color:var(--muted)">No logos yet — paste URLs above</span>`;
 }
 // Show/hide stock limit and pre-order fields based on stock status
 function toggleStockFields(){
