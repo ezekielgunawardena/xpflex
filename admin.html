@@ -22,9 +22,7 @@
 }
 *{box-sizing:border-box;margin:0;padding:0}
 body{background:var(--bg);color:var(--text);font-family:var(--font-body);min-height:100vh}
-
-
-/* CMS SHELL */
+.screen{display:none}.screen.active{display:block}
 .cms-login-wrap{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:100vh;background:var(--bg);padding:24px}
 .cms-login-card{background:#0e1520;border:.5px solid var(--border);border-radius:14px;padding:36px;width:100%;max-width:380px}
 .cms-logo{font-family:var(--font-head);font-size:22px;font-weight:700;color:var(--neon);letter-spacing:2px;margin-bottom:4px}
@@ -103,36 +101,29 @@ body{background:var(--bg);color:var(--text);font-family:var(--font-body);min-hei
 .toggle-slider:before{content:'';position:absolute;width:14px;height:14px;left:3px;bottom:3px;background:#64748b;border-radius:50%;transition:.2s}
 .toggle-wrap input:checked + .toggle-slider{background:rgba(0,240,160,.3)}
 .toggle-wrap input:checked + .toggle-slider:before{transform:translateX(16px);background:var(--neon)}
-/* CMS MOBILE */
 @media(max-width:768px){
   .cms-bar{height:auto;padding:8px 14px;flex-direction:column;align-items:stretch;gap:6px}
   .cms-brand{font-size:15px;text-align:center;padding:4px 0}
-  .cms-tabs{gap:2px;justify-content:center;overflow-x:auto;flex-wrap:nowrap;padding-bottom:2px;-webkit-overflow-scrolling:touch;scrollbar-width:none}
+  .cms-tabs{overflow-x:auto;flex-wrap:nowrap;padding-bottom:2px;scrollbar-width:none}
   .cms-tabs::-webkit-scrollbar{display:none}
   .ctab{font-size:11px;padding:5px 9px;flex-shrink:0}
-  .cms-bar-right{justify-content:center;gap:6px}
-  .fr2,.fr3{grid-template-columns:1fr !important}
-  .stats-grid{grid-template-columns:repeat(2,1fr) !important}
-  .fcard{padding:14px;overflow-x:auto}
-  .tbl{font-size:12px;min-width:480px}
-  .swatch-row{flex-wrap:wrap}
-  .swatch-row label{min-width:100%;margin-bottom:4px}
-  .bcms{width:100%;text-align:center}
-  #cp-activity .ph{flex-direction:column;align-items:flex-start;gap:8px}
-  #log-filter{width:100%}
+  .cms-bar-right{justify-content:center}
+  .fr2,.fr3{grid-template-columns:1fr!important}
+  .stats-grid{grid-template-columns:repeat(2,1fr)!important}
+  .fcard{overflow-x:auto}
+  .tbl{min-width:480px}
+  .bcms{width:100%}
 }
 @media(max-width:480px){
-  .stats-grid{grid-template-columns:1fr !important}
+  .stats-grid{grid-template-columns:1fr!important}
   .cms-login-card{padding:24px 18px}
   .cpanel{padding:10px}
-  .fcard{padding:12px}
 }
-
 </style>
 </head>
 <body>
 <!-- ══════════════ CMS ══════════════ -->
-<div id="screen-cms" class="screen">
+<div id="screen-cms" class="screen active">
   <div id="cms-login" class="cms-login-wrap">
     <div class="cms-login-card">
       <div class="cms-logo">XP<em>FLEX</em></div>
@@ -308,23 +299,23 @@ body{background:var(--bg);color:var(--text);font-family:var(--font-body);min-hei
         </div>
         <!-- BNPL -->
         <div style="background:rgba(139,92,246,.07);border:1px solid rgba(139,92,246,.2);border-radius:9px;padding:14px;margin-bottom:14px">
-          <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px">
+          <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px">
             <label class="toggle-wrap"><input type="checkbox" id="f-bnpl" onchange="toggleBNPLFields()"/><span class="toggle-slider"></span></label>
             <span style="font-size:13px;font-weight:500;color:#a78bfa">Enable Buy Now, Pay Later (BNPL)</span>
-            <span style="font-size:11px;color:var(--muted)">— splits price into 3 equal instalments on the storefront</span>
           </div>
           <div id="bnpl-fields" style="display:none">
             <div class="img-guide" style="margin-bottom:12px;border-color:rgba(139,92,246,.2)">
               <strong style="color:#a78bfa">&#128444; BNPL partner logo guidelines</strong>
-              Recommended size: <strong>120 × 40px</strong> (horizontal) &middot; Max: <strong>100KB</strong> &middot; Format: <strong>PNG or WebP (transparent background preferred)</strong><br/>
-              Up to 3 logos &middot; Host on Imgur, Cloudinary or any public URL &middot; Will display as small inline badges on product cards
+              Recommended: <strong>120 × 40px</strong> · Max: <strong>100KB</strong> · Format: <strong>PNG or WebP (transparent bg preferred)</strong> · Up to 3 logos
             </div>
-            <div class="fr3" style="gap:10px">
-              <div class="cf" style="margin:0"><label style="font-size:11px">Logo 1 URL</label><input type="url" id="f-bnpl-logo-0" placeholder="https://..." style="font-size:12px" oninput="updateBNPLPreview()"/></div>
-              <div class="cf" style="margin:0"><label style="font-size:11px">Logo 2 URL (optional)</label><input type="url" id="f-bnpl-logo-1" placeholder="https://..." style="font-size:12px" oninput="updateBNPLPreview()"/></div>
-              <div class="cf" style="margin:0"><label style="font-size:11px">Logo 3 URL (optional)</label><input type="url" id="f-bnpl-logo-2" placeholder="https://..." style="font-size:12px" oninput="updateBNPLPreview()"/></div>
+            <div class="fr3">
+              <div class="cf" style="margin:0"><label style="font-size:11px">Logo 1 URL</label><input type="url" id="f-bnpl-logo-0" placeholder="https://..." oninput="updateBNPLPreview()"/></div>
+              <div class="cf" style="margin:0"><label style="font-size:11px">Logo 2 URL</label><input type="url" id="f-bnpl-logo-1" placeholder="https://..." oninput="updateBNPLPreview()"/></div>
+              <div class="cf" style="margin:0"><label style="font-size:11px">Logo 3 URL</label><input type="url" id="f-bnpl-logo-2" placeholder="https://..." oninput="updateBNPLPreview()"/></div>
             </div>
-            <div id="bnpl-logo-preview" style="display:flex;gap:8px;align-items:center;margin-top:10px;min-height:28px"></div>
+            <div id="bnpl-logo-preview" style="display:flex;gap:8px;align-items:center;margin-top:10px;min-height:28px">
+              <span style="font-size:11px;color:var(--muted)">No logos yet — paste URLs above</span>
+            </div>
           </div>
         </div>
         <div class="cf">
@@ -456,7 +447,7 @@ body{background:var(--bg);color:var(--text);font-family:var(--font-body);min-hei
         <div class="cf"><label>Hero Subtext</label><input type="text" id="s-sub" placeholder="Instant digital delivery · Steam · PSN · Xbox"/></div>
         <div class="fr2">
           <div class="cf"><label>Currency Symbol</label>
-            <select id="s-currency"><option value="Rs.">LKR (Rs.)</option><option value="$">USD ($)</option><option value="£">GBP (£)</option><option value="€">EUR (€)</option></select>
+            <select id="s-currency"><option value="$">USD ($)</option><option value="Rs.">LKR (Rs.)</option><option value="£">GBP (£)</option><option value="€">EUR (€)</option></select>
           </div>
           <div class="cf"><label>Payment Gateway Note</label><input type="text" id="s-pay" placeholder="e.g. PayHere, Stripe, PayPal..."/></div>
         </div>
@@ -547,7 +538,6 @@ body{background:var(--bg);color:var(--text);font-family:var(--font-body);min-hei
         </div>
       </div>
     </div>
-  </div>
 
     <!-- ACTIVITY LOG -->
     <div id="cp-activity" class="cpanel">
@@ -567,11 +557,10 @@ body{background:var(--bg);color:var(--text);font-family:var(--font-body);min-hei
       </div>
       <div class="fcard" style="padding:0;overflow:hidden"><div id="activity-tbl"></div></div>
     </div>
-  </div>
-</div>
 
+  </div><!-- end cms-shell -->
+</div><!-- end screen-cms -->
 
-<script>
 <script>
 // ══ SUPABASE CONFIG ══
 const SB_URL = 'https://pxsajdecyrifqwaonfpy.supabase.co';
@@ -605,10 +594,11 @@ const DEFAULT_DESIGN = {fontHead:"'Rajdhani',sans-serif",fontBody:"'Barlow',sans
 let cart=[], prods=[], settings={}, design={...DEFAULT_DESIGN}, orders=[], featured=[], ejsConfig={};
 let discounts={}, bannerSlides=[], activityLog=[];
 let editId=null, shopFilter='All', detFrom='home', currency='Rs.';
+let toastTimer=null;
+
 function priceFmt(n){
-  const num=parseFloat(n);
-  return currency+' '+Math.round(num).toLocaleString('en-LK');
-}let toastTimer=null;
+  return currency+' '+Math.round(parseFloat(n)).toLocaleString('en-LK');
+}
 
 // ══ SUPABASE HELPERS ══
 async function sbGet(table){
@@ -660,16 +650,16 @@ window.addEventListener('load',async()=>{
   const sbBanner=await getSettingVal('banner'); bannerSlides=sbBanner||[];
   const sbAdmins=await sbGet('admins'); adminUsers=sbAdmins||[];
   if(ejsConfig.pubkey)emailjs.init(ejsConfig.pubkey);
-  if(window.location.hash==='#admin'){openCMS();return;}
+  // Always show login screen on admin page load
   applyDesign();
-  // storefront (index.html) handles banner + store rendering
-  // no secret knock on admin page
+  document.getElementById('cms-login').style.display='flex';
+  document.getElementById('cms-shell').classList.remove('on');
 });
 
 // ══ SCREENS ══
 function showScreen(id){document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));document.getElementById(id).classList.add('active');}
 function storeGo(sub){
-  // storefront on separate page
+  showScreen('screen-store');
   document.querySelectorAll('#sv-home,#sv-shop,#sv-detail,#sv-cart,#sv-checkout,#sv-success').forEach(s=>s.classList.remove('active'));
   document.getElementById('sv-'+sub).classList.add('active');
   if(sub==='cart')renderCart();
@@ -722,7 +712,6 @@ function discountLabel(p){const d=discounts[p.id];if(!discIsActive(d))return nul
 // ══ HELPERS ══
 function platClass(p){return{Steam:'t-steam',PSN:'t-psn',Xbox:'t-xbox','Epic Games':'t-epic',Nintendo:'t-nin'}[p]||'t-other';}
 function bgClass(p){return{Steam:'bg-steam',PSN:'bg-psn',Xbox:'bg-xbox','Epic Games':'bg-epic',Nintendo:'bg-nin'}[p]||'bg-other';}
-function priceFmt(n){return currency+parseFloat(n).toFixed(2);}
 function genOrderId(){return 'ORD-'+Date.now().toString(36).toUpperCase();}
 
 // ══ CART TOAST ══
@@ -1015,6 +1004,33 @@ async function saveDesign(){
 }
 async function resetDesign(){design={...DEFAULT_DESIGN};await setSettingVal('design',design);applyDesign();showCMSToast('toast-design');}
 
+// ══ CMS LOGIN ══
+function cmsLogin(){
+  const u=document.getElementById('cms-un').value.trim();
+  const p=document.getElementById('cms-pw').value;
+  const match=adminUsers.find(a=>a.username===u&&a.password===p);
+  if(match){
+    currentUser=match;
+    document.getElementById('cms-login').style.display='none';
+    document.getElementById('cms-shell').classList.add('on');
+    initCMSShell();
+    // Log the login
+    const actor=match.display_name||match.displayName||match.username;
+    writeLog('login',`${actor} signed in`,actor,{role:match.role});
+  } else {
+    document.getElementById('login-err').textContent='Invalid username or password.';
+  }
+}
+document.getElementById('cms-pw').addEventListener('keydown',e=>{if(e.key==='Enter')cmsLogin();});
+document.getElementById('cms-un').addEventListener('keydown',e=>{if(e.key==='Enter')cmsLogin();});
+function cmsLogout(){
+  currentUser=null;
+  document.getElementById('cms-shell').classList.remove('on');
+  document.getElementById('cms-login').style.display='flex';
+  document.getElementById('cms-un').value='';
+  document.getElementById('cms-pw').value='';
+  document.getElementById('login-err').textContent='';
+}
 
 async function initCMSShell(){
   const sbProds=await sbGet('products'); prods=sbProds&&sbProds.length?sbProds.map(p=>({...p,desc:p.description})):DEFAULT_PRODS;
@@ -1284,8 +1300,7 @@ async function saveProd(){
     description:document.getElementById('f-desc').value.trim(),
     tags:document.getElementById('f-tags').value.trim(),
     stock:finalStock,
-    stockLimit,stockQty,preorderNote,
-    bnpl,bnplLogos,
+    stockLimit,stockQty,preorderNote,bnpl,bnplLogos,
   };
   await sbUpsert('products',p);
   const actor=currentUser?.display_name||currentUser?.displayName||currentUser?.username||'Unknown';
@@ -1319,7 +1334,7 @@ function editProd(id){
   if(bnplEl){bnplEl.checked=!!p.bnpl;toggleBNPLFields();}
   const logos=p.bnplLogos||[];
   [0,1,2].forEach(i=>{const el=document.getElementById(`f-bnpl-logo-${i}`);if(el)el.value=logos[i]||'';});
-  updateBNPLPreview();
+  if(p.bnpl)updateBNPLPreview();
   document.getElementById('add-title').textContent='Edit Product';
   toggleStockFields();
   cmsTab('add');
@@ -1331,7 +1346,7 @@ async function delProd(id){
   prods=prods.filter(p=>p.id!==id);
   featured=featured.filter(f=>f!==id);
   await setSettingVal('featured',featured);
-  refreshDash(); renderCMSProds(); renderHome(); renderShop();
+  refreshDash(); renderCMSProds();
   showCMSToast('toast-prods');
 }
 
@@ -1358,8 +1373,8 @@ function updateBNPLPreview(){
   const prev=document.getElementById('bnpl-logo-preview');if(!prev)return;
   const logos=[0,1,2].map(i=>(document.getElementById(`f-bnpl-logo-${i}`)?.value||'').trim()).filter(Boolean);
   prev.innerHTML=logos.length
-    ?`<span style="font-size:11px;color:var(--muted)">Preview:</span>`+logos.map(l=>`<img src="${l}" style="height:24px;width:auto;max-width:60px;object-fit:contain;border-radius:4px;background:#fff;padding:2px 4px" onerror="this.style.opacity='.3'"/>`).join('')
-    :`<span style="font-size:11px;color:var(--muted)">No logos yet — paste URLs above</span>`;
+    ?`<span style="font-size:11px;color:var(--muted)">Preview:</span>`+logos.map(l=>`<img src="${l}" style="height:24px;max-width:60px;object-fit:contain;border-radius:4px;background:#fff;padding:2px 4px" onerror="this.style.opacity='.3'"/>`).join('')
+    :`<span style="font-size:11px;color:var(--muted)">No logos yet</span>`;
 }
 // Show/hide stock limit and pre-order fields based on stock status
 function toggleStockFields(){
@@ -1444,7 +1459,7 @@ async function nukeProds(){
   await sbDeleteAll('products');
   prods=[];featured=[];
   await setSettingVal('featured',[]);
-  refreshDash();renderCMSProds();// storefront renders on index.html
+  refreshDash();renderCMSProds();renderHome();renderShop();
 }
 
 // ══ ADMIN USERS — Supabase ══
@@ -1735,10 +1750,6 @@ function renderActivityLog(){
 
 // ══ TOAST ══
 function showCMSToast(id,ms=3000){const el=document.getElementById(id);if(!el)return;el.classList.add('show');setTimeout(()=>el.classList.remove('show'),ms);}
-</script>
-</body>
-</html>
-
 </script>
 </body>
 </html>
