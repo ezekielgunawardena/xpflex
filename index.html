@@ -88,12 +88,16 @@ body{background:var(--bg);color:var(--col-body);font-family:var(--font-body);min
 .disc-badge{position:absolute;top:7px;left:7px;background:#f43f5e;color:#fff;font-size:10px;font-weight:700;padding:2px 8px;border-radius:4px;z-index:4;letter-spacing:.3px}
 
 /* SLASH PRICING */
-.price-wrap{display:flex;flex-direction:column;line-height:1.15}
-.pprice-orig{font-family:var(--font-price);font-size:12px;color:var(--muted);text-decoration:line-through}
-.pprice-save{font-size:10px;color:#f43f5e;font-weight:600}
+.price-wrap{display:flex;flex-direction:column;line-height:1.2}
+.price-row{display:flex;align-items:baseline;gap:8px;flex-wrap:wrap}
+.pprice{font-family:var(--font-price);font-size:18px;font-weight:700;color:var(--col-price);line-height:1}
+.pprice-orig{font-family:var(--font-price);font-size:18px;font-weight:700;color:var(--muted);text-decoration:line-through;opacity:.55;line-height:1}
+.pprice-save{font-size:10px;color:#f43f5e;font-weight:700;background:rgba(244,63,94,.1);border:1px solid rgba(244,63,94,.25);padding:1px 6px;border-radius:4px;white-space:nowrap;align-self:center}
 
 /* DETAIL DISCOUNT */
-.det-orig{font-family:var(--font-price);font-size:18px;color:var(--muted);text-decoration:line-through}
+.det-price-row{display:flex;align-items:baseline;gap:12px;flex-wrap:wrap;margin:6px 0}
+.det-orig{font-family:var(--font-price);font-size:34px;font-weight:700;color:var(--muted);text-decoration:line-through;opacity:.45;line-height:1}
+.det-new{font-family:var(--font-price);font-size:34px;font-weight:700;color:var(--col-price);line-height:1}
 .det-save{display:inline-block;background:#f43f5e;color:#fff;font-size:12px;font-weight:700;padding:3px 10px;border-radius:4px;margin-top:6px}
 .det-price-block{margin:12px 0}
 
@@ -737,7 +741,7 @@ function cardHTML(p,isFeat=false){
   const stockTag=p.stock==='low'?'<span class="stock-tag stock-low">Low Stock</span>':isOut?'<span class="stock-tag stock-out">Out of Stock</span>':isPreorder?'<span class="preorder-tag">Pre-Order</span>':'';
   const countBadge=stockCountBadge(p);
   const discBadge=dl?`<span class="disc-badge">${dl}</span>`:'';
-  const priceHTML=dp!=null?`<div class="price-wrap"><div class="pprice-orig">${priceFmt(p.price)}</div><div class="pprice">${priceFmt(dp)}</div><div class="pprice-save">Save ${priceFmt(p.price-dp)}</div>${bnplCardStrip(p,dp)}</div>`:`<div class="price-wrap"><div class="pprice">${priceFmt(p.price)}</div>${bnplCardStrip(p,p.price)}</div>`;
+  const priceHTML=dp!=null?`<div class="price-wrap"><div class="price-row"><div class="pprice-orig">${priceFmt(p.price)}</div><div class="pprice">${priceFmt(dp)}</div><span class="pprice-save">${dl}</span></div>${bnplCardStrip(p,dp)}</div>`:`<div class="price-wrap"><div class="pprice">${priceFmt(p.price)}</div>${bnplCardStrip(p,p.price)}</div>`;
   // CTA button logic
   let atc;
   if(isOut){
@@ -752,7 +756,7 @@ function cardHTML(p,isFeat=false){
       :`<div class="atc-wrap" id="atc-${p.id}"><button class="atc-add" style="display:none" onclick="event.stopPropagation();addCart('${p.id}')">+</button><div class="atc-ctrl show" id="atcc-${p.id}"><button class="atc-btn" onclick="event.stopPropagation();decCart('${p.id}')">&#8722;</button><span class="atc-qty" id="atcq-${p.id}">${qty}</span><button class="atc-btn" onclick="event.stopPropagation();incCart('${p.id}')">+</button></div></div>`;
   }
   if(isFeat){
-    const fPrice=dp!=null?`<div class="price-wrap"><div class="pprice-orig" style="font-size:12px">${priceFmt(p.price)}</div><div style="font-family:var(--font-price);font-size:20px;font-weight:700;color:var(--col-price)">${priceFmt(dp)}</div>${bnplCardStrip(p,dp)}</div>`:`<div class="price-wrap"><div style="font-family:var(--font-price);font-size:20px;font-weight:700;color:var(--col-price)">${priceFmt(p.price)}</div>${bnplCardStrip(p,p.price)}</div>`;
+    const fPrice=dp!=null?`<div class="price-wrap"><div class="price-row"><div class="pprice-orig">${priceFmt(p.price)}</div><div class="pprice" style="font-size:20px">${priceFmt(dp)}</div><span class="pprice-save">${dl}</span></div>${bnplCardStrip(p,dp)}</div>`:`<div class="price-wrap"><div class="pprice" style="font-size:20px">${priceFmt(p.price)}</div>${bnplCardStrip(p,p.price)}</div>`;
     return `<div class="feat-card" onclick="showDetail('${p.id}')">
       ${!p.img?'<div class="feat-ribbon">Featured</div>':''}${dl?`<span class="disc-badge" style="top:10px;right:10px;left:auto">${dl}</span>`:''}
       <div class="feat-img ${bgClass(p.platform)}">${img}<span class="feat-emoji" ${emojiHide}>${p.icon||'🎮'}</span><span class="plat-tag ${platClass(p.platform)}">${p.platform}</span>${stockTag}${countBadge}</div>
@@ -862,7 +866,7 @@ function showDetail(id){
   const dp=discountedPrice(p); const dl=discountLabel(p);
   const ep=dp!=null?dp:p.price;
   if(dp!=null){
-    document.getElementById('det-price').innerHTML=`<div class="det-price-block"><div class="det-orig">${priceFmt(p.price)}</div><div style="font-family:var(--font-price);font-size:34px;color:var(--col-price);font-weight:700">${priceFmt(dp)}</div><span class="det-save">${dl} &nbsp; Save ${priceFmt(p.price-dp)}</span></div>${bnplDetailBlock(p,ep)}`;
+    document.getElementById('det-price').innerHTML=`<div class="det-price-block"><div class="det-price-row"><div class="det-orig">${priceFmt(p.price)}</div><div class="det-new">${priceFmt(dp)}</div></div><span class="det-save">${dl} &nbsp; You save ${priceFmt(p.price-dp)}</span></div>${bnplDetailBlock(p,ep)}`;
   } else {
     document.getElementById('det-price').innerHTML=`<div style="font-family:var(--font-price);font-size:34px;color:var(--col-price);font-weight:700;margin:14px 0">${priceFmt(p.price)}</div>${bnplDetailBlock(p,ep)}`;
   }
