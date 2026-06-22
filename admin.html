@@ -1548,7 +1548,7 @@ async function placeOrder(){
 function discIsActive(d){
   if(!d||!d.enabled) return false;
   const now=new Date(); now.setHours(0,0,0,0);
-  if(d.startDate){const s=new Date(d.startDate);if(now<s)return false;}
+  if(d.startDate){const s=new Date(d.startDate);s.setHours(0,0,0,0);if(now<s)return false;}
   if(d.endDate){const e=new Date(d.endDate);e.setHours(23,59,59,999);if(new Date()>e)return false;}
   return true;
 }
