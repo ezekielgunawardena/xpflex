@@ -447,7 +447,7 @@ body{background:var(--bg);color:var(--text);font-family:var(--font-body);min-hei
         <div class="cf"><label>Hero Subtext</label><input type="text" id="s-sub" placeholder="Instant digital delivery · Steam · PSN · Xbox"/></div>
         <div class="fr2">
           <div class="cf"><label>Currency Symbol</label>
-            <select id="s-currency"><option value="$">USD ($)</option><option value="Rs.">LKR (Rs.)</option><option value="£">GBP (£)</option><option value="€">EUR (€)</option></select>
+            <select id="s-currency"><option value="Rs.">LKR (Rs.)</option><option value="$">USD ($)</option><option value="£">GBP (£)</option><option value="€">EUR (€)</option></select>
           </div>
           <div class="cf"><label>Payment Gateway Note</label><input type="text" id="s-pay" placeholder="e.g. PayHere, Stripe, PayPal..."/></div>
         </div>
@@ -1049,7 +1049,7 @@ async function initCMSShell(){
   document.getElementById('s-email').value=settings.email||'';
   document.getElementById('s-pay').value=settings.pay||'';
   document.getElementById('s-footer').value=settings.footer||'';
-  document.getElementById('s-currency').value=settings.currency||'$';
+  document.getElementById('s-currency').value=settings.currency||'Rs.';
   document.getElementById('ejs-service').value=ejsConfig.serviceId||'';
   document.getElementById('ejs-template').value=ejsConfig.templateId||'';
   document.getElementById('ejs-pubkey').value=ejsConfig.pubkey||'';

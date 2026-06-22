@@ -728,6 +728,7 @@ function cardHTML(p,isFeat=false){
   const dp=discountedPrice(p);const dl=discountLabel(p);
   const inCart=cart.find(x=>x.id===p.id);const qty=inCart?inCart.qty:0;
   const img=p.img?`<img src="${p.img}" alt="${p.name}" onerror="this.style.display='none'"/>`:'' ;
+  const emojiHide=p.img?'style="display:none"':'';
   const isOut=p.stock==='out';
   const isPreorder=p.stock==='preorder';
   const stockTag=p.stock==='low'?'<span class="stock-tag stock-low">Low Stock</span>':isOut?'<span class="stock-tag stock-out">Out of Stock</span>':isPreorder?'<span class="preorder-tag">Pre-Order</span>':'';
@@ -750,13 +751,13 @@ function cardHTML(p,isFeat=false){
   if(isFeat){
     const fPrice=dp!=null?`<div class="price-wrap"><div class="pprice-orig" style="font-size:12px">${priceFmt(p.price)}</div><div style="font-family:var(--font-price);font-size:20px;font-weight:700;color:var(--col-price)">${priceFmt(dp)}</div>${bnplCardStrip(p,dp)}</div>`:`<div class="price-wrap"><div style="font-family:var(--font-price);font-size:20px;font-weight:700;color:var(--col-price)">${priceFmt(p.price)}</div>${bnplCardStrip(p,p.price)}</div>`;
     return `<div class="feat-card" onclick="showDetail('${p.id}')">
-      <div class="feat-ribbon">Featured</div>${dl?`<span class="disc-badge" style="top:10px;right:10px;left:auto">${dl}</span>`:''}
-      <div class="feat-img ${bgClass(p.platform)}">${img}<span class="feat-emoji">${p.icon||'🎮'}</span><span class="plat-tag ${platClass(p.platform)}">${p.platform}</span>${stockTag}${countBadge}</div>
+      ${!p.img?'<div class="feat-ribbon">Featured</div>':''}${dl?`<span class="disc-badge" style="top:10px;right:10px;left:auto">${dl}</span>`:''}
+      <div class="feat-img ${bgClass(p.platform)}">${img}<span class="feat-emoji" ${emojiHide}>${p.icon||'🎮'}</span><span class="plat-tag ${platClass(p.platform)}">${p.platform}</span>${stockTag}${countBadge}</div>
       <div class="feat-info"><div class="feat-name">${p.name}</div><div class="feat-desc">${(p.desc||p.description||'').substring(0,80)}${(p.desc||p.description||'').length>80?'…':''}</div>
       <div class="feat-bot">${fPrice}${atc}</div></div></div>`;
   }
   return `<div class="pcard" onclick="showDetail('${p.id}')">${discBadge}
-    <div class="pimg ${bgClass(p.platform)}">${img}<span class="emoji-icon">${p.icon||'🎮'}</span><span class="plat-tag ${platClass(p.platform)}">${p.platform}</span>${stockTag}${countBadge}</div>
+    <div class="pimg ${bgClass(p.platform)}">${img}<span class="emoji-icon" ${emojiHide}>${p.icon||'🎮'}</span><span class="plat-tag ${platClass(p.platform)}">${p.platform}</span>${stockTag}${countBadge}</div>
     <div class="pinfo"><div class="pname">${p.name}</div><div class="pmeta">${p.cat}</div>
     <div class="pbot">${priceHTML}${atc}</div></div></div>`;
 }
@@ -846,7 +847,7 @@ function showDetail(id){
   detFrom=document.getElementById('sv-shop').classList.contains('active')?'shop':'home';
   const img=p.img?`<img src="${p.img}" alt="${p.name}" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover" onerror="this.style.display='none'"/>`:'' ;
   document.getElementById('det-img').className=`det-img ${bgClass(p.platform)}`;
-  document.getElementById('det-img').innerHTML=`${img}<span class="det-emoji">${p.icon||'🎮'}</span>`;
+  document.getElementById('det-img').innerHTML=`${img}<span class="det-emoji"${p.img?' style="display:none"':''}>${p.icon||'🎮'}</span>`;
   // Badge row: platform + stock status
   const isOut=p.stock==='out';
   const isPreorder=p.stock==='preorder';
@@ -1048,7 +1049,7 @@ async function initCMSShell(){
   document.getElementById('s-email').value=settings.email||'';
   document.getElementById('s-pay').value=settings.pay||'';
   document.getElementById('s-footer').value=settings.footer||'';
-  document.getElementById('s-currency').value=settings.currency||'$';
+  document.getElementById('s-currency').value=settings.currency||'Rs.';
   document.getElementById('ejs-service').value=ejsConfig.serviceId||'';
   document.getElementById('ejs-template').value=ejsConfig.templateId||'';
   document.getElementById('ejs-pubkey').value=ejsConfig.pubkey||'';
