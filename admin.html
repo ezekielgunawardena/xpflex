@@ -1,1660 +1,1767 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-  <meta name="apple-mobile-web-app-capable" content="yes" />
-  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
-  <meta name="apple-mobile-web-app-title" content="Tonik Admin" />
-  <meta name="mobile-web-app-capable" content="yes" />
-  <meta name="theme-color" content="#1a1a18" />
-  <link rel="manifest" href="manifest.json" />
-  <link rel="apple-touch-icon" href="icon-192.png" />
-  <title>Tonik Admin — Update Statistics</title>
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <style>
-    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-
-    html, body {
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-      background: #f5f4f0;
-      color: #1a1a18;
-      min-height: 100vh;
-    }
-
-    /* ── Auth ── */
-    #auth-screen {
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      min-height: 100vh;
-      padding: 1rem;
-    }
-    #auth-screen.hidden { display: none; }
-
-    .auth-card { background:#fff; border-radius:16px; border:1px solid #e8e7e1; padding:2rem; width:100%; max-width:380px; }
-    .auth-logo { font-size:13px; font-weight:600; letter-spacing:0.15em; text-transform:uppercase; color:#185FA5; margin-bottom:1.5rem; }
-    .auth-title { font-size:20px; font-weight:500; margin-bottom:0.375rem; }
-    .auth-sub { font-size:12px; color:#73726c; margin-bottom:1.5rem; }
-    .auth-error { background:#fff0ed; border:1px solid #f5c4b3; border-radius:6px; padding:0.625rem 0.75rem; font-size:12px; color:#993C1D; margin-bottom:1rem; display:none; }
-
-    /* ── App ── */
-    #app-screen { display: none; }
-    #app-screen.visible { display: block; }
-
-    .topbar {
-      width: 100%;
-      background: #1a1a18;
-      color: #f5f4f0;
-      padding: 0.875rem 1.5rem;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      position: sticky;
-      top: 0;
-      z-index: 10;
-    }
-    .topbar-brand { font-size:12px; font-weight:600; letter-spacing:0.12em; text-transform:uppercase; color:#B5D4F4; }
-    .topbar-right { display:flex; align-items:center; gap:1rem; }
-    .topbar-user { font-size:11px; color:#888780; }
-    .topbar a { font-size:11px; color:#B5D4F4; text-decoration:none; }
-
-    .page-body {
-      width: 100%;
-      display: flex;
-      justify-content: center;
-      padding: 1.5rem 1rem 4rem;
-    }
-
-    .main {
-      width: 100%;
-      max-width: 780px;
-    }
-
-    /* ── Tabs ── */
-    .nav-tabs { display:flex; gap:6px; margin-bottom:1.75rem; flex-wrap:wrap; }
-    .nav-tabs.hidden { display:none; }
-    .nav-tab { font-size:12px; padding:7px 16px; border-radius:6px; border:1px solid #d3d1c7; cursor:pointer; background:#fff; color:#73726c; font-family:inherit; transition:all 0.15s; -webkit-tap-highlight-color:transparent; }
-    .nav-tab.active { background:#185FA5; color:#fff; border-color:#185FA5; }
-
-    /* ── Home screen ── */
-    .home-welcome { margin-bottom:2rem; }
-    .home-welcome-title { font-size:22px; font-weight:500; color:#1a1a18; margin-bottom:4px; }
-    .home-welcome-sub { font-size:13px; color:#73726c; }
-    .home-cards { display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-bottom:1.5rem; }
-    .home-card {
-      background:#fff; border:1px solid #e8e7e1; border-radius:12px;
-      padding:1.25rem 1.25rem 1rem; cursor:pointer;
-      transition:border-color 0.15s, box-shadow 0.15s;
-      text-align:left; font-family:inherit;
-      display:flex; flex-direction:column; gap:10px;
-    }
-    .home-card:hover { border-color:#185FA5; box-shadow:0 2px 12px rgba(24,95,165,0.08); }
-    .home-card-icon { width:36px; height:36px; border-radius:8px; display:flex; align-items:center; justify-content:center; flex-shrink:0; }
-    .home-card-icon.blue  { background:#EBF3FC; }
-    .home-card-icon.dark  { background:#EEEEED; }
-    .home-card-icon.green { background:#E6F6F1; }
-    .home-card-icon.amber { background:#FDF3E6; }
-    .home-card-title { font-size:13px; font-weight:600; color:#1a1a18; margin-bottom:2px; }
-    .home-card-desc  { font-size:11px; color:#73726c; line-height:1.4; }
-    @media (max-width:480px) { .home-cards { grid-template-columns:1fr; } }
-
-    /* ── Section headers ── */
-    .section-header { font-size:10px; font-weight:600; text-transform:uppercase; letter-spacing:0.1em; color:#888780; margin-bottom:1rem; padding-bottom:0.5rem; border-bottom:1px solid #d3d1c7; }
-
-    /* ── Month selector ── */
-    .month-bar { display:flex; gap:8px; align-items:flex-end; flex-wrap:wrap; margin-bottom:1.5rem; }
-    .field { display:flex; flex-direction:column; gap:4px; }
-    label { font-size:11px; color:#73726c; font-weight:500; }
-
-    /* ── Property cards ── */
-    .prop-grid { display:flex; flex-direction:column; gap:0.625rem; margin-bottom:1.25rem; }
-    .prop-card { background:#fff; border:1px solid #e8e7e1; border-radius:10px; padding:0.875rem 1rem; }
-    .prop-card-header { display:flex; justify-content:space-between; align-items:center; margin-bottom:0.75rem; }
-    .prop-name { font-size:13px; font-weight:600; }
-    .prop-type { font-size:10px; background:#f5f4f0; border:1px solid #e8e7e1; border-radius:4px; padding:2px 7px; color:#73726c; }
-    .stat-grid { display:grid; grid-template-columns:1fr 1fr; gap:6px; }
-    .stat-label { font-size:9px; color:#888780; margin-bottom:2px; text-transform:uppercase; letter-spacing:0.05em; }
-    .stat-inputs { display:grid; grid-template-columns:1fr 1fr; gap:4px; }
-    .input-sub { font-size:9px; color:#b4b2a9; margin-bottom:2px; }
-    select, input[type=number], input[type=text], input[type=email], input[type=password] {
-      font-family:inherit; font-size:12px; padding:6px 8px;
-      border:1px solid #d3d1c7; border-radius:5px;
-      background:#fff; color:#1a1a18; outline:none; transition:border-color 0.15s; width:100%;
-    }
-    select:focus, input:focus { border-color:#185FA5; }
-
-    /* ── Segment cards ── */
-    .seg-grid { display:flex; flex-direction:column; gap:0.625rem; margin-bottom:1.25rem; }
-    .seg-card { background:#fff; border:1px solid #e8e7e1; border-radius:10px; padding:0.875rem 1rem; }
-    .seg-name { font-size:13px; font-weight:600; margin-bottom:0.75rem; }
-    .seg-stats { display:grid; grid-template-columns:1fr 1fr; gap:6px; }
-
-    /* ── Save bar ── */
-    .save-bar { position:sticky; bottom:0; background:#f5f4f0; padding:1rem 0; border-top:1px solid #d3d1c7; margin-top:0.5rem; }
-
-    /* ── Buttons ── */
-    .btn { display:inline-flex; align-items:center; gap:6px; font-size:13px; font-weight:500; padding:10px 20px; border-radius:8px; border:none; cursor:pointer; font-family:inherit; transition:all 0.15s; -webkit-tap-highlight-color:transparent; }
-    .btn-primary { background:#185FA5; color:#fff; }
-    .btn-primary:disabled { background:#b4b2a9; cursor:not-allowed; }
-    .btn-secondary { background:#fff; color:#1a1a18; border:1px solid #d3d1c7; }
-    .btn-secondary:hover { border-color:#185FA5; color:#185FA5; }
-    .btn-danger { background:#fff0ed; color:#993C1D; border:1px solid #f5c4b3; }
-    .btn-sm { font-size:11px; padding:5px 12px; }
-
-    /* ── Toast ── */
-    .toast { position:fixed; bottom:1.5rem; right:1.5rem; background:#1a1a18; color:#f5f4f0; font-size:12px; padding:0.75rem 1.125rem; border-radius:8px; opacity:0; transform:translateY(6px); transition:all 0.2s; pointer-events:none; z-index:100; max-width:280px; }
-    .toast.show { opacity:1; transform:translateY(0); }
-    .toast.error { background:#993C1D; }
-
-    /* ── Records ── */
-    .loading-overlay { text-align:center; padding:2rem; color:#73726c; font-size:13px; }
-    .records-list { display:flex; flex-direction:column; gap:6px; }
-    .record-row { background:#fff; border:1px solid #e8e7e1; border-radius:8px; padding:0.75rem 1rem; display:flex; justify-content:space-between; align-items:center; gap:8px; flex-wrap:wrap; }
-    .record-info { font-size:12px; font-weight:500; }
-    .record-meta { font-size:11px; color:#73726c; margin-top:2px; }
-    .record-actions { display:flex; gap:6px; flex-shrink:0; }
-
-    /* ── Settings ── */
-    .settings-card { background:#fff; border:1px solid #e8e7e1; border-radius:12px; padding:1.125rem; margin-bottom:1rem; }
-    .settings-row { display:flex; gap:10px; align-items:flex-end; flex-wrap:wrap; }
-    .settings-hint { font-size:11px; color:#888780; line-height:1.5; }
-    .settings-list { display:flex; flex-direction:column; gap:6px; margin-top:0.75rem; }
-    .settings-list-item { display:flex; justify-content:space-between; align-items:center; padding:8px 10px; background:#f9f8f5; border:1px solid #e8e7e1; border-radius:6px; font-size:12px; gap:8px; }
-    .prop-badge { font-size:10px; background:#fff; border:1px solid #e8e7e1; border-radius:4px; padding:2px 8px; color:#73726c; }
-    .section-subheader { font-size:10px; font-weight:600; text-transform:uppercase; letter-spacing:0.08em; color:#b4b2a9; margin-bottom:0.5rem; }
-    #preview-modal.open { display:flex !important; }
-
-    @media (min-width:640px) {
-      .stat-grid { grid-template-columns:repeat(4, 1fr); }
-      .seg-stats { grid-template-columns:repeat(4, 1fr); }
-    }
-  </style>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>XPFlex Admin</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+<link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@500;700&family=Barlow:wght@400;500;600&family=Orbitron:wght@700&family=Exo+2:wght@400;500;700&family=Share+Tech+Mono&display=swap" rel="stylesheet"/>
+<style>
+:root{
+  --neon:#00f0a0;--accent:#f43f5e;
+  --bg:#080c12;--bg2:#0e1520;--bg3:#141d2b;
+  --card:#111827;--border:#1e2d42;
+  --text:#e2e8f0;--muted:#64748b;
+  --font-head:'Rajdhani',sans-serif;
+  --font-body:'Barlow',sans-serif;
+  --font-price:'Rajdhani',sans-serif;
+  --col-heading:var(--neon);--col-body:#e2e8f0;--col-price:var(--neon);
+  --col-btn-bg:var(--neon);--col-btn-text:#080c12;
+  --col-nav-bg:#080c12;--col-card-bg:#111827;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--bg);color:var(--text);font-family:var(--font-body);min-height:100vh}
+.screen{display:none}.screen.active{display:block}
+.cms-login-wrap{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:100vh;background:var(--bg);padding:24px}
+.cms-login-card{background:#0e1520;border:.5px solid var(--border);border-radius:14px;padding:36px;width:100%;max-width:380px}
+.cms-logo{font-family:var(--font-head);font-size:22px;font-weight:700;color:var(--neon);letter-spacing:2px;margin-bottom:4px}
+.cms-logo em{color:var(--text);font-style:normal}
+.cms-sub{font-size:13px;color:var(--muted);margin-bottom:26px}
+.cf{margin-bottom:14px}
+.cf label{display:block;font-size:12px;color:var(--muted);margin-bottom:5px;font-weight:500}
+.cf input,.cf select,.cf textarea{width:100%;background:#141d2b;border:1px solid var(--border);color:var(--text);padding:9px 12px;border-radius:8px;font-size:13px;outline:none;transition:.15s;font-family:var(--font-body)}
+.cf input:focus,.cf select:focus,.cf textarea:focus{border-color:var(--neon)}
+.cf textarea{resize:vertical;min-height:74px;line-height:1.6}
+.login-err{font-size:12px;color:#f87171;margin-top:10px;text-align:center}
+.cms-shell{display:none;min-height:100vh;background:var(--bg)}
+.cms-shell.on{display:block}
+.cms-bar{background:#0a0f18;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;padding:0 22px;height:52px;position:sticky;top:0;z-index:200;flex-wrap:wrap;gap:4px}
+.cms-brand{font-family:var(--font-head);font-size:17px;font-weight:700;color:var(--neon);letter-spacing:2px;white-space:nowrap}
+.cms-brand em{color:var(--text);font-style:normal;font-size:12px;font-weight:400;letter-spacing:0;margin-left:4px}
+.cms-tabs{display:flex;gap:3px;flex-wrap:wrap}
+.ctab{background:none;border:none;color:var(--muted);font-size:12px;padding:5px 11px;border-radius:7px;cursor:pointer;font-family:var(--font-body);transition:.15s;white-space:nowrap}
+.ctab:hover,.ctab.on{background:rgba(0,240,160,.08);color:var(--neon)}
+.cms-bar-right{display:flex;gap:8px;align-items:center}
+.signout{background:none;border:1px solid var(--border);color:var(--muted);font-size:12px;padding:4px 11px;border-radius:7px;cursor:pointer;white-space:nowrap}
+.signout:hover{color:#f87171;border-color:#f87171}
+.view-store-btn{background:rgba(0,240,160,.1);border:1px solid rgba(0,240,160,.25);color:var(--neon);font-size:12px;padding:4px 11px;border-radius:7px;cursor:pointer;white-space:nowrap;font-family:var(--font-body)}
+.view-store-btn:hover{background:rgba(0,240,160,.2)}
+.cpanel{display:none;padding:22px}
+.cpanel.on{display:block}
+.ph{display:flex;align-items:center;justify-content:space-between;margin-bottom:18px}
+.pt{font-size:17px;font-weight:500}
+.stats-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:11px;margin-bottom:22px}
+.stat{background:#0e1520;border-radius:9px;padding:15px}
+.stat-l{font-size:12px;color:var(--muted);margin-bottom:5px}
+.stat-v{font-size:24px;font-weight:500}
+.stat-v.g{color:var(--neon)}
+.tbl{width:100%;border-collapse:collapse;font-size:13px}
+.tbl th{text-align:left;font-size:11px;font-weight:500;color:var(--muted);padding:7px 11px;border-bottom:1px solid var(--border);text-transform:uppercase;letter-spacing:.5px}
+.tbl td{padding:10px 11px;border-bottom:1px solid var(--border);vertical-align:middle}
+.tbl tr:last-child td{border-bottom:none}
+.tbl tr:hover td{background:rgba(255,255,255,.02)}
+.ppill{font-size:11px;padding:2px 9px;border-radius:10px;font-weight:500;background:#1a2535;color:var(--muted);border:1px solid var(--border)}
+.gv{font-weight:500;color:var(--neon)}
+.fcard{background:#0e1520;border:1px solid var(--border);border-radius:12px;padding:22px;margin-bottom:20px}
+.fcard h3{font-size:14px;font-weight:500;margin-bottom:18px;color:var(--muted)}
+.fr2{display:grid;grid-template-columns:1fr 1fr;gap:13px}
+.fr3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:13px}
+.toast{background:#0a2e1a;border:1px solid #14532d;color:#4ade80;padding:10px 15px;border-radius:8px;font-size:13px;margin-bottom:15px;display:none}
+.toast.show{display:block}
+.bsm{background:#141d2b;border:1px solid var(--border);color:var(--text);padding:5px 13px;border-radius:7px;font-size:12px;cursor:pointer;font-family:var(--font-body)}
+.bsm:hover{border-color:var(--neon);color:var(--neon)}
+.bdanger{background:rgba(239,68,68,.1);border:1px solid rgba(239,68,68,.3);color:#f87171;padding:5px 13px;border-radius:7px;font-size:12px;cursor:pointer;font-family:var(--font-body)}
+.bdanger:hover{opacity:.8}
+.bcms{background:var(--neon);color:#080c12;border:none;padding:9px 22px;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;font-family:var(--font-body);transition:.15s}
+.bcms:hover{opacity:.88}
+.sbadge{font-size:11px;padding:2px 9px;border-radius:10px;font-weight:500}
+.s-in{background:rgba(74,222,128,.1);color:#4ade80;border:1px solid rgba(74,222,128,.25)}
+.s-low{background:rgba(234,179,8,.1);color:#eab308;border:1px solid rgba(234,179,8,.25)}
+.s-out{background:rgba(239,68,68,.1);color:#f87171;border:1px solid rgba(239,68,68,.25)}
+.o-pending{background:rgba(234,179,8,.1);color:#eab308;border:1px solid rgba(234,179,8,.25)}
+.o-complete{background:rgba(74,222,128,.1);color:#4ade80;border:1px solid rgba(74,222,128,.25)}
+.o-cancelled{background:rgba(239,68,68,.1);color:#f87171;border:1px solid rgba(239,68,68,.25)}
+.swatch-row{display:flex;align-items:center;gap:10px;margin-bottom:14px}
+.swatch-row label{font-size:12px;color:var(--muted);min-width:160px}
+.swatch-row input[type=color]{width:42px;height:32px;border:none;border-radius:6px;cursor:pointer;background:none;padding:0}
+.swatch-row input[type=text]{flex:1;background:#141d2b;border:1px solid var(--border);color:var(--text);padding:6px 10px;border-radius:7px;font-size:12px;font-family:'Share Tech Mono',monospace;outline:none}
+.swatch-row input[type=text]:focus{border-color:var(--neon)}
+.font-sel{width:100%;background:#141d2b;border:1px solid var(--border);color:var(--text);padding:8px 12px;border-radius:8px;font-size:13px;outline:none;margin-bottom:8px}
+.store-preview{background:var(--bg);border:1px solid var(--border);border-radius:10px;padding:18px;margin-top:14px}
+.emailjs-note{background:rgba(234,179,8,.08);border:1px solid rgba(234,179,8,.25);border-radius:9px;padding:14px 16px;font-size:12px;color:#eab308;margin-bottom:16px;line-height:1.7}
+.emailjs-note strong{display:block;margin-bottom:4px;font-size:13px}
+.feat-toggle{display:flex;align-items:center;gap:8px;margin-bottom:10px;font-size:13px;color:var(--muted)}
+.feat-toggle input[type=checkbox]{width:16px;height:16px;cursor:pointer;accent-color:var(--neon)}
+.img-guide{background:rgba(0,240,160,.05);border:1px solid rgba(0,240,160,.15);border-radius:8px;padding:10px 14px;font-size:11px;color:var(--muted);margin-bottom:10px;line-height:1.8}
+.img-guide strong{color:var(--neon);display:block;margin-bottom:3px}
+.toggle-wrap{position:relative;width:36px;height:20px;flex-shrink:0}
+.toggle-wrap input{opacity:0;width:0;height:0;position:absolute}
+.toggle-slider{position:absolute;inset:0;background:#1e2d42;border-radius:10px;cursor:pointer;transition:.2s}
+.toggle-slider:before{content:'';position:absolute;width:14px;height:14px;left:3px;bottom:3px;background:#64748b;border-radius:50%;transition:.2s}
+.toggle-wrap input:checked + .toggle-slider{background:rgba(0,240,160,.3)}
+.toggle-wrap input:checked + .toggle-slider:before{transform:translateX(16px);background:var(--neon)}
+@media(max-width:768px){
+  .cms-bar{height:auto;padding:8px 14px;flex-direction:column;align-items:stretch;gap:6px}
+  .cms-brand{font-size:15px;text-align:center;padding:4px 0}
+  .cms-tabs{overflow-x:auto;flex-wrap:nowrap;padding-bottom:2px;scrollbar-width:none}
+  .cms-tabs::-webkit-scrollbar{display:none}
+  .ctab{font-size:11px;padding:5px 9px;flex-shrink:0}
+  .cms-bar-right{justify-content:center}
+  .fr2,.fr3{grid-template-columns:1fr!important}
+  .stats-grid{grid-template-columns:repeat(2,1fr)!important}
+  .fcard{overflow-x:auto}
+  .tbl{min-width:480px}
+  .bcms{width:100%}
+}
+@media(max-width:480px){
+  .stats-grid{grid-template-columns:1fr!important}
+  .cms-login-card{padding:24px 18px}
+  .cpanel{padding:10px}
+}
+</style>
 </head>
 <body>
-
-<!-- AUTH -->
-<div id="auth-screen">
-  <div class="auth-card">
-    <div class="auth-logo">Tonik</div>
-    <div class="auth-title">Admin sign in</div>
-    <div class="auth-sub">Enter your credentials to manage dashboard statistics.</div>
-    <div class="auth-error" id="auth-error"></div>
-    <div class="field" style="margin-bottom:0.75rem;">
-      <label for="email">Email</label>
-      <input type="email" id="email" placeholder="you@example.com" autocomplete="email" />
-    </div>
-    <div class="field" style="margin-bottom:1.25rem;">
-      <label for="password">Password</label>
-      <input type="password" id="password" placeholder="••••••••" autocomplete="current-password" />
-    </div>
-    <button class="btn btn-primary" id="sign-in-btn" style="width:100%;justify-content:center;" onclick="signIn()">Sign in</button>
-  </div>
-</div>
-
-<!-- APP -->
-<div id="app-screen">
-  <div class="topbar">
-    <div class="topbar-brand" onclick="showTab('home')" style="cursor:pointer;">Tonik Admin</div>
-    <div class="topbar-right">
-      <span class="topbar-user" id="user-email"></span>
-      <a href="dashboard.html">Dashboard</a>
-      <a href="#" onclick="signOut();return false;">Sign out</a>
+<!-- ══════════════ CMS ══════════════ -->
+<div id="screen-cms" class="screen active">
+  <div id="cms-login" class="cms-login-wrap">
+    <div class="cms-login-card">
+      <div class="cms-logo">XP<em>FLEX</em></div>
+      <div class="cms-sub">Admin panel &mdash; sign in to manage your store</div>
+      <div class="cf"><label>Username</label><input type="text" id="cms-un" placeholder="Username"/></div>
+      <div class="cf"><label>Password</label><input type="password" id="cms-pw" placeholder="Password"/></div>
+      <div class="login-err" id="login-err"></div>
+      <button class="bcms" onclick="cmsLogin()" style="width:100%;margin-top:16px">Sign in &#8594;</button>
     </div>
   </div>
 
-  <div class="page-body">
-    <div class="main">
-      <div class="nav-tabs">
-        <button class="nav-tab" onclick="showTab('home')" style="background:transparent;border-color:transparent;color:#73726c;padding-left:0;">← Home</button>
-        <button class="nav-tab active" onclick="showTab('entry')">Add / Edit Month</button>
-        <button class="nav-tab" onclick="showTab('records')">View All Records</button>
-        <button class="nav-tab" onclick="showTab('pace')">📈 Pace</button>
-        <button class="nav-tab" onclick="showTab('widgets')">🧩 Widgets</button>
-        <button class="nav-tab" onclick="showTab('settings')" style="margin-left:auto;">⚙ Settings</button>
+  <div id="cms-shell" class="cms-shell">
+    <div class="cms-bar">
+      <div class="cms-brand">XP<em>FLEX &mdash; CMS</em></div>
+      <div class="cms-tabs">
+        <button class="ctab on"  onclick="cmsTab('dash')">&#9641; Dashboard</button>
+        <button class="ctab" onclick="cmsTab('prods')">&#11036; Products</button>
+        <button class="ctab" onclick="cmsTab('add')">&#43; Add/Edit</button>
+        <button class="ctab" onclick="cmsTab('featured')">&#11088; Featured</button>
+        <button class="ctab" onclick="cmsTab('discounts')">&#127991; Discounts</button>
+        <button class="ctab" onclick="cmsTab('banner')">&#128444; Banner</button>
+        <button class="ctab" onclick="cmsTab('orders')">&#128203; Orders</button>
+        <button class="ctab" onclick="cmsTab('design')">&#127912; Design</button>
+        <button class="ctab" onclick="cmsTab('settings')">&#9881; Settings</button>
+        <button class="ctab" id="tab-admins" onclick="cmsTab('admins')">&#128100; Admins</button>
+        <button class="ctab" id="tab-activity" onclick="cmsTab('activity')">&#128221; Activity Log</button>
       </div>
-
-      <!-- HOME TAB -->
-      <div id="tab-home" style="display:none;">
-        <div class="home-welcome">
-          <div class="home-welcome-title" id="home-greeting">Welcome back</div>
-          <div class="home-welcome-sub">What would you like to do today?</div>
-        </div>
-        <div class="home-cards">
-          <button class="home-card" onclick="showTab('entry')">
-            <div class="home-card-icon blue">
-              <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#185FA5" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
-            </div>
-            <div>
-              <div class="home-card-title">Add / Edit Month</div>
-              <div class="home-card-desc">Enter or update actuals and budgets for any property and month.</div>
-            </div>
-          </button>
-          <button class="home-card" onclick="showTab('records')">
-            <div class="home-card-icon dark">
-              <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#5f5e5a" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>
-            </div>
-            <div>
-              <div class="home-card-title">View All Records</div>
-              <div class="home-card-desc">Browse and edit all previously saved monthly records.</div>
-            </div>
-          </button>
-          <button class="home-card" onclick="showTab('widgets')">
-            <div class="home-card-icon blue">
-              <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#185FA5" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
-            </div>
-            <div>
-              <div class="home-card-title">Widget Builder</div>
-              <div class="home-card-desc">Create and manage custom widgets for the Inquiries dashboard.</div>
-            </div>
-          </button>
-          <button class="home-card" onclick="showTab('pace')">
-            <div class="home-card-icon blue">
-              <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#185FA5" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
-            </div>
-            <div>
-              <div class="home-card-title">Booking Pace</div>
-              <div class="home-card-desc">Enter weekly room night booking pace for all properties.</div>
-            </div>
-          </button>
-          <button class="home-card" onclick="window.location.href='dashboard.html'">
-            <div class="home-card-icon green">
-              <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#1D9E75" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
-            </div>
-            <div>
-              <div class="home-card-title">View Dashboard</div>
-              <div class="home-card-desc">Go to the live performance dashboard to see charts and data.</div>
-            </div>
-          </button>
-          <button class="home-card" onclick="showTab('settings')">
-            <div class="home-card-icon amber">
-              <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#D97706" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
-            </div>
-            <div>
-              <div class="home-card-title">Settings</div>
-              <div class="home-card-desc">Manage properties, set the financial year, and override YTD data.</div>
-            </div>
-          </button>
-        </div>
+      <div class="cms-bar-right">
+        <button class="view-store-btn" onclick="goStore()">&#8592; View Store</button>
+        <button class="signout" onclick="cmsLogout()">Sign out</button>
       </div>
-
-      <!-- ENTRY TAB -->
-      <div id="tab-entry">
-
-        <!-- Mode toggle -->
-        <div style="display:flex;gap:8px;margin-bottom:1.5rem;">
-          <button class="btn btn-primary" id="mode-csv-btn" onclick="setEntryMode('csv')">📂 CSV Upload</button>
-          <button class="btn btn-secondary" id="mode-manual-btn" onclick="setEntryMode('manual')">✏️ Manual Entry</button>
-        </div>
-
-        <!-- CSV UPLOAD MODE -->
-        <div id="entry-csv">
-          <div class="section-header">Upload monthly data via CSV</div>
-          <div class="settings-card">
-            <p class="settings-hint" style="margin-bottom:1rem;">Download the template, fill it in, then upload it here. One file can contain multiple months and properties — all rows will be upserted at once.</p>
-            <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:1.25rem;">
-              <button class="btn btn-secondary" onclick="downloadPropertyTemplate()">⬇ Download property stats template</button>
-              <button class="btn btn-secondary" onclick="downloadTonikTemplate()">⬇ Download portfolio stats template</button>
-            </div>
-
-            <div class="section-subheader" style="margin-bottom:0.5rem;">Upload CSV</div>
-            <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:flex-end;">
-              <div class="field">
-                <label for="csv-type">Data type</label>
-                <select id="csv-type">
-                  <option value="property">Property stats</option>
-                  <option value="tonik">Portfolio (Tonik) stats</option>
-                </select>
-              </div>
-              <div class="field">
-                <label for="csv-file">CSV file</label>
-                <input type="file" id="csv-file" accept=".csv" style="font-size:12px;padding:5px 8px;" />
-              </div>
-              <button class="btn btn-primary" onclick="uploadCSV()">Upload & save</button>
-            </div>
-
-            <div id="csv-preview" style="margin-top:1.25rem;"></div>
-          </div>
-        </div>
-
-        <!-- MANUAL ENTRY MODE -->
-        <div id="entry-manual" style="display:none;">
-          <div class="section-header">Select month</div>
-          <div class="month-bar">
-            <div class="field">
-              <label for="sel-month">Month</label>
-              <select id="sel-month">
-                <option value="1">January</option><option value="2">February</option>
-                <option value="3">March</option><option value="4">April</option>
-                <option value="5">May</option><option value="6" selected>June</option>
-                <option value="7">July</option><option value="8">August</option>
-                <option value="9">September</option><option value="10">October</option>
-                <option value="11">November</option><option value="12">December</option>
-              </select>
-            </div>
-            <div class="field">
-              <label for="sel-year">Year</label>
-              <input type="number" id="sel-year" value="2026" min="2020" max="2040" style="width:90px;" />
-            </div>
-            <button class="btn btn-secondary" onclick="loadMonth()">Load</button>
-          </div>
-          <div id="entry-form"></div>
-        </div>
-
-      </div>
-
-      <!-- RECORDS TAB -->
-      <div id="tab-records" style="display:none;">
-        <div class="section-header">All property records</div>
-        <div id="all-records" class="loading-overlay">Loading…</div>
-      </div>
-
-      <!-- PACE TAB -->
-      <div id="tab-pace" style="display:none;">
-
-        <div style="display:flex;gap:8px;margin-bottom:1.5rem;">
-          <button class="btn btn-primary" id="pace-mode-csv-btn" onclick="setPaceMode('csv')">&#128194; CSV Upload</button>
-          <button class="btn btn-secondary" id="pace-mode-manual-btn" onclick="setPaceMode('manual')">&#9999; Manual Entry</button>
-        </div>
-
-        <div id="pace-csv">
-          <div class="section-header">Upload weekly pace via CSV</div>
-          <div class="settings-card">
-            <p class="settings-hint" style="margin-bottom:1rem;">Download the template, fill in room nights per property for each week, then upload. Multiple weeks can be included in one file.</p>
-            <div style="margin-bottom:1.25rem;">
-              <button class="btn btn-secondary" onclick="downloadPaceTemplate()">&#11015; Download pace template</button>
-            </div>
-            <div class="section-subheader" style="margin-bottom:0.5rem;">Upload CSV</div>
-            <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:flex-end;">
-              <div class="field">
-                <label for="pace-csv-file">CSV file</label>
-                <input type="file" id="pace-csv-file" accept=".csv" style="font-size:12px;padding:5px 8px;" />
-              </div>
-              <button class="btn btn-primary" onclick="uploadPaceCSV()">Upload &amp; save</button>
-            </div>
-            <div id="pace-csv-preview" style="margin-top:1.25rem;"></div>
-          </div>
-        </div>
-
-        <div id="pace-manual" style="display:none;">
-          <div class="section-header">Enter weekly booking pace</div>
-          <div class="settings-card">
-            <p class="settings-hint" style="margin-bottom:1rem;">Enter the week label, the week start date, and room nights booked per property.</p>
-            <div class="settings-row" style="margin-bottom:1rem;">
-              <div class="field" style="flex:2;">
-                <label for="pace-week-label">Week label</label>
-                <input type="text" id="pace-week-label" placeholder="e.g. 15 Jun – 21 Jun" />
-              </div>
-              <div class="field" style="flex:1;">
-                <label for="pace-week-start">Week start date</label>
-                <input type="date" id="pace-week-start" />
-              </div>
-              <div class="field">
-                <label>&nbsp;</label>
-                <button class="btn btn-secondary" onclick="loadPaceWeek()">Load</button>
-              </div>
-            </div>
-            <div id="pace-entry-form"></div>
-          </div>
-        </div>
-
-        <div class="section-header" style="margin-top:1.5rem;">Recent weeks</div>
-        <div id="pace-recent" class="loading-overlay">Loading…</div>
-      </div>
-
-      <!-- WIDGETS TAB -->
-      <div id="tab-widgets" style="display:none;">
-
-        <div class="section-header">Create a new widget</div>
-        <div class="settings-card">
-
-          <!-- Row 1: Title + Type -->
-          <div class="settings-row" style="margin-bottom:1rem;">
-            <div class="field" style="flex:2;">
-              <label for="w-title">Widget title</label>
-              <input type="text" id="w-title" placeholder="e.g. Inquiries by Property" />
-            </div>
-            <div class="field" style="flex:1;">
-              <label for="w-type">Widget type</label>
-              <select id="w-type" onchange="onWidgetTypeChange()">
-                <option value="kpi">KPI Card</option>
-                <option value="bar">Bar Chart</option>
-                <option value="line">Line Chart</option>
-                <option value="timeseries">Time-Series Line (by date)</option>
-                <option value="doughnut">Doughnut Chart</option>
-                <option value="table">Data Table</option>
-              </select>
-            </div>
-            <div class="field">
-              <label>&nbsp;</label>
-              <button class="btn btn-secondary btn-sm" onclick="loadSheetFields()">Load fields</button>
-            </div>
-          </div>
-
-          <!-- Row 2: X axis + Y axis -->
-          <div class="settings-row" style="margin-bottom:1rem;" id="w-axis-row">
-            <div class="field" style="flex:1;" id="w-x-wrap">
-              <label for="w-x">X axis — group by</label>
-              <select id="w-x"><option value="">— select field —</option></select>
-            </div>
-            <div class="field" style="flex:1;" id="w-cluster-wrap" style="display:none;">
-              <label for="w-cluster">Date clustering</label>
-              <select id="w-cluster">
-                <option value="day">By day</option>
-                <option value="week" selected>By week</option>
-                <option value="month">By month</option>
-              </select>
-            </div>
-            <div class="field" style="flex:1;" id="w-y-wrap">
-              <label for="w-y">Y axis — measure</label>
-              <select id="w-y">
-                <option value="count">Count of records</option>
-              </select>
-            </div>
-            <div class="field" style="flex:1;" id="w-agg-wrap">
-              <label for="w-agg">Aggregation</label>
-              <select id="w-agg">
-                <option value="count">Count</option>
-                <option value="sum">Sum</option>
-              </select>
-            </div>
-          </div>
-
-          <!-- Row 3: Date filter -->
-          <div class="section-subheader" style="margin-bottom:0.5rem;">Date filter (uses Inquiry Date)</div>
-          <div class="settings-row" style="margin-bottom:1rem;">
-            <div class="field">
-              <label for="w-date-from">From date</label>
-              <input type="date" id="w-date-from" />
-            </div>
-            <div class="field">
-              <label for="w-date-to">To date</label>
-              <input type="date" id="w-date-to" />
-            </div>
-          </div>
-
-          <!-- Row 4: Field filters -->
-          <div class="section-subheader" style="margin-bottom:0.5rem;">Field filters</div>
-          <div id="w-filters"></div>
-          <button class="btn btn-secondary btn-sm" onclick="addFilterRow()" style="margin-bottom:1rem;">+ Add filter</button>
-
-          <!-- Actions -->
-          <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
-            <button class="btn btn-primary" onclick="saveWidget()">Add widget</button>
-            <span id="w-status" style="font-size:11px;color:#73726c;"></span>
-          </div>
-        </div>
-
-        <div class="section-header" style="margin-top:1.5rem;">Current widgets <span id="widget-count" style="font-weight:400;color:#888780;"></span></div>
-        <div id="widget-list" class="loading-overlay">Loading…</div>
-
-      </div>
-
-      <!-- SETTINGS TAB -->
-      <div id="tab-settings" style="display:none;">
-        <div class="section-header">Add a new property</div>
-        <div class="settings-card">
-          <div class="settings-row">
-            <div class="field" style="flex:2;">
-              <label for="new-prop-name">Property name</label>
-              <input type="text" id="new-prop-name" placeholder="e.g. Mount Cinnamon" />
-            </div>
-            <div class="field" style="flex:1;">
-              <label for="new-prop-type">Type</label>
-              <select id="new-prop-type">
-                <option value="Management">Management</option>
-                <option value="Franchise">Franchise</option>
-              </select>
-            </div>
-            <div class="field">
-              <label>&nbsp;</label>
-              <button class="btn btn-primary" onclick="addProperty()">Add property</button>
-            </div>
-          </div>
-          <div class="section-subheader" style="margin-top:1.25rem;">Current properties</div>
-          <div id="prop-list" class="settings-list"></div>
-        </div>
-
-        <div class="section-header" style="margin-top:1.75rem;">USD exchange rate</div>
-        <div class="settings-card">
-          <p class="settings-hint">Set the LKR buying rate per 1 USD (CBSL buying rate — used to show USD equivalent of ARR on the dashboard). Current rate as of 23 Jun 2026: 333.</p>
-          <div class="settings-row" style="margin-top:1rem;">
-            <div class="field">
-              <label for="usd-rate">LKR per 1 USD (buying rate)</label>
-              <input type="number" id="usd-rate" value="333" min="1" step="0.01" style="max-width:140px;" />
-            </div>
-            <div class="field">
-              <label>&nbsp;</label>
-              <button class="btn btn-primary" onclick="saveUsdRate()">Save</button>
-            </div>
-          </div>
-        </div>
-
-        <div class="section-header" style="margin-top:1.75rem;">YTD period</div>
-        <div class="settings-card">
-          <p class="settings-hint">Set the financial year start month. The dashboard YTD tab sums all months from this month onwards within the same financial year.</p>
-          <div class="settings-row" style="margin-top:1rem;">
-            <div class="field">
-              <label for="fy-start">Financial year start month</label>
-              <select id="fy-start">
-                <option value="1">January</option><option value="2">February</option>
-                <option value="3">March</option><option value="4" selected>April</option>
-                <option value="5">May</option><option value="6">June</option>
-                <option value="7">July</option><option value="8">August</option>
-                <option value="9">September</option><option value="10">October</option>
-                <option value="11">November</option><option value="12">December</option>
-              </select>
-            </div>
-            <div class="field">
-              <label>&nbsp;</label>
-              <button class="btn btn-primary" onclick="saveFySetting()">Save</button>
-            </div>
-          </div>
-        </div>
-
-        <div class="section-header" style="margin-top:1.75rem;">Override YTD data</div>
-        <div class="settings-card">
-          <p class="settings-hint">Zero out budget or actual figures for all months in a financial year.</p>
-          <div class="settings-row" style="margin-top:1rem;">
-            <div class="field">
-              <label for="zero-fy">Financial year starting</label>
-              <select id="zero-fy">
-                <option value="2026">April 2026 – March 2027</option>
-                <option value="2027">April 2027 – March 2028</option>
-              </select>
-            </div>
-            <div class="field">
-              <label for="zero-field">Field to zero</label>
-              <select id="zero-field">
-                <option value="budgets">All budgets</option>
-                <option value="actuals">All actuals</option>
-                <option value="both">Both actuals and budgets</option>
-              </select>
-            </div>
-            <div class="field">
-              <label for="zero-table">Apply to</label>
-              <select id="zero-table">
-                <option value="both">Properties + Portfolio</option>
-                <option value="property">Properties only</option>
-                <option value="tonik">Portfolio only</option>
-              </select>
-            </div>
-          </div>
-          <div style="margin-top:1rem;display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
-            <button class="btn btn-danger" onclick="confirmZero()">Zero selected data</button>
-            <span class="settings-hint" id="zero-status"></span>
-          </div>
-        </div>
-
-        <div class="section-header" style="margin-top:1.75rem;">YTD hardcoded override</div>
-        <div class="settings-card">
-          <p class="settings-hint">The dashboard currently uses hardcoded YTD figures (stored as a special override row). Once you have entered all individual monthly actuals, clear the override and the dashboard will calculate YTD automatically by summing your monthly entries.</p>
-          <div class="settings-row" style="margin-top:1rem;">
-            <div class="field">
-              <label for="ytd-override-fy">Financial year</label>
-              <select id="ytd-override-fy">
-                <option value="2026">April 2026 – March 2027</option>
-                <option value="2027">April 2027 – March 2028</option>
-              </select>
-            </div>
-          </div>
-          <div style="margin-top:1rem;display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
-            <button class="btn btn-danger" onclick="clearYtdOverride()">Clear YTD override</button>
-            <span class="settings-hint" id="ytd-override-status"></span>
-          </div>
-        </div>
-      </div>
-
     </div>
-  </div>
-</div>
 
-<div class="toast" id="toast"></div>
+    <!-- DASHBOARD -->
+    <div id="cp-dash" class="cpanel on">
+      <div class="ph"><div class="pt">Dashboard</div><span style="font-size:12px;color:var(--muted)" id="dash-date"></span></div>
 
-<!-- WIDGET PREVIEW MODAL -->
-<div id="preview-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:200;display:none;align-items:center;justify-content:center;padding:1rem;">
-  <div style="background:#fff;border-radius:16px;width:100%;max-width:600px;max-height:90vh;overflow-y:auto;box-shadow:0 20px 60px rgba(0,0,0,0.3);">
-    <div style="display:flex;align-items:center;justify-content:space-between;padding:1.25rem 1.5rem;border-bottom:1px solid #e8e7e1;">
-      <div style="font-size:14px;font-weight:600;color:#1a1a18;" id="preview-title">Widget Preview</div>
-      <button onclick="closePreview()" style="background:none;border:none;font-size:20px;cursor:pointer;color:#73726c;line-height:1;">✕</button>
+      <!-- CATALOGUE STATS -->
+      <div style="font-size:11px;font-weight:600;letter-spacing:1.5px;color:var(--muted);text-transform:uppercase;margin-bottom:10px">Catalogue</div>
+      <div class="stats-grid" style="margin-bottom:22px">
+        <div class="stat"><div class="stat-l">Products</div><div class="stat-v" id="ds-total">0</div></div>
+        <div class="stat"><div class="stat-l">Gift Cards</div><div class="stat-v" id="ds-gc">0</div></div>
+        <div class="stat"><div class="stat-l">Games</div><div class="stat-v" id="ds-games">0</div></div>
+        <div class="stat"><div class="stat-l">Featured</div><div class="stat-v" id="ds-feat">0</div></div>
+        <div class="stat"><div class="stat-l">Active Discounts</div><div class="stat-v g" id="ds-disc">0</div></div>
+      </div>
+
+      <!-- SALES ANALYTICS -->
+      <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;margin-bottom:12px">
+        <div style="font-size:11px;font-weight:600;letter-spacing:1.5px;color:var(--muted);text-transform:uppercase">Sales Analytics</div>
+        <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+          <div style="display:flex;gap:6px">
+            <button class="bsm" id="df-today"    onclick="setDatePreset('today')"    style="font-size:11px;padding:4px 10px">Today</button>
+            <button class="bsm" id="df-7"        onclick="setDatePreset('7')"        style="font-size:11px;padding:4px 10px">7 days</button>
+            <button class="bsm" id="df-30"       onclick="setDatePreset('30')"       style="font-size:11px;padding:4px 10px">30 days</button>
+            <button class="bsm" id="df-month"    onclick="setDatePreset('month')"    style="font-size:11px;padding:4px 10px">This month</button>
+            <button class="bsm" id="df-all"      onclick="setDatePreset('all')"      style="font-size:11px;padding:4px 10px;color:var(--neon);border-color:rgba(0,240,160,.3)">All time</button>
+          </div>
+          <div style="display:flex;align-items:center;gap:6px">
+            <input type="date" id="df-from" onchange="setDatePreset('custom')" style="background:#141d2b;border:1px solid var(--border);color:var(--text);padding:4px 8px;border-radius:7px;font-size:12px;outline:none;color-scheme:dark"/>
+            <span style="color:var(--muted);font-size:12px">→</span>
+            <input type="date" id="df-to"   onchange="setDatePreset('custom')" style="background:#141d2b;border:1px solid var(--border);color:var(--text);padding:4px 8px;border-radius:7px;font-size:12px;outline:none;color-scheme:dark"/>
+          </div>
+          <span id="df-label" style="font-size:11px;color:var(--neon);white-space:nowrap"></span>
+        </div>
+      </div>
+      <div class="stats-grid" style="grid-template-columns:repeat(auto-fit,minmax(150px,1fr));margin-bottom:22px">
+        <div class="stat" style="border-left:3px solid var(--neon)">
+          <div class="stat-l">Total Revenue</div>
+          <div class="stat-v g" id="ds-revenue">$0.00</div>
+        </div>
+        <div class="stat" style="border-left:3px solid var(--neon)">
+          <div class="stat-l">Items Sold</div>
+          <div class="stat-v g" id="ds-items-sold">0</div>
+        </div>
+        <div class="stat" style="border-left:3px solid #eab308">
+          <div class="stat-l">Pending Orders</div>
+          <div class="stat-v" style="color:#eab308" id="ds-pending">0</div>
+        </div>
+        <div class="stat" style="border-left:3px solid #4ade80">
+          <div class="stat-l">Completed Orders</div>
+          <div class="stat-v" style="color:#4ade80" id="ds-complete">0</div>
+        </div>
+        <div class="stat" style="border-left:3px solid #f87171">
+          <div class="stat-l">Cancelled Orders</div>
+          <div class="stat-v" style="color:#f87171" id="ds-cancelled">0</div>
+        </div>
+        <div class="stat" style="border-left:3px solid var(--muted)">
+          <div class="stat-l">Total Orders</div>
+          <div class="stat-v" id="ds-orders">0</div>
+        </div>
+      </div>
+
+      <!-- TOP PRODUCTS -->
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:18px;margin-bottom:18px">
+        <div class="fcard" style="margin:0">
+          <div class="pt" style="font-size:14px;margin-bottom:14px">&#127942; Top Products by Revenue</div>
+          <div id="dash-top-prods"><p style="color:var(--muted);font-size:13px">No sales yet.</p></div>
+        </div>
+        <div class="fcard" style="margin:0">
+          <div class="pt" style="font-size:14px;margin-bottom:14px">&#128203; Orders by Status</div>
+          <div id="dash-status-chart"></div>
+        </div>
+      </div>
+
+      <!-- RECENT ORDERS -->
+      <div class="fcard">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">
+          <div class="pt" style="font-size:14px">Recent Orders</div>
+          <button class="bsm" onclick="cmsTab('orders')" style="font-size:11px">View all</button>
+        </div>
+        <div id="dash-orders"></div>
+      </div>
     </div>
-    <div style="padding:1.5rem;" id="preview-body">
-      <div style="text-align:center;color:#73726c;font-size:13px;">Loading preview…</div>
+
+    <!-- PRODUCTS -->
+    <div id="cp-prods" class="cpanel">
+      <div class="ph"><div class="pt">All Products</div><button class="bcms" onclick="cmsTab('add')" style="padding:6px 16px;font-size:12px">+ Add New</button></div>
+      <div class="toast" id="toast-prods">Product deleted.</div>
+      <div class="fcard" style="padding:0;overflow:hidden"><div id="prod-tbl"></div></div>
     </div>
-  </div>
-</div>
+
+    <!-- ADD/EDIT -->
+    <div id="cp-add" class="cpanel">
+      <div class="ph"><div class="pt" id="add-title">Add Product</div></div>
+      <div class="toast" id="toast-add">Product saved successfully.</div>
+      <div class="fcard">
+        <div class="fr2">
+          <div class="cf"><label>Product Name</label><input type="text" id="f-name" placeholder="e.g. Steam Wallet $20"/></div>
+          <div class="cf"><label>Price (USD)</label><input type="number" id="f-price" placeholder="0.00" step="0.01" min="0"/></div>
+        </div>
+        <div class="fr2">
+          <div class="cf"><label>Category</label>
+            <select id="f-cat"><option>Gift Cards</option><option>Games</option><option>In-Game Currency</option><option>DLC</option><option>Subscription</option></select>
+          </div>
+          <div class="cf"><label>Platform</label>
+            <select id="f-plat"><option>Steam</option><option>PSN</option><option>Xbox</option><option>Epic Games</option><option>Nintendo</option><option>Other</option></select>
+          </div>
+        </div>
+        <div class="fr2">
+          <div class="cf"><label>Icon Emoji</label><input type="text" id="f-icon" placeholder="🎮" maxlength="4"/></div>
+          <div class="cf"><label>Stock Status</label>
+            <select id="f-stock" onchange="toggleStockFields()">
+              <option value="in">In Stock</option>
+              <option value="low">Low Stock</option>
+              <option value="out">Out of Stock</option>
+              <option value="preorder">Pre-Order</option>
+            </select>
+          </div>
+        </div>
+        <!-- STOCK LIMIT -->
+        <div id="stock-limit-row" style="display:none">
+          <div style="background:rgba(0,240,160,.05);border:1px solid rgba(0,240,160,.15);border-radius:9px;padding:14px;margin-bottom:14px">
+            <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px">
+              <label class="toggle-wrap"><input type="checkbox" id="f-stock-limit" onchange="toggleStockQty()"/><span class="toggle-slider"></span></label>
+              <span style="font-size:13px;font-weight:500">Enable stock limit</span>
+              <span style="font-size:11px;color:var(--muted)">— product auto-marks Out of Stock when quantity hits 0</span>
+            </div>
+            <div id="stock-qty-row" style="display:none">
+              <div class="cf" style="margin:0;max-width:180px">
+                <label>Stock Quantity</label>
+                <input type="number" id="f-stock-qty" min="0" step="1" placeholder="e.g. 50" style="font-size:14px"/>
+              </div>
+            </div>
+          </div>
+        </div>
+        <!-- PRE-ORDER INFO -->
+        <div id="preorder-info-row" style="display:none">
+          <div style="background:rgba(139,92,246,.07);border:1px solid rgba(139,92,246,.25);border-radius:9px;padding:12px 14px;margin-bottom:14px;font-size:12px;color:#a78bfa">
+            &#128336; <strong>Pre-Order mode:</strong> The "Add to Cart" button will show as <strong>"Pre-Order"</strong> on the storefront. The order flow is identical — customers complete checkout normally.
+          </div>
+          <div class="cf"><label>Pre-Order Release Note (optional)</label><input type="text" id="f-preorder-note" placeholder="e.g. Expected release: Q3 2026"/></div>
+        </div>
+        <!-- BNPL -->
+        <div style="background:rgba(139,92,246,.07);border:1px solid rgba(139,92,246,.2);border-radius:9px;padding:14px;margin-bottom:14px">
+          <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px">
+            <label class="toggle-wrap"><input type="checkbox" id="f-bnpl" onchange="toggleBNPLFields()"/><span class="toggle-slider"></span></label>
+            <span style="font-size:13px;font-weight:500;color:#a78bfa">Enable Buy Now, Pay Later (BNPL)</span>
+          </div>
+          <div id="bnpl-fields" style="display:none">
+            <div class="img-guide" style="margin-bottom:12px;border-color:rgba(139,92,246,.2)">
+              <strong style="color:#a78bfa">&#128444; BNPL partner logo guidelines</strong>
+              Recommended: <strong>120 × 40px</strong> · Max: <strong>100KB</strong> · Format: <strong>PNG or WebP (transparent bg preferred)</strong> · Up to 3 logos
+            </div>
+            <div class="fr3">
+              <div class="cf" style="margin:0"><label style="font-size:11px">Logo 1 URL</label><input type="url" id="f-bnpl-logo-0" placeholder="https://..." oninput="updateBNPLPreview()"/></div>
+              <div class="cf" style="margin:0"><label style="font-size:11px">Logo 2 URL</label><input type="url" id="f-bnpl-logo-1" placeholder="https://..." oninput="updateBNPLPreview()"/></div>
+              <div class="cf" style="margin:0"><label style="font-size:11px">Logo 3 URL</label><input type="url" id="f-bnpl-logo-2" placeholder="https://..." oninput="updateBNPLPreview()"/></div>
+            </div>
+            <div id="bnpl-logo-preview" style="display:flex;gap:8px;align-items:center;margin-top:10px;min-height:28px">
+              <span style="font-size:11px;color:var(--muted)">No logos yet — paste URLs above</span>
+            </div>
+          </div>
+        </div>
+        <div class="cf">
+          <label>Product Image URL</label>
+          <div class="img-guide"><strong>&#128444; Image guidelines</strong>Recommended: <strong>600×400px</strong> (3:2 ratio) &middot; Max: <strong>500KB</strong> &middot; Formats: <strong>JPG, PNG, WebP</strong><br/>Host on Imgur, Cloudinary, or any public image URL</div>
+          <input type="url" id="f-img" placeholder="https://example.com/product-cover.jpg"/>
+        </div>
+        <div class="cf"><label>Description</label><textarea id="f-desc" placeholder="Describe the product, platform, region, how to redeem..."></textarea></div>
+        <div class="cf"><label>Tags (comma separated)</label><input type="text" id="f-tags" placeholder="Instant Delivery, Digital Code, Global"/></div>
+        <div style="display:flex;gap:10px;margin-top:6px">
+          <button class="bcms" onclick="saveProd()">Save Product</button>
+          <button class="bsm" onclick="clearForm()">Clear</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- FEATURED MANAGER -->
+    <div id="cp-featured" class="cpanel">
+      <div class="ph"><div class="pt">Featured Products</div></div>
+      <div class="toast" id="toast-feat">Featured products updated.</div>
+      <div class="fcard">
+        <h3>Tick the products you want to highlight in the Featured section on the homepage.</h3>
+        <div id="feat-picker"></div>
+        <button class="bcms" onclick="saveFeatured()" style="margin-top:14px">Save Featured</button>
+      </div>
+    </div>
+
+    <!-- DISCOUNTS -->
+    <div id="cp-discounts" class="cpanel">
+      <div class="ph"><div class="pt">Discounts</div></div>
+      <div class="toast" id="toast-disc">Discounts saved.</div>
+      <div class="fcard">
+        <h3>Set a discount on any product. Slash pricing and a discount badge will appear on the storefront.</h3>
+        <div id="disc-list"></div>
+        <button class="bcms" onclick="saveDiscounts()" style="margin-top:14px">Save All Discounts</button>
+      </div>
+    </div>
+
+    <!-- BANNER -->
+    <div id="cp-banner" class="cpanel">
+      <div class="ph"><div class="pt">Banner / Carousel</div><span id="banner-count-label" style="font-size:12px;color:var(--muted)"></span></div>
+      <div class="toast" id="toast-banner">Banner saved.</div>
+      <div class="fcard">
+        <h3>Add up to 5 full-width slides to the homepage carousel. Image URL only — no text overlays.</h3>
+        <div class="img-guide" style="margin-bottom:16px"><strong>&#128444; Banner image requirements</strong>Size: <strong>1440 × 340px</strong> (wide landscape) &middot; Max: <strong>1MB</strong> &middot; Format: <strong>JPG, PNG or WebP</strong><br/>Host on Imgur, Cloudinary or any public image host — paste the direct image link into each slot</div>
+        <div id="banner-slots"></div>
+        <button id="banner-add-btn" class="bsm" onclick="addBannerSlot()" style="margin-top:6px;display:inline-flex;align-items:center;gap:6px">+ Add Slide</button>
+        <p id="banner-max-note" style="display:none;font-size:12px;color:var(--muted);margin-top:8px">Maximum 5 slides reached.</p>
+      </div>
+      <button class="bcms" onclick="saveBanner()">Save Banner</button>
+    </div>
+
+    <!-- ORDERS -->
+    <div id="cp-orders" class="cpanel">
+      <div class="ph"><div class="pt">Orders</div><span style="font-size:12px;color:var(--muted)" id="orders-count"></span></div>
+      <div class="fcard" style="padding:0;overflow:hidden"><div id="orders-tbl"></div></div>
+    </div>
+
+    <!-- DESIGN -->
+    <div id="cp-design" class="cpanel">
+      <div class="ph"><div class="pt">Design &amp; Theme</div></div>
+      <div class="toast" id="toast-design">Design saved and applied.</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px">
+        <div>
+          <div class="fcard">
+            <h3>Fonts</h3>
+            <div class="cf"><label>Heading Font</label>
+              <select class="font-sel" id="d-font-head" onchange="previewDesign()">
+                <option value="'Rajdhani',sans-serif">Rajdhani (default gaming)</option>
+                <option value="'Orbitron',sans-serif">Orbitron (futuristic)</option>
+                <option value="'Exo 2',sans-serif">Exo 2 (tech)</option>
+                <option value="'Share Tech Mono',monospace">Share Tech Mono (retro)</option>
+              </select>
+            </div>
+            <div class="cf"><label>Body Font</label>
+              <select class="font-sel" id="d-font-body" onchange="previewDesign()">
+                <option value="'Barlow',sans-serif">Barlow (default)</option>
+                <option value="'Exo 2',sans-serif">Exo 2 (tech)</option>
+                <option value="'Rajdhani',sans-serif">Rajdhani (gaming)</option>
+              </select>
+            </div>
+            <div class="cf"><label>Price Font</label>
+              <select class="font-sel" id="d-font-price" onchange="previewDesign()">
+                <option value="'Rajdhani',sans-serif">Rajdhani (default)</option>
+                <option value="'Orbitron',sans-serif">Orbitron</option>
+                <option value="'Share Tech Mono',monospace">Share Tech Mono</option>
+                <option value="'Barlow',sans-serif">Barlow</option>
+              </select>
+            </div>
+          </div>
+          <div class="fcard">
+            <h3>Colours</h3>
+            <div class="swatch-row"><label>Heading / accent</label><input type="color" id="dc-heading" oninput="syncHex(this,'dh-hex');previewDesign()"/><input type="text" id="dh-hex" maxlength="7" oninput="syncColor(this,'dc-heading');previewDesign()"/></div>
+            <div class="swatch-row"><label>Body text</label><input type="color" id="dc-body" oninput="syncHex(this,'db-hex');previewDesign()"/><input type="text" id="db-hex" maxlength="7" oninput="syncColor(this,'dc-body');previewDesign()"/></div>
+            <div class="swatch-row"><label>Price colour</label><input type="color" id="dc-price" oninput="syncHex(this,'dp-hex');previewDesign()"/><input type="text" id="dp-hex" maxlength="7" oninput="syncColor(this,'dc-price');previewDesign()"/></div>
+            <div class="swatch-row"><label>Button background</label><input type="color" id="dc-btnbg" oninput="syncHex(this,'dbb-hex');previewDesign()"/><input type="text" id="dbb-hex" maxlength="7" oninput="syncColor(this,'dc-btnbg');previewDesign()"/></div>
+            <div class="swatch-row"><label>Button text</label><input type="color" id="dc-btntext" oninput="syncHex(this,'dbt-hex');previewDesign()"/><input type="text" id="dbt-hex" maxlength="7" oninput="syncColor(this,'dc-btntext');previewDesign()"/></div>
+            <div class="swatch-row"><label>Nav background</label><input type="color" id="dc-nav" oninput="syncHex(this,'dn-hex');previewDesign()"/><input type="text" id="dn-hex" maxlength="7" oninput="syncColor(this,'dc-nav');previewDesign()"/></div>
+            <div class="swatch-row"><label>Card background</label><input type="color" id="dc-card" oninput="syncHex(this,'dcard-hex');previewDesign()"/><input type="text" id="dcard-hex" maxlength="7" oninput="syncColor(this,'dc-card');previewDesign()"/></div>
+          </div>
+        </div>
+        <div>
+          <div class="fcard">
+            <h3>Live Preview</h3>
+            <div class="store-preview">
+              <div style="font-family:var(--font-head);font-size:18px;font-weight:700;letter-spacing:2px;color:var(--col-heading)" id="pv-logo">XP<em style="font-style:normal;color:var(--col-body)">FLEX</em></div>
+              <div style="color:var(--col-body);font-size:13px;margin:6px 0" id="pv-body">Instant digital delivery</div>
+              <div style="font-family:var(--font-price);font-size:22px;font-weight:700;color:var(--col-price);margin:6px 0" id="pv-price">$24.99</div>
+              <div style="display:inline-block;background:var(--col-btn-bg);color:var(--col-btn-text);padding:7px 18px;border-radius:7px;font-size:12px;font-weight:600;margin-top:4px" id="pv-btn">Add to Cart</div>
+            </div>
+          </div>
+          <div class="fcard"><h3>Reset</h3><p style="font-size:13px;color:var(--muted);margin-bottom:14px">Reset to default XPFlex dark gaming theme.</p><button class="bsm" onclick="resetDesign()">Reset to default</button></div>
+        </div>
+      </div>
+      <button class="bcms" onclick="saveDesign()" style="margin-top:4px">Save &amp; Apply Design</button>
+    </div>
+
+    <!-- SETTINGS -->
+    <div id="cp-settings" class="cpanel">
+      <div class="ph"><div class="pt">Settings</div></div>
+      <div class="toast" id="toast-settings">Settings saved.</div>
+      <div class="fcard">
+        <h3>Store Identity</h3>
+        <div class="fr2">
+          <div class="cf"><label>Store Name</label><input type="text" id="s-name" value="XPFlex"/></div>
+          <div class="cf"><label>Contact Email</label><input type="email" id="s-email" placeholder="admin@xpflex.com"/></div>
+        </div>
+        <div class="cf"><label>Hero Headline</label><input type="text" id="s-hero" placeholder="Level Up Your Gaming Library"/></div>
+        <div class="cf"><label>Hero Subtext</label><input type="text" id="s-sub" placeholder="Instant digital delivery · Steam · PSN · Xbox"/></div>
+        <div class="fr2">
+          <div class="cf"><label>Currency Symbol</label>
+            <select id="s-currency"><option value="Rs.">LKR (Rs.)</option><option value="$">USD ($)</option><option value="£">GBP (£)</option><option value="€">EUR (€)</option></select>
+          </div>
+          <div class="cf"><label>Payment Gateway Note</label><input type="text" id="s-pay" placeholder="e.g. PayHere, Stripe, PayPal..."/></div>
+        </div>
+        <div class="cf"><label>Footer Text</label><input type="text" id="s-footer"/></div>
+        <div style="display:flex;align-items:center;justify-content:space-between;background:rgba(234,179,8,.06);border:1px solid rgba(234,179,8,.2);border-radius:9px;padding:13px 16px;margin-bottom:14px">
+          <div>
+            <div style="font-size:13px;font-weight:600;color:#eab308">&#9888; Coming Soon Mode</div>
+            <div style="font-size:12px;color:var(--muted);margin-top:3px">When on, visitors see the coming soon page instead of the store</div>
+          </div>
+          <label class="toggle-wrap" style="flex-shrink:0">
+            <input type="checkbox" id="s-coming-soon" onchange="saveSettings()"/>
+            <span class="toggle-slider"></span>
+          </label>
+        </div>
+        <button class="bcms" onclick="saveSettings()" style="margin-top:6px">Save Settings</button>
+      </div>
+      <div class="fcard">
+        <h3>EmailJS — Order Notifications</h3>
+        <div class="emailjs-note">
+          <strong>&#9888; Setup required to activate email notifications</strong>
+          1. Create a free account at <strong>emailjs.com</strong><br/>
+          2. Add a service — connect your Hotmail/Outlook account (<strong>ezekiel.gun@hotmail.co.uk</strong>)<br/>
+          3. Create an email template using these variables:<br/>
+          &nbsp;&nbsp;<code>{{order_id}}</code> &nbsp;<code>{{customer_name}}</code> &nbsp;<code>{{customer_email}}</code> &nbsp;<code>{{order_items}}</code> &nbsp;<code>{{order_total}}</code> &nbsp;<code>{{order_date}}</code><br/>
+          4. Paste your Service ID, Template ID, and Public Key below.
+        </div>
+        <div class="fr2">
+          <div class="cf"><label>EmailJS Service ID</label><input type="text" id="ejs-service" placeholder="service_xxxxxxx"/></div>
+          <div class="cf"><label>EmailJS Template ID</label><input type="text" id="ejs-template" placeholder="template_xxxxxxx"/></div>
+        </div>
+        <div class="cf"><label>EmailJS Public Key</label><input type="text" id="ejs-pubkey" placeholder="your_public_key"/></div>
+        <div class="cf"><label>Admin Notification Email</label><input type="email" id="ejs-adminemail" value="ezekiel.gun@hotmail.co.uk"/></div>
+        <button class="bcms" onclick="saveEmailJS()" style="margin-top:6px">Save EmailJS Config</button>
+      </div>
+      <div class="fcard" style="border-color:rgba(239,68,68,.3)">
+        <h3 style="color:#f87171">Danger Zone</h3>
+        <div style="display:flex;align-items:center;justify-content:space-between;font-size:13px;margin-bottom:12px">
+          <span style="color:var(--muted)">Delete all products</span>
+          <button class="bdanger" onclick="nukeProds()">&#128465; Clear Products</button>
+        </div>
+        <div style="display:flex;align-items:center;justify-content:space-between;font-size:13px">
+          <span style="color:var(--muted)">Delete all orders</span>
+          <button class="bdanger" onclick="nukeOrders()">&#128465; Clear Orders</button>
+        </div>
+      </div>
+      <div class="fcard"><h3>Navigation</h3><p style="font-size:13px;color:var(--muted)">Use the <strong style="color:var(--neon)">← View Store</strong> button in the top bar to return to the storefront.</p></div>
+    </div>
+
+    <!-- ADMIN USERS -->
+    <div id="cp-admins" class="cpanel">
+      <div class="ph"><div class="pt">Admin Users</div><span id="admins-superonly" style="font-size:12px;color:var(--muted)"></span></div>
+      <div class="toast" id="toast-admins">Admin users updated.</div>
+
+      <!-- Super admin locked notice shown to editors -->
+      <div id="admins-locked" style="display:none">
+        <div class="emailjs-note" style="background:rgba(239,68,68,.07);border-color:rgba(239,68,68,.25);color:#f87171">
+          <strong>&#128274; Super Admin only</strong>
+          Only the Super Admin (<strong>dariddler</strong>) can manage admin accounts. You are logged in as an Editor and cannot view or change admin credentials.
+        </div>
+      </div>
+
+      <div id="admins-content">
+        <!-- ADD NEW ADMIN -->
+        <div class="fcard">
+          <h3>Add New Admin</h3>
+          <div class="fr2">
+            <div class="cf"><label>Username</label><input type="text" id="na-user" placeholder="e.g. janesmith" autocomplete="off"/></div>
+            <div class="cf"><label>Password</label><input type="password" id="na-pass" placeholder="Strong password" autocomplete="new-password"/></div>
+          </div>
+          <div class="fr2">
+            <div class="cf"><label>Display Name</label><input type="text" id="na-display" placeholder="e.g. Jane Smith"/></div>
+            <div class="cf"><label>Role</label>
+              <select id="na-role">
+                <option value="editor">Editor — can manage products &amp; orders</option>
+                <option value="superadmin">Super Admin — full access including admins</option>
+              </select>
+            </div>
+          </div>
+          <div class="cf"><label>Email (optional — for notifications)</label><input type="email" id="na-email" placeholder="jane@example.com"/></div>
+          <button class="bcms" onclick="addAdmin()" style="margin-top:6px">Add Admin</button>
+        </div>
+
+        <!-- ADMIN LIST -->
+        <div class="fcard" style="padding:0;overflow:hidden">
+          <div id="admins-tbl"></div>
+        </div>
+
+        <!-- CHANGE OWN PASSWORD -->
+        <div class="fcard">
+          <h3>Change Your Password</h3>
+          <div class="fr2">
+            <div class="cf"><label>Current Password</label><input type="password" id="cp-current" placeholder="Current password"/></div>
+            <div class="cf"><label>New Password</label><input type="password" id="cp-new" placeholder="New password"/></div>
+          </div>
+          <div class="cf"><label>Confirm New Password</label><input type="password" id="cp-confirm" placeholder="Confirm new password"/></div>
+          <div id="cp-err" style="font-size:12px;color:#f87171;margin-top:6px"></div>
+          <button class="bcms" onclick="changeOwnPassword()" style="margin-top:8px">Update Password</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ACTIVITY LOG -->
+    <div id="cp-activity" class="cpanel">
+      <div class="ph">
+        <div class="pt">Activity Log</div>
+        <div style="display:flex;gap:8px;align-items:center">
+          <select id="log-filter" onchange="renderActivityLog()" style="background:#141d2b;border:1px solid var(--border);color:var(--text);padding:5px 10px;border-radius:7px;font-size:12px">
+            <option value="all">All Actions</option>
+            <option value="order_status">Order Updates</option>
+            <option value="login">Logins</option>
+            <option value="product">Products</option>
+            <option value="discount">Discounts</option>
+            <option value="settings">Settings</option>
+          </select>
+          <span style="font-size:12px;color:var(--muted)" id="log-count"></span>
+        </div>
+      </div>
+      <div class="fcard" style="padding:0;overflow:hidden"><div id="activity-tbl"></div></div>
+    </div>
+
+  </div><!-- end cms-shell -->
+</div><!-- end screen-cms -->
 
 <script>
-const SUPABASE_URL  = 'https://rmnufhsfuaycpkdzwfgj.supabase.co';
-const SUPABASE_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJtbnVmaHNmdWF5Y3BrZHp3ZmdqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODE5Njc3NjksImV4cCI6MjA5NzU0Mzc2OX0.rnBgL4fAowZrimTP3LZMSZwcOBcTW-kraPnupqyidU4';
+// ══ SUPABASE CONFIG ══
+const SB_URL = 'https://pxsajdecyrifqwaonfpy.supabase.co';
+const SB_KEY = 'sb_publishable_Cym_d_X9P9PsvhM_3KFhZw_bHtyBzXG';
 
-const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON, {
-  db: { schema: 'public' },
-  global: { headers: { 'Accept-Profile': 'public', 'Content-Profile': 'public' } }
-});
+// ══ EMAILJS CONFIG ══
+const EMAILJS_SERVICE_ID  = '';
+const EMAILJS_TEMPLATE_ID = '';
+const EMAILJS_PUBLIC_KEY  = '';
+const ADMIN_EMAIL         = 'ezekiel.gun@hotmail.co.uk';
 
-let appInitialised = false;
+const SUPER_ADMIN_USER = 'dariddler';
+let adminUsers  = [];
+let currentUser = null;
 
-const PROPERTIES = [
-  { name:'KAHA',              type:'Management' },
-  { name:'Villa Sayura',      type:'Management' },
-  { name:'Garfield Bungalow', type:'Franchise'  },
-  { name:'Garfield Cottage',  type:'Franchise'  },
+const DEFAULT_PRODS = [
+  {id:'p1',name:'Steam Wallet $10',price:10,cat:'Gift Cards',platform:'Steam',icon:'💚',img:'',desc:'Add $10 to your Steam Wallet. Works on any Steam account worldwide.',tags:'Instant Delivery,Digital Code,Global',stock:'in'},
+  {id:'p2',name:'Steam Wallet $25',price:25,cat:'Gift Cards',platform:'Steam',icon:'💚',img:'',desc:'Add $25 to your Steam Wallet. Perfect for Steam sales.',tags:'Instant Delivery,Digital Code,Global',stock:'in'},
+  {id:'p3',name:'PSN $20 Gift Card',price:20,cat:'Gift Cards',platform:'PSN',icon:'🔵',img:'',desc:'$20 PlayStation Network gift card for PS5 & PS4 games.',tags:'Instant Delivery,Digital Code,US Store',stock:'in'},
+  {id:'p4',name:'PSN $50 Gift Card',price:50,cat:'Gift Cards',platform:'PSN',icon:'🔵',img:'',desc:'$50 PlayStation Network gift card.',tags:'Instant Delivery,Digital Code,US Store',stock:'in'},
+  {id:'p5',name:'Xbox $15 Gift Card',price:15,cat:'Gift Cards',platform:'Xbox',icon:'🟢',img:'',desc:'$15 Microsoft Xbox gift card.',tags:'Instant Delivery,Digital Code,Global',stock:'in'},
+  {id:'p6',name:'Cyberpunk 2077',price:39.99,cat:'Games',platform:'Steam',icon:'🌆',img:'',desc:'Open-world action RPG set in Night City. Steam key for PC.',tags:'Steam Key,Action RPG,Open World',stock:'in'},
+  {id:'p7',name:'Elden Ring',price:44.99,cat:'Games',platform:'Steam',icon:'⚔️',img:'',desc:'FromSoftware open-world RPG. Steam key.',tags:'Steam Key,Souls-like,Open World',stock:'in'},
+  {id:'p8',name:'Fortnite V-Bucks 2800',price:19.99,cat:'In-Game Currency',platform:'Epic Games',icon:'🎯',img:'',desc:'2800 V-Bucks for Fortnite on Epic Games.',tags:'Epic Games,In-Game Currency,Fortnite',stock:'in'},
+  {id:'p9',name:'GTA V — PC',price:14.99,cat:'Games',platform:'Epic Games',icon:'🚗',img:'',desc:'Grand Theft Auto V for PC via Epic Games.',tags:'Epic Key,Open World,Action',stock:'in'},
+  {id:'p10',name:'Red Dead Redemption 2',price:29.99,cat:'Games',platform:'Steam',icon:'🤠',img:'',desc:'Rockstar epic western adventure. Steam key.',tags:'Steam Key,Open World,Western',stock:'in'},
 ];
-const SEGMENTS = ['Franchise', 'Management'];
-const MONTH_NAMES = ['January','February','March','April','May','June','July','August','September','October','November','December'];
 
-// ── Auth ──────────────────────────────────────────────────────────────────────
-async function signIn() {
-  const email = document.getElementById('email').value.trim();
-  const pass  = document.getElementById('password').value;
-  const btn   = document.getElementById('sign-in-btn');
-  const err   = document.getElementById('auth-error');
-  err.style.display = 'none';
-  btn.disabled = true; btn.textContent = 'Signing in…';
-  const { data, error } = await sb.auth.signInWithPassword({ email, password: pass });
-  btn.disabled = false; btn.textContent = 'Sign in';
-  if (error) { err.textContent = error.message; err.style.display = 'block'; return; }
-  showApp(data.user.email);
+const DEFAULT_DESIGN = {fontHead:"'Rajdhani',sans-serif",fontBody:"'Barlow',sans-serif",fontPrice:"'Rajdhani',sans-serif",colHeading:'#00f0a0',colBody:'#e2e8f0',colPrice:'#00f0a0',colBtnBg:'#00f0a0',colBtnText:'#080c12',colNav:'#080c12',colCard:'#111827'};
+
+let cart=[], prods=[], settings={}, design={...DEFAULT_DESIGN}, orders=[], featured=[], ejsConfig={};
+let discounts={}, bannerSlides=[], activityLog=[];
+let editId=null, shopFilter='All', detFrom='home', currency='Rs.';
+let toastTimer=null;
+
+function priceFmt(n){
+  return currency+' '+Math.round(parseFloat(n)).toLocaleString('en-LK');
 }
 
-async function signOut() {
-  await sb.auth.signOut();
-  appInitialised = false;
-  document.getElementById('app-screen').classList.remove('visible');
-  document.getElementById('auth-screen').classList.remove('hidden');
+// ══ SUPABASE HELPERS ══
+async function sbGet(table){
+  try{
+    const r=await fetch(`${SB_URL}/rest/v1/${table}?select=*`,{headers:{'apikey':SB_KEY,'Authorization':`Bearer ${SB_KEY}`}});
+    if(!r.ok) return null;
+    return await r.json();
+  }catch(e){return null;}
+}
+async function sbUpsert(table,row){
+  try{
+    await fetch(`${SB_URL}/rest/v1/${table}`,{method:'POST',headers:{'apikey':SB_KEY,'Authorization':`Bearer ${SB_KEY}`,'Content-Type':'application/json','Prefer':'resolution=merge-duplicates'},body:JSON.stringify(row)});
+  }catch(e){}
+}
+async function sbDelete(table,id){
+  try{
+    await fetch(`${SB_URL}/rest/v1/${table}?id=eq.${id}`,{method:'DELETE',headers:{'apikey':SB_KEY,'Authorization':`Bearer ${SB_KEY}`}});
+  }catch(e){}
+}
+async function sbDeleteAll(table){
+  try{
+    await fetch(`${SB_URL}/rest/v1/${table}?id=neq.null`,{method:'DELETE',headers:{'apikey':SB_KEY,'Authorization':`Bearer ${SB_KEY}`}});
+  }catch(e){}
 }
 
-sb.auth.onAuthStateChange((event, session) => {
-  if (event === 'SIGNED_IN' && session && !appInitialised) {
-    showApp(session.user.email);
-  }
+// ══ SETTINGS HELPERS (key/value store) ══
+async function getSettingVal(key){
+  try{
+    const r=await fetch(`${SB_URL}/rest/v1/settings?key=eq.${key}&select=value`,{headers:{'apikey':SB_KEY,'Authorization':`Bearer ${SB_KEY}`}});
+    const data=await r.json();
+    return data&&data.length?data[0].value:null;
+  }catch(e){return null;}
+}
+async function setSettingVal(key,value){
+  await sbUpsert('settings',{key,value});
+}
+
+// ══ BOOT ══
+window.addEventListener('load',async()=>{
+  const sbProds=await sbGet('products');
+  prods=sbProds&&sbProds.length?sbProds.map(p=>({...p,desc:p.description})):DEFAULT_PRODS;
+  if(!sbProds||!sbProds.length){for(const p of DEFAULT_PRODS)await sbUpsert('products',{id:p.id,name:p.name,price:p.price,cat:p.cat,platform:p.platform,icon:p.icon,img:p.img,description:p.description,tags:p.tags,stock:p.stock});}
+  const sbSettings=await getSettingVal('main'); settings=sbSettings||{};
+  const sbDesign=await getSettingVal('design'); if(sbDesign)design={...DEFAULT_DESIGN,...sbDesign};
+  const sbOrders=await sbGet('orders'); orders=sbOrders||[];
+  const sbFeat=await getSettingVal('featured'); featured=sbFeat||[];
+  const sbEjs=await getSettingVal('emailjs'); ejsConfig=sbEjs||{};
+  const sbDisc=await getSettingVal('discounts'); discounts=sbDisc||{};
+  const sbBanner=await getSettingVal('banner'); bannerSlides=sbBanner||[];
+  const sbAdmins=await sbGet('admins'); adminUsers=sbAdmins||[];
+  if(ejsConfig.pubkey)emailjs.init(ejsConfig.pubkey);
+  // Always show login screen on admin page load
+  applyDesign();
+  document.getElementById('cms-login').style.display='flex';
+  document.getElementById('cms-shell').classList.remove('on');
 });
 
-function showApp(email) {
-  if (appInitialised) return;
-  appInitialised = true;
-  document.getElementById('auth-screen').classList.add('hidden');
-  document.getElementById('app-screen').classList.add('visible');
-  if (email) {
-    document.getElementById('user-email').textContent = email;
-    const firstName = (email.split('.')[0] || '');
-    const cap = firstName.charAt(0).toUpperCase() + firstName.slice(1);
-    const greetEl = document.getElementById('home-greeting');
-    if (greetEl) greetEl.textContent = `Welcome back, ${cap}`;
+// ══ SCREENS ══
+function showScreen(id){document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));document.getElementById(id).classList.add('active');}
+function storeGo(sub){
+  showScreen('screen-store');
+  document.querySelectorAll('#sv-home,#sv-shop,#sv-detail,#sv-cart,#sv-checkout,#sv-success').forEach(s=>s.classList.remove('active'));
+  document.getElementById('sv-'+sub).classList.add('active');
+  if(sub==='cart')renderCart();
+  if(sub==='checkout')renderCkSum();
+  window.scrollTo(0,0);
+}
+async function openCMS(){
+  showScreen('screen-cms');
+  const sbAdmins=await sbGet('admins');adminUsers=sbAdmins||[];
+  document.getElementById('cms-login').style.display='flex';
+  document.getElementById('cms-shell').classList.remove('on');
+}
+function goStore(){window.location.href='index.html';}
+
+// ══ SECRET KNOCK ══
+function setupSecretKnock(){
+  const zone=document.getElementById('secret-zone');if(!zone)return;
+  zone.addEventListener('dblclick',()=>openCMS());
+  let lastTap=0;
+  zone.addEventListener('touchend',e=>{const now=Date.now();if(now-lastTap<350){openCMS();e.preventDefault();}lastTap=now;});
+}
+
+// ══ SHOP DROPDOWN ══
+function toggleShopDrop(){document.getElementById('shop-drop').classList.toggle('open');}
+function closeShopDrop(){document.getElementById('shop-drop').classList.remove('open');}
+document.addEventListener('click',e=>{if(!e.target.closest('#shop-drop'))closeShopDrop();});
+
+// ══ CAROUSEL ══
+let bannerIdx=0,bannerTimer=null;
+function renderBanner(){
+  const track=document.getElementById('banner-track');const dots=document.getElementById('banner-dots');
+  if(!bannerSlides.length){
+    track.innerHTML=`<div class="banner-slide"><div class="banner-placeholder"><div style="font-size:32px">🎮</div><div>Add banner images in CMS → Banner tab</div><div style="font-size:11px;margin-top:4px">Up to 5 slides · 1440×340px · JPG/PNG/WebP</div></div></div>`;
+    dots.innerHTML='';return;
   }
-  showTab('home');
+  track.innerHTML=bannerSlides.map(s=>`<div class="banner-slide"><img src="${s.img}" alt="Banner" style="width:100%;height:340px;object-fit:cover;display:block" onerror="this.parentElement.style.display='none'"/></div>`).join('');
+  dots.innerHTML=bannerSlides.map((_,i)=>`<div class="bdot${i===0?' on':''}" onclick="bannerGo(${i})"></div>`).join('');
+  bannerIdx=0;updateBannerPos();
+  if(bannerTimer)clearInterval(bannerTimer);
+  if(bannerSlides.length>1)bannerTimer=setInterval(()=>bannerMove(1),4500);
+}
+function bannerMove(d){bannerIdx=(bannerIdx+d+Math.max(1,bannerSlides.length))%Math.max(1,bannerSlides.length);updateBannerPos();}
+function bannerGo(i){bannerIdx=i;updateBannerPos();}
+function updateBannerPos(){const t=document.getElementById('banner-track');if(t)t.style.transform=`translateX(-${bannerIdx*100}%)`;document.querySelectorAll('.bdot').forEach((d,i)=>d.classList.toggle('on',i===bannerIdx));}
+
+// ══ DISCOUNT HELPERS ══
+function discountedPrice(p){const d=discounts[p.id];if(!discIsActive(d))return null;return d.type==='pct'?Math.max(0,p.price*(1-d.value/100)):Math.max(0,p.price-d.value);}
+function discountLabel(p){const d=discounts[p.id];if(!discIsActive(d))return null;return d.type==='pct'?`-${d.value}%`:`-${currency}${d.value}`;}
+
+// ══ HELPERS ══
+function platClass(p){return{Steam:'t-steam',PSN:'t-psn',Xbox:'t-xbox','Epic Games':'t-epic',Nintendo:'t-nin'}[p]||'t-other';}
+function bgClass(p){return{Steam:'bg-steam',PSN:'bg-psn',Xbox:'bg-xbox','Epic Games':'bg-epic',Nintendo:'bg-nin'}[p]||'bg-other';}
+function genOrderId(){return 'ORD-'+Date.now().toString(36).toUpperCase();}
+
+// ══ CART TOAST ══
+function showCartToast(msg){const el=document.getElementById('cart-toast');document.getElementById('cart-toast-msg').textContent=msg;el.classList.add('show');if(toastTimer)clearTimeout(toastTimer);toastTimer=setTimeout(()=>el.classList.remove('show'),3000);}
+function hideToast(){document.getElementById('cart-toast').classList.remove('show');}
+
+// ══ CARD HTML ══
+function stockCountBadge(p){
+  if(!p.stockLimit||!p.stockQty&&p.stockQty!==0) return '';
+  const q=parseInt(p.stockQty);
+  if(q<=0) return '';
+  if(q<=5) return `<span class="stock-count">Only ${q} left</span>`;
+  return '';
+}
+function cardHTML(p,isFeat=false){
+  const dp=discountedPrice(p);const dl=discountLabel(p);
+  const inCart=cart.find(x=>x.id===p.id);const qty=inCart?inCart.qty:0;
+  const img=p.img?`<img src="${p.img}" alt="${p.name}" onerror="this.style.display='none'"/>`:'' ;
+  const isOut=p.stock==='out';
+  const isPreorder=p.stock==='preorder';
+  const stockTag=p.stock==='low'?'<span class="stock-tag stock-low">Low Stock</span>':isOut?'<span class="stock-tag stock-out">Out of Stock</span>':isPreorder?'<span class="preorder-tag">Pre-Order</span>':'';
+  const countBadge=stockCountBadge(p);
+  const discBadge=dl?`<span class="disc-badge">${dl}</span>`:'';
+  const priceHTML=dp!=null?`<div class="price-wrap"><div class="pprice-orig">${priceFmt(p.price)}</div><div class="pprice">${priceFmt(dp)}</div><div class="pprice-save">Save ${priceFmt(p.price-dp)}</div></div>`:`<div class="pprice">${priceFmt(p.price)}</div>`;
+  // CTA button logic
+  let atc;
+  if(isOut){
+    atc=`<span style="font-size:11px;color:#f87171;font-weight:600">Out of stock</span>`;
+  } else if(isPreorder){
+    atc=qty===0
+      ?`<div class="atc-wrap" id="atc-${p.id}"><button class="atc-preorder" onclick="event.stopPropagation();addCart('${p.id}')">Pre-Order</button><div class="atc-ctrl" id="atcc-${p.id}"></div></div>`
+      :`<div class="atc-wrap" id="atc-${p.id}"><button class="atc-preorder" style="display:none" onclick="event.stopPropagation();addCart('${p.id}')">Pre-Order</button><div class="atc-ctrl show" id="atcc-${p.id}"><button class="atc-btn" onclick="event.stopPropagation();decCart('${p.id}')">&#8722;</button><span class="atc-qty" id="atcq-${p.id}">${qty}</span><button class="atc-btn" onclick="event.stopPropagation();incCart('${p.id}')">+</button></div></div>`;
+  } else {
+    atc=qty===0
+      ?`<div class="atc-wrap" id="atc-${p.id}"><button class="atc-add" onclick="event.stopPropagation();addCart('${p.id}')" title="Add to cart">+</button><div class="atc-ctrl" id="atcc-${p.id}"></div></div>`
+      :`<div class="atc-wrap" id="atc-${p.id}"><button class="atc-add" style="display:none" onclick="event.stopPropagation();addCart('${p.id}')">+</button><div class="atc-ctrl show" id="atcc-${p.id}"><button class="atc-btn" onclick="event.stopPropagation();decCart('${p.id}')">&#8722;</button><span class="atc-qty" id="atcq-${p.id}">${qty}</span><button class="atc-btn" onclick="event.stopPropagation();incCart('${p.id}')">+</button></div></div>`;
+  }
+  if(isFeat){
+    const fPrice=dp!=null?`<div class="price-wrap"><div class="pprice-orig" style="font-size:12px">${priceFmt(p.price)}</div><div style="font-family:var(--font-price);font-size:20px;font-weight:700;color:var(--col-price)">${priceFmt(dp)}</div></div>`:`<div style="font-family:var(--font-price);font-size:20px;font-weight:700;color:var(--col-price)">${priceFmt(p.price)}</div>`;
+    return `<div class="feat-card" onclick="showDetail('${p.id}')">
+      <div class="feat-ribbon">Featured</div>${dl?`<span class="disc-badge" style="top:10px;right:10px;left:auto">${dl}</span>`:''}
+      <div class="feat-img ${bgClass(p.platform)}">${img}<span class="feat-emoji">${p.icon||'🎮'}</span><span class="plat-tag ${platClass(p.platform)}">${p.platform}</span>${stockTag}${countBadge}</div>
+      <div class="feat-info"><div class="feat-name">${p.name}</div><div class="feat-desc">${(p.desc||p.description||'').substring(0,80)}${(p.desc||p.description||'').length>80?'…':''}</div>
+      <div class="feat-bot">${fPrice}${atc}</div></div></div>`;
+  }
+  return `<div class="pcard" onclick="showDetail('${p.id}')">${discBadge}
+    <div class="pimg ${bgClass(p.platform)}">${img}<span class="emoji-icon">${p.icon||'🎮'}</span><span class="plat-tag ${platClass(p.platform)}">${p.platform}</span>${stockTag}${countBadge}</div>
+    <div class="pinfo"><div class="pname">${p.name}</div><div class="pmeta">${p.cat}</div>
+    <div class="pbot">${priceHTML}${atc}</div></div></div>`;
 }
 
-// ── Tabs ──────────────────────────────────────────────────────────────────────
-function showTab(tab) {
-  const navTabs = document.querySelector('.nav-tabs');
-  if (navTabs) navTabs.classList.toggle('hidden', tab === 'home');
-
-  document.querySelectorAll('.nav-tab').forEach((t,i) => {
-    t.classList.toggle('active',
-      (i===0&&tab==='entry') || (i===1&&tab==='records') || (i===2&&tab==='pace') || (i===3&&tab==='settings')
-    );
-  });
-
-  ['tab-home','tab-entry','tab-records','tab-pace','tab-widgets','tab-settings'].forEach(id => {
-    const el = document.getElementById(id);
-    if (el) el.style.display = id === `tab-${tab}` ? '' : 'none';
-  });
-
-  if (tab === 'records')  loadAllRecords();
-  if (tab === 'settings') loadSettings();
-  if (tab === 'pace')     loadPaceRecent();
-  if (tab === 'widgets')  loadWidgets();
-  if (tab === 'entry' && document.getElementById('entry-form')) loadMonth();
-}
-
-// ── CSV Upload ────────────────────────────────────────────────────────────────
-
-function setEntryMode(mode) {
-  document.getElementById('entry-csv').style.display    = mode === 'csv'    ? '' : 'none';
-  document.getElementById('entry-manual').style.display = mode === 'manual' ? '' : 'none';
-  document.getElementById('mode-csv-btn').className    = mode === 'csv'    ? 'btn btn-primary' : 'btn btn-secondary';
-  document.getElementById('mode-manual-btn').className = mode === 'manual' ? 'btn btn-primary' : 'btn btn-secondary';
-}
-
-function downloadPropertyTemplate() {
-  const now = new Date();
-  const y = now.getFullYear();
-  const m = now.getMonth() + 1;
-  const headers = 'property_name,property_type,stat_year,stat_month,rev_actual,rev_budget,arr_actual,arr_budget,rn_actual,rn_budget,occu_actual,occu_budget';
-  const example = [
-    `KAHA,Management,${y},${m},0,1080000,0,120000,0,9,0,30`,
-    `Villa Sayura,Management,${y},${m},0,630000,0,105000,0,6,0,20`,
-    `Garfield Bungalow,Franchise,${y},${m},0,1000000,0,19077,0,15,0,50`,
-    `Garfield Cottage,Franchise,${y},${m},0,1000000,0,19077,0,15,0,50`,
-  ].join('\n');
-  downloadCSVFile(`tonik_property_stats_${y}_${String(m).padStart(2,'0')}.csv`, headers + '\n' + example);
-}
-
-function downloadTonikTemplate() {
-  const now = new Date();
-  const y = now.getFullYear();
-  const m = now.getMonth() + 1;
-  const headers = 'segment,stat_year,stat_month,rev_actual,rev_budget,arr_actual,arr_budget,rn_actual,rn_budget,occu_actual,occu_budget,share_actual,share_budget,villas_actual,villas_budget,rooms_actual,rooms_budget';
-  const example = [
-    `Franchise,${y},${m},0,7556250,0,95384,0,75,0,50,0,1360125,0,5,0,0`,
-    `Management,${y},${m},0,5810805,0,41230,0,450,0,32,0,0,0,15,0,450`,
-  ].join('\n');
-  downloadCSVFile(`tonik_portfolio_stats_${y}_${String(m).padStart(2,'0')}.csv`, headers + '\n' + example);
-}
-
-function downloadCSVFile(filename, content) {
-  const blob = new Blob([content], { type: 'text/csv' });
-  const url  = URL.createObjectURL(blob);
-  const a    = document.createElement('a');
-  a.href = url; a.download = filename; a.click();
-  URL.revokeObjectURL(url);
-}
-
-function parseUploadedCSV(text) {
-  const lines = text.trim().split('\n').map(l => l.trim()).filter(Boolean);
-  const headers = lines[0].split(',').map(h => h.trim().replace(/^"|"$/g,'').toLowerCase());
-  return lines.slice(1).map(line => {
-    const cols = line.split(',').map(c => c.trim().replace(/^"|"$/g,''));
-    const obj = {};
-    headers.forEach((h,i) => obj[h] = cols[i] ?? '');
-    return obj;
-  }).filter(r => Object.values(r).some(v => v));
-}
-
-async function uploadCSV() {
-  const file    = document.getElementById('csv-file').files[0];
-  const type    = document.getElementById('csv-type').value;
-  const preview = document.getElementById('csv-preview');
-
-  if (!file) { showToast('Please select a CSV file.', true); return; }
-
-  const text = await file.text();
-  const rows = parseUploadedCSV(text);
-
-  if (!rows.length) { showToast('No data found in CSV.', true); return; }
-
-  // Show preview
-  preview.innerHTML = `<div style="font-size:12px;color:#73726c;margin-bottom:0.75rem;">${rows.length} row(s) found — previewing first 5:</div>
-    <div class="table-scroll"><table class="data-table" style="min-width:unset;">
-      <thead><tr>${Object.keys(rows[0]).map(h=>`<th>${h}</th>`).join('')}</tr></thead>
-      <tbody>${rows.slice(0,5).map(r=>`<tr>${Object.values(r).map(v=>`<td>${v}</td>`).join('')}</tr>`).join('')}</tbody>
-    </table></div>
-    <div style="margin-top:1rem;display:flex;gap:8px;align-items:center;">
-      <button class="btn btn-primary" onclick="confirmUpload()">✓ Confirm & save ${rows.length} row(s)</button>
-      <button class="btn btn-secondary" onclick="document.getElementById('csv-preview').innerHTML=''">Cancel</button>
-    </div>`;
-
-  // Store for confirm step
-  window._pendingCSVRows = rows;
-  window._pendingCSVType = type;
-}
-
-async function confirmUpload() {
-  const rows = window._pendingCSVRows;
-  const type = window._pendingCSVType;
-  const preview = document.getElementById('csv-preview');
-  if (!rows?.length) return;
-
-  preview.innerHTML = '<div style="font-size:12px;color:#73726c;">Saving…</div>';
-
-  try {
-    let upserts, conflict;
-
-    if (type === 'property') {
-      upserts = rows.map(r => ({
-        property_name: r.property_name,
-        property_type: r.property_type,
-        stat_year:     parseInt(r.stat_year),
-        stat_month:    parseInt(r.stat_month),
-        rev_actual:    parseFloat(r.rev_actual)  || 0,
-        rev_budget:    parseFloat(r.rev_budget)  || 0,
-        arr_actual:    parseFloat(r.arr_actual)  || 0,
-        arr_budget:    parseFloat(r.arr_budget)  || 0,
-        rn_actual:     parseInt(r.rn_actual)     || 0,
-        rn_budget:     parseInt(r.rn_budget)     || 0,
-        occu_actual:   parseFloat(r.occu_actual) || 0,
-        occu_budget:   parseFloat(r.occu_budget) || 0,
-      }));
-      conflict = 'property_name,stat_year,stat_month';
+function refreshATCButtons(){
+  prods.forEach(p=>{
+    const wrap=document.getElementById('atc-'+p.id);
+    if(!wrap) return;
+    const inCart=cart.find(x=>x.id===p.id);
+    const qty=inCart?inCart.qty:0;
+    const addBtn=wrap.querySelector('.atc-add');
+    const ctrl=document.getElementById('atcc-'+p.id);
+    const qel=document.getElementById('atcq-'+p.id);
+    if(!ctrl) return;
+    if(qty===0){
+      if(addBtn){addBtn.style.display='flex';}
+      ctrl.classList.remove('show');
     } else {
-      upserts = rows.map(r => ({
-        segment:       r.segment,
-        stat_year:     parseInt(r.stat_year),
-        stat_month:    parseInt(r.stat_month),
-        rev_actual:    parseFloat(r.rev_actual)    || 0,
-        rev_budget:    parseFloat(r.rev_budget)    || 0,
-        arr_actual:    parseFloat(r.arr_actual)    || 0,
-        arr_budget:    parseFloat(r.arr_budget)    || 0,
-        rn_actual:     parseInt(r.rn_actual)       || 0,
-        rn_budget:     parseInt(r.rn_budget)       || 0,
-        occu_actual:   parseFloat(r.occu_actual)   || 0,
-        occu_budget:   parseFloat(r.occu_budget)   || 0,
-        share_actual:  parseFloat(r.share_actual)  || 0,
-        share_budget:  parseFloat(r.share_budget)  || 0,
-        villas_actual: parseInt(r.villas_actual)   || 0,
-        villas_budget: parseInt(r.villas_budget)   || 0,
-        rooms_actual:  parseInt(r.rooms_actual)    || 0,
-        rooms_budget:  parseInt(r.rooms_budget)    || 0,
-      }));
-      conflict = 'segment,stat_year,stat_month';
+      if(addBtn){addBtn.style.display='none';}
+      ctrl.classList.add('show');
+      if(qel) qel.textContent=qty;
+      else ctrl.innerHTML=`<button class="atc-btn" onclick="event.stopPropagation();decCart('${p.id}')">&#8722;</button><span class="atc-qty" id="atcq-${p.id}">${qty}</span><button class="atc-btn" onclick="event.stopPropagation();incCart('${p.id}')">+</button>`;
     }
+  });
+  updateBadge();
+}
 
-    const table = type === 'property' ? 'property_stats' : 'tonik_stats';
-    const { error } = await sb.from(table).upsert(upserts, { onConflict: conflict });
-    if (error) throw new Error(error.message);
+// ══ CART OPS ══
+function addCart(id){
+  const p=prods.find(x=>x.id===id); if(!p||p.stock==='out') return;
+  const ep=discountedPrice(p);
+  const cartPrice=ep!=null?ep:p.price;
+  const ex=cart.find(x=>x.id===id);
+  // Stock limit enforcement
+  if(p.stockLimit){
+    const currentQty=ex?ex.qty:0;
+    const remaining=parseInt(p.stockQty||0)-currentQty;
+    if(remaining<=0){showCartToast('Sorry — no more stock available!');return;}
+  }
+  if(ex){ex.qty++;}
+  else{cart.push({...p,price:cartPrice,origPrice:p.price,qty:1});}
+  // Decrement stockQty in memory and persist
+  if(p.stockLimit&&p.stockQty!=null){
+    p.stockQty=Math.max(0,parseInt(p.stockQty)-1);
+    if(p.stockQty<=0){
+      p.stock='out';
+      sbUpsert('products',{id:p.id,stock:'out',stockQty:0,stockLimit:true});
+    } else {
+      sbUpsert('products',{id:p.id,stockQty:p.stockQty});
+    }
+  }
+  refreshATCButtons();
+  const label=p.stock==='preorder'?`${p.name} pre-ordered!`:`${p.name} added to cart!`;
+  showCartToast(label);
+}
+function incCart(id){const ex=cart.find(x=>x.id===id);if(ex){ex.qty++;refreshATCButtons();}}
+function decCart(id){
+  const ex=cart.find(x=>x.id===id); if(!ex) return;
+  ex.qty--;
+  if(ex.qty<=0) cart=cart.filter(x=>x.id!==id);
+  refreshATCButtons();
+}
+function removeCartItem(id){cart=cart.filter(x=>x.id!==id);refreshATCButtons();renderCart();}
+function updateBadge(){document.getElementById('cart-count').textContent=cart.reduce((s,x)=>s+x.qty,0);}
 
-    preview.innerHTML = `<div style="background:#e6f6f1;border:1px solid #9FE1CB;border-radius:8px;padding:0.875rem 1rem;font-size:12px;color:#0F6E56;">
-      ✓ ${rows.length} row(s) saved successfully to ${type === 'property' ? 'property stats' : 'portfolio stats'}.
-    </div>`;
-    document.getElementById('csv-file').value = '';
-    window._pendingCSVRows = null;
-    showToast(`${rows.length} rows saved ✓`);
+// ══ RENDER HOME ══
+function renderHome(){
+  const featProds=prods.filter(p=>featured.includes(p.id));
+  const strip=document.getElementById('featured-strip');
+  if(featProds.length){strip.style.display='block';document.getElementById('feat-grid').innerHTML=featProds.map(p=>cardHTML(p,true)).join('');}
+  else{strip.style.display='none';}
+}
 
-  } catch(e) {
-    preview.innerHTML = `<div style="color:#993C1D;font-size:12px;">Error: ${e.message}</div>`;
-    showToast('Upload failed: ' + e.message, true);
+// ══ RENDER SHOP ══
+function filterShop(cat){shopFilter=cat;renderShop();}
+function renderShop(){
+  const cats=['All','Gift Cards','Games','In-Game Currency','DLC','Subscription'];
+  document.getElementById('shop-cats').innerHTML=cats.map(c=>`<button class="chip${c===shopFilter?' on':''}" onclick="filterShop('${c}')">${c}</button>`).join('');
+  const filtered=shopFilter==='All'?prods:prods.filter(p=>p.cat===shopFilter);
+  document.getElementById('shop-title').textContent=shopFilter==='All'?'All Products':shopFilter;
+  document.getElementById('shop-grid').innerHTML=filtered.map(p=>cardHTML(p)).join('')||'<p style="color:var(--muted);font-size:13px">No products in this category.</p>';
+}
+
+// ══ DETAIL ══
+function showDetail(id){
+  const p=prods.find(x=>x.id===id); if(!p) return;
+  detFrom=document.getElementById('sv-shop').classList.contains('active')?'shop':'home';
+  const img=p.img?`<img src="${p.img}" alt="${p.name}" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover" onerror="this.style.display='none'"/>`:'' ;
+  document.getElementById('det-img').className=`det-img ${bgClass(p.platform)}`;
+  document.getElementById('det-img').innerHTML=`${img}<span class="det-emoji">${p.icon||'🎮'}</span>`;
+  // Badge row: platform + stock status
+  const isOut=p.stock==='out';
+  const isPreorder=p.stock==='preorder';
+  const stockBadge=p.stock==='low'?`<span class="sbadge s-low" style="margin-left:8px">Low Stock</span>`:isOut?`<span class="sbadge s-out" style="margin-left:8px">Out of Stock</span>`:isPreorder?`<span style="background:rgba(139,92,246,.15);color:#a78bfa;border:1px solid rgba(139,92,246,.3);font-size:11px;padding:2px 9px;border-radius:10px;font-weight:500;margin-left:8px">Pre-Order</span>`:'';
+  const qBadge=(p.stockLimit&&parseInt(p.stockQty)>0&&parseInt(p.stockQty)<=5)?`<span style="font-size:11px;color:#eab308;margin-left:8px">Only ${p.stockQty} left</span>`:'';
+  document.getElementById('det-badge').innerHTML=`<div style="display:flex;align-items:center;flex-wrap:wrap;gap:4px;margin-bottom:10px"><span class="plat-tag ${platClass(p.platform)}" style="position:relative;display:inline-block">${p.platform} &middot; ${p.cat}</span>${stockBadge}${qBadge}</div>`;
+  document.getElementById('det-name').textContent=p.name;
+  // Pricing
+  const dp=discountedPrice(p); const dl=discountLabel(p);
+  if(dp!=null){
+    document.getElementById('det-price').innerHTML=`<div class="det-price-block"><div class="det-orig">${priceFmt(p.price)}</div><div style="font-family:var(--font-price);font-size:34px;color:var(--col-price);font-weight:700">${priceFmt(dp)}</div><span class="det-save">${dl} &nbsp; Save ${priceFmt(p.price-dp)}</span></div>`;
+  } else {
+    document.getElementById('det-price').innerHTML=`<div style="font-family:var(--font-price);font-size:34px;color:var(--col-price);font-weight:700;margin:14px 0">${priceFmt(p.price)}</div>`;
+  }
+  // Pre-order note
+  let descText=p.desc||p.description||'';
+  if(isPreorder&&p.preorderNote) descText=(p.preorderNote?`📅 ${p.preorderNote}\n\n`:'')+descText;
+  document.getElementById('det-desc').textContent=descText;
+  document.getElementById('det-tags').innerHTML=(p.tags||'').split(',').filter(Boolean).map(t=>`<span class="dtag">${t.trim()}</span>`).join('');
+  document.getElementById('det-back').onclick=()=>storeGo(detFrom);
+  const addBtn=document.getElementById('det-add');
+  if(isOut){
+    addBtn.textContent='Out of Stock'; addBtn.disabled=true; addBtn.style.opacity='.5';
+    addBtn.style.background='rgba(239,68,68,.15)'; addBtn.style.color='#f87171'; addBtn.style.cursor='not-allowed';
+  } else if(isPreorder){
+    addBtn.textContent='Pre-Order Now'; addBtn.disabled=false; addBtn.style.opacity='1';
+    addBtn.style.background='rgba(139,92,246,.9)'; addBtn.style.color='#fff'; addBtn.style.cursor='pointer';
+    addBtn.onclick=()=>{addCart(p.id);storeGo('cart');};
+  } else {
+    addBtn.textContent='Add to Cart'; addBtn.disabled=false; addBtn.style.opacity='1';
+    addBtn.style.background=''; addBtn.style.color=''; addBtn.style.cursor='pointer';
+    addBtn.onclick=()=>{addCart(p.id);storeGo('cart');};
+  }
+  storeGo('detail');
+}
+
+// ══ CART RENDER ══
+function renderCart(){
+  const el=document.getElementById('cart-items'),sb=document.getElementById('cart-sum');
+  if(!cart.length){
+    el.innerHTML=`<div class="empty-cart"><div style="font-size:52px;margin-bottom:14px">🛒</div><p>Your cart is empty.</p><br><br><button class="btn-p" onclick="storeGo('shop')">Browse Products</button></div>`;
+    sb.innerHTML='';return;
+  }
+  el.innerHTML=cart.map(item=>`<div class="citem">
+    <div class="citem-icon ${bgClass(item.platform)}">${item.img?`<img src="${item.img}" onerror="this.style.display='none'"/>`:''}<span>${item.icon||'🎮'}</span></div>
+    <div class="citem-info">
+      <div class="citem-name">${item.name}</div>
+      <div class="citem-meta">${item.platform} &middot; ${item.cat}</div>
+      <div class="qty-ctrl">
+        <button class="qty-btn" onclick="cartQty('${item.id}',-1)">&#8722;</button>
+        <span class="qty-num">${item.qty}</span>
+        <button class="qty-btn" onclick="cartQty('${item.id}',1)">+</button>
+      </div>
+    </div>
+    <div class="citem-price">${priceFmt(item.price*item.qty)}</div>
+    <button class="cremove" onclick="removeCartItem('${item.id}')">&#10005;</button>
+  </div>`).join('');
+  const sub=cart.reduce((s,x)=>s+(x.price*x.qty),0);
+  sb.innerHTML=`<div class="csum">
+    <div class="crow"><span>Subtotal (${cart.reduce((s,x)=>s+x.qty,0)} items)</span><span>${priceFmt(sub)}</span></div>
+    <div class="crow"><span>Delivery</span><span style="color:var(--col-heading)">Instant Digital</span></div>
+    <div class="ctotal"><span>Total</span><span class="ctotal-val">${priceFmt(sub)}</span></div>
+    <button class="ckbtn" onclick="storeGo('checkout')">Proceed to Checkout &#8594;</button>
+  </div>`;
+}
+function cartQty(id,d){const i=cart.find(x=>x.id===id);if(i){i.qty=Math.max(1,i.qty+d);}refreshATCButtons();renderCart();}
+
+// ══ CHECKOUT ══
+function renderCkSum(){
+  const sub=cart.reduce((s,x)=>s+(x.price*x.qty),0);
+  document.getElementById('ck-order-sum').innerHTML=`<div style="font-size:12px;color:var(--muted);margin-bottom:8px">Order Summary</div>`+
+    cart.map(i=>`<div style="display:flex;justify-content:space-between;font-size:13px;margin-bottom:5px"><span>${i.name} ×${i.qty}</span><span style="color:var(--col-price)">${priceFmt(i.price*i.qty)}</span></div>`).join('')+
+    `<div style="display:flex;justify-content:space-between;font-size:15px;font-weight:600;border-top:1px solid var(--border);padding-top:10px;margin-top:8px"><span>Total</span><span style="color:var(--col-price)">${priceFmt(sub)}</span></div>`;
+  document.getElementById('ck-pay-label').textContent=settings.pay||'(e.g. PayHere, Stripe, PayPal)';
+}
+
+// ══ EMAILJS ══
+async function sendOrderEmail(order){
+  const cfg=ejsConfig;
+  const svcId=cfg.serviceId||EMAILJS_SERVICE_ID;
+  const tplId=cfg.templateId||EMAILJS_TEMPLATE_ID;
+  const pubKey=cfg.pubkey||EMAILJS_PUBLIC_KEY;
+  if(!svcId||!tplId||!pubKey){console.warn('EmailJS not configured — skipping email.');return;}
+  try{
+    emailjs.init(pubKey);
+    const itemsText=order.items.map(i=>`${i.name} x${i.qty} — ${currency}${(i.price*i.qty).toFixed(2)}`).join('\n');
+    const params = {
+      to_email:order.email,
+      cc_email:cfg.adminEmail||ADMIN_EMAIL,
+      order_id:order.id,
+      customer_name:order.customer,
+      customer_email:order.email,
+      customer_country:order.country||'N/A',
+      customer_phone:order.phone||'N/A',
+      order_items:itemsText,
+      order_total:currency+order.total.toFixed(2),
+      order_date:order.date+' '+order.time,
+      admin_email:cfg.adminEmail||ADMIN_EMAIL,
+      reply_to:order.email,
+    };
+    const result = await emailjs.send(svcId,tplId,params);
+    console.log('Order email sent:',result.status,result.text);
+  }catch(e){
+    console.error('EmailJS error:',e.text||e.message||e);
   }
 }
 
-// ── Load month ────────────────────────────────────────────────────────────────
-async function loadMonth() {
-  const month = +document.getElementById('sel-month').value;
-  const year  = +document.getElementById('sel-year').value;
-  const form  = document.getElementById('entry-form');
-  form.innerHTML = '<div class="loading-overlay">Loading existing data…</div>';
+// ══ SETTINGS ══
+function applySettings(){
+  currency=settings.currency||'Rs.';
+  if(settings.hero) document.getElementById('hero-title').innerHTML=settings.hero;
+  if(settings.sub) document.getElementById('hero-sub').textContent=settings.sub;
+  if(settings.footer) document.getElementById('store-footer').textContent=settings.footer;
+}
 
-  const [{ data: ps }, { data: ts }] = await Promise.all([
-    sb.from('property_stats').select('*').eq('stat_year', year).eq('stat_month', month),
-    sb.from('tonik_stats').select('*').eq('stat_year', year).eq('stat_month', month),
-  ]);
+// ══ DESIGN ══
+function applyDesign(){
+  const r=document.documentElement.style;
+  r.setProperty('--font-head',design.fontHead);
+  r.setProperty('--font-body',design.fontBody);
+  r.setProperty('--font-price',design.fontPrice);
+  r.setProperty('--col-heading',design.colHeading);
+  r.setProperty('--col-body',design.colBody);
+  r.setProperty('--col-price',design.colPrice);
+  r.setProperty('--col-btn-bg',design.colBtnBg);
+  r.setProperty('--col-btn-text',design.colBtnText);
+  r.setProperty('--col-nav-bg',design.colNav);
+  r.setProperty('--col-card-bg',design.colCard);
+  const map=[['dc-heading','dh-hex','colHeading'],['dc-body','db-hex','colBody'],['dc-price','dp-hex','colPrice'],['dc-btnbg','dbb-hex','colBtnBg'],['dc-btntext','dbt-hex','colBtnText'],['dc-nav','dn-hex','colNav'],['dc-card','dcard-hex','colCard']];
+  map.forEach(([pid,tid,dk])=>{const pe=document.getElementById(pid),te=document.getElementById(tid);if(pe)pe.value=design[dk]||'#000000';if(te)te.value=design[dk]||'#000000';});
+  const fh=document.getElementById('d-font-head'),fb=document.getElementById('d-font-body'),fp=document.getElementById('d-font-price');
+  if(fh)fh.value=design.fontHead; if(fb)fb.value=design.fontBody; if(fp)fp.value=design.fontPrice;
+  previewDesign();
+}
+function syncHex(c,id){const el=document.getElementById(id);if(el)el.value=c.value;}
+function syncColor(h,id){if(/^#[0-9a-fA-F]{6}$/.test(h.value)){const el=document.getElementById(id);if(el)el.value=h.value;}}
+function previewDesign(){
+  const fh=document.getElementById('d-font-head')?.value||design.fontHead;
+  const ch=document.getElementById('dc-heading')?.value||design.colHeading;
+  const cb=document.getElementById('dc-body')?.value||design.colBody;
+  const cp=document.getElementById('dc-price')?.value||design.colPrice;
+  const cbg=document.getElementById('dc-btnbg')?.value||design.colBtnBg;
+  const cbt=document.getElementById('dc-btntext')?.value||design.colBtnText;
+  const logo=document.getElementById('pv-logo'),body=document.getElementById('pv-body'),price=document.getElementById('pv-price'),btn=document.getElementById('pv-btn');
+  if(logo){logo.style.fontFamily=fh;logo.style.color=ch;}
+  if(body)body.style.color=cb;
+  if(price){price.style.color=cp;}
+  if(btn){btn.style.background=cbg;btn.style.color=cbt;}
+}
+async function saveDesign(){
+  design={fontHead:document.getElementById('d-font-head').value,fontBody:document.getElementById('d-font-body').value,fontPrice:document.getElementById('d-font-price').value,colHeading:document.getElementById('dc-heading').value,colBody:document.getElementById('dc-body').value,colPrice:document.getElementById('dc-price').value,colBtnBg:document.getElementById('dc-btnbg').value,colBtnText:document.getElementById('dc-btntext').value,colNav:document.getElementById('dc-nav').value,colCard:document.getElementById('dc-card').value};
+  await setSettingVal('design',design); applyDesign(); renderHome(); renderShop(); showCMSToast('toast-design');
+}
+async function resetDesign(){design={...DEFAULT_DESIGN};await setSettingVal('design',design);applyDesign();showCMSToast('toast-design');}
 
-  const propMap = {}; (ps||[]).forEach(r => propMap[r.property_name] = r);
-  const segMap  = {}; (ts||[]).forEach(r => segMap[r.segment] = r);
+// ══ CMS LOGIN ══
+function cmsLogin(){
+  const u=document.getElementById('cms-un').value.trim();
+  const p=document.getElementById('cms-pw').value;
+  const match=adminUsers.find(a=>a.username===u&&a.password===p);
+  if(match){
+    currentUser=match;
+    document.getElementById('cms-login').style.display='none';
+    document.getElementById('cms-shell').classList.add('on');
+    initCMSShell();
+    // Log the login
+    const actor=match.display_name||match.displayName||match.username;
+    writeLog('login',`${actor} signed in`,actor,{role:match.role});
+  } else {
+    document.getElementById('login-err').textContent='Invalid username or password.';
+  }
+}
+document.getElementById('cms-pw').addEventListener('keydown',e=>{if(e.key==='Enter')cmsLogin();});
+document.getElementById('cms-un').addEventListener('keydown',e=>{if(e.key==='Enter')cmsLogin();});
+function cmsLogout(){
+  currentUser=null;
+  document.getElementById('cms-shell').classList.remove('on');
+  document.getElementById('cms-login').style.display='flex';
+  document.getElementById('cms-un').value='';
+  document.getElementById('cms-pw').value='';
+  document.getElementById('login-err').textContent='';
+}
 
-  const fi = (name, label, val) =>
-    `<div><div class="input-sub">${label}</div><input type="number" name="${name}" value="${val||''}" placeholder="0" step="any" /></div>`;
+async function initCMSShell(){
+  const sbProds=await sbGet('products'); prods=sbProds&&sbProds.length?sbProds.map(p=>({...p,desc:p.description})):DEFAULT_PRODS;
+  const sbSettings=await getSettingVal('main'); settings=sbSettings||{};
+  const sbDesign=await getSettingVal('design'); if(sbDesign) design={...DEFAULT_DESIGN,...sbDesign};
+  const sbOrders=await sbGet('orders'); orders=sbOrders||[];
+  const sbFeat=await getSettingVal('featured'); featured=sbFeat||[];
+  const sbEjs=await getSettingVal('emailjs'); ejsConfig=sbEjs||{};
+  const sbAdmins=await sbGet('admins'); adminUsers=sbAdmins||[];
+  const sbDisc=await getSettingVal('discounts'); discounts=sbDisc||{};
+  const sbBan=await getSettingVal('banner'); bannerSlides=sbBan||[];
+  const sbLog=await sbGet('activity_log'); activityLog=sbLog?sbLog.sort((a,b)=>b.ts_ms-a.ts_ms):[];
+  document.getElementById('s-name').value=settings.storeName||'XPFlex';
+  document.getElementById('s-hero').value=settings.hero||'';
+  document.getElementById('s-sub').value=settings.sub||'';
+  document.getElementById('s-email').value=settings.email||'';
+  document.getElementById('s-pay').value=settings.pay||'';
+  document.getElementById('s-footer').value=settings.footer||'';
+  document.getElementById('s-currency').value=settings.currency||'Rs.';
+  const csEl=document.getElementById('s-coming-soon');
+  if(csEl)csEl.checked=!!settings.comingSoon;
+  document.getElementById('ejs-service').value=ejsConfig.serviceId||'';
+  document.getElementById('ejs-template').value=ejsConfig.templateId||'';
+  document.getElementById('ejs-pubkey').value=ejsConfig.pubkey||'';
+  document.getElementById('ejs-adminemail').value=ejsConfig.adminEmail||ADMIN_EMAIL;
+  const isSuperAdmin=currentUser&&currentUser.role==='superadmin';
+  const adminsTab=document.getElementById('tab-admins');
+  if(adminsTab) adminsTab.style.display=isSuperAdmin?'':'none';
+  document.querySelector('.signout').textContent=(currentUser?.display_name||currentUser?.displayName||currentUser?.username||'User')+' — Sign out';
+  applyDesign(); refreshDash(); renderCMSProds(); renderCMSOrders();
+  // Initialise date filter to all-time on first load
+  setTimeout(()=>setDatePreset('all'),0);
+  document.getElementById('dash-date').textContent=new Date().toLocaleDateString('en-GB',{weekday:'long',year:'numeric',month:'long',day:'numeric'});
+}
 
-  const propCards = PROPERTIES.map(p => {
-    const d = propMap[p.name] || {};
-    return `<div class="prop-card" data-prop="${p.name}" data-type="${p.type}">
-      <div class="prop-card-header"><div class="prop-name">${p.name}</div><div class="prop-type">${p.type}</div></div>
-      <div class="stat-grid">
-        <div><div class="stat-label">Revenue (LKR)</div><div class="stat-inputs">${fi('rev_actual','Actual',d.rev_actual)}${fi('rev_budget','Budget',d.rev_budget)}</div></div>
-        <div><div class="stat-label">Room nights</div><div class="stat-inputs">${fi('rn_actual','Actual',d.rn_actual)}${fi('rn_budget','Budget',d.rn_budget)}</div></div>
-        <div><div class="stat-label">ARR (LKR)</div><div class="stat-inputs">${fi('arr_actual','Actual',d.arr_actual)}${fi('arr_budget','Budget',d.arr_budget)}</div></div>
-        <div><div class="stat-label">Occupancy (%)</div><div class="stat-inputs">${fi('occu_actual','Actual',d.occu_actual)}${fi('occu_budget','Budget',d.occu_budget)}</div></div>
+function cmsTab(t){
+  if(t==='admins'&&currentUser?.role!=='superadmin'){return;}
+  document.querySelectorAll('.cpanel').forEach(p=>p.classList.remove('on'));
+  document.querySelectorAll('.ctab').forEach(b=>b.classList.remove('on'));
+  const panel=document.getElementById('cp-'+t);
+  if(panel) panel.classList.add('on');
+  const tabs=['dash','prods','add','featured','discounts','banner','orders','design','settings','admins','activity'];
+  const i=tabs.indexOf(t);
+  if(i>-1){const btns=document.querySelectorAll('.ctab');if(btns[i])btns[i].classList.add('on');}
+  if(t==='featured') renderFeatPicker();
+  if(t==='admins') renderAdminsPanel();
+  if(t==='discounts') renderDiscList();
+  if(t==='banner') renderBannerCMS();
+  if(t==='activity') renderActivityLog();
+}
+
+// ══ ADMIN USERS MANAGEMENT ══
+function renderAdminsPanel(){
+  const isSuperAdmin=currentUser?.role==='superadmin';
+  document.getElementById('admins-locked').style.display=isSuperAdmin?'none':'block';
+  document.getElementById('admins-content').style.display=isSuperAdmin?'block':'none';
+  document.getElementById('admins-superonly').textContent=isSuperAdmin?'Super Admin access':'Editor access — restricted';
+  if(!isSuperAdmin) return;
+  renderAdminsTbl();
+}
+
+function renderAdminsTbl(){
+  const el=document.getElementById('admins-tbl');
+  if(!adminUsers.length){el.innerHTML='<div style="padding:24px;text-align:center;color:var(--muted);font-size:13px">No admins yet.</div>';return;}
+  el.innerHTML=`<table class="tbl" style="table-layout:fixed;width:100%">
+    <thead><tr><th>Username</th><th>Display Name</th><th>Role</th><th>Email</th><th style="width:80px">Added</th><th style="width:80px">Actions</th></tr></thead>
+    <tbody>${adminUsers.map(a=>`<tr>
+      <td style="font-family:'Share Tech Mono',monospace;font-size:12px">${a.username}${a.username===SUPER_ADMIN_USER?` <span style="font-size:10px;background:rgba(0,240,160,.15);color:var(--neon);border:1px solid rgba(0,240,160,.3);padding:1px 6px;border-radius:4px">you</span>`:''}</td>
+      <td style="font-weight:500">${a.displayName||'—'}</td>
+      <td><span class="sbadge ${a.role==='superadmin'?'o-complete':'o-pending'}">${a.role==='superadmin'?'Super Admin':'Editor'}</span></td>
+      <td style="color:var(--muted);font-size:12px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${a.email||'—'}</td>
+      <td style="color:var(--muted);font-size:12px">${a.createdAt||'—'}</td>
+      <td>${a.username===SUPER_ADMIN_USER?`<span style="font-size:11px;color:var(--muted)">Protected</span>`:`<button class="bdanger" onclick="removeAdmin('${a.id}')" style="padding:4px 9px">&#128465;</button>`}</td>
+    </tr>`).join('')}</tbody>
+  </table>`;
+}
+
+
+// ══ DASHBOARD DATE FILTER ══
+function parseOrderDate(o){
+  // Orders store date as "DD/MM/YYYY" (en-GB locale)
+  if(!o.date) return null;
+  const parts=o.date.split('/');
+  if(parts.length===3) return new Date(+parts[2],+parts[1]-1,+parts[0]);
+  return new Date(o.date);
+}
+function setDatePreset(preset){
+  const now=new Date(); now.setHours(0,0,0,0);
+  const fmt=d=>`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+  const fromEl=document.getElementById('df-from');
+  const toEl=document.getElementById('df-to');
+  const today=fmt(now);
+  document.querySelectorAll('[id^="df-"]').forEach(b=>{if(b.tagName==='BUTTON'){b.style.color='';b.style.borderColor='';}});
+  const setActive=id=>{const b=document.getElementById(id);if(b){b.style.color='var(--neon)';b.style.borderColor='rgba(0,240,160,.5)';}};
+  if(preset==='today'){
+    fromEl.value=today; toEl.value=today; setActive('df-today');
+  } else if(preset==='7'){
+    const d=new Date(now); d.setDate(d.getDate()-6);
+    fromEl.value=fmt(d); toEl.value=today; setActive('df-7');
+  } else if(preset==='30'){
+    const d=new Date(now); d.setDate(d.getDate()-29);
+    fromEl.value=fmt(d); toEl.value=today; setActive('df-30');
+  } else if(preset==='month'){
+    fromEl.value=fmt(new Date(now.getFullYear(),now.getMonth(),1)); toEl.value=today; setActive('df-month');
+  } else if(preset==='all'){
+    fromEl.value=''; toEl.value=''; setActive('df-all');
+  }
+  // custom — just use whatever is in the inputs
+  refreshDash();
+}
+function getFilteredOrders(){
+  const fromVal=document.getElementById('df-from')?.value;
+  const toVal=document.getElementById('df-to')?.value;
+  if(!fromVal&&!toVal) return orders;
+  const from=fromVal?new Date(fromVal):null;
+  const to=toVal?new Date(toVal):null;
+  if(to) to.setHours(23,59,59,999);
+  return orders.filter(o=>{
+    const d=parseOrderDate(o); if(!d) return true;
+    if(from&&d<from) return false;
+    if(to&&d>to) return false;
+    return true;
+  });
+}
+
+// ══ DASHBOARD ══
+function sBadge(s,p=null){
+  if(s==='preorder') return `<span class="sbadge" style="background:rgba(139,92,246,.12);color:#a78bfa;border:1px solid rgba(139,92,246,.3)">Pre-Order</span>`;
+  const m={in:'s-in',low:'s-low',out:'s-out'};
+  const l={in:'In Stock',low:'Low Stock',out:'Out of Stock'};
+  let badge=`<span class="sbadge ${m[s]||'s-in'}">${l[s]||'In Stock'}</span>`;
+  if(p&&p.stockLimit&&p.stockQty!=null&&s!=='out'){
+    const q=parseInt(p.stockQty);
+    badge+=`<br/><span style="font-size:10px;color:${q<=5?'#eab308':'var(--muted)'}">${q} left</span>`;
+  }
+  return badge;
+}
+function refreshDash(){
+  // Catalogue (always all-time)
+  document.getElementById('ds-total').textContent=prods.length;
+  document.getElementById('ds-gc').textContent=prods.filter(p=>p.cat==='Gift Cards').length;
+  document.getElementById('ds-games').textContent=prods.filter(p=>p.cat==='Games').length;
+  document.getElementById('ds-feat').textContent=featured.length;
+  document.getElementById('ds-disc').textContent=Object.values(discounts).filter(d=>discIsActive(d)).length;
+
+  // Date-filtered orders
+  const filtered=getFilteredOrders();
+  const fromVal=document.getElementById('df-from')?.value;
+  const toVal=document.getElementById('df-to')?.value;
+  const labelEl=document.getElementById('df-label');
+  if(labelEl){
+    if(!fromVal&&!toVal) labelEl.textContent='All time · '+filtered.length+' orders';
+    else if(fromVal===toVal&&fromVal) labelEl.textContent=fromVal+' · '+filtered.length+' orders';
+    else labelEl.textContent=(fromVal||'…')+' → '+(toVal||'…')+' · '+filtered.length+' orders';
+  }
+
+  // Analytics on filtered set
+  const pending=filtered.filter(o=>o.status==='pending');
+  const complete=filtered.filter(o=>o.status==='complete');
+  const cancelled=filtered.filter(o=>o.status==='cancelled');
+  const revenue=complete.reduce((s,o)=>s+parseFloat(o.total||0),0);
+  const itemsSold=complete.reduce((s,o)=>s+(o.items?o.items.reduce((a,i)=>a+i.qty,0):0),0);
+  document.getElementById('ds-orders').textContent=filtered.length;
+  document.getElementById('ds-revenue').textContent=currency+revenue.toFixed(2);
+  document.getElementById('ds-items-sold').textContent=itemsSold;
+  document.getElementById('ds-pending').textContent=pending.length;
+  document.getElementById('ds-complete').textContent=complete.length;
+  document.getElementById('ds-cancelled').textContent=cancelled.length;
+
+  // Top products by revenue (completed only, filtered)
+  const prodRev={};
+  complete.forEach(o=>(o.items||[]).forEach(i=>{if(!prodRev[i.name])prodRev[i.name]=0;prodRev[i.name]+=(i.price||0)*i.qty;}));
+  const topProds=Object.entries(prodRev).sort((a,b)=>b[1]-a[1]).slice(0,5);
+  document.getElementById('dash-top-prods').innerHTML=topProds.length?topProds.map(([name,rev],i)=>`
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px">
+      <span style="font-size:11px;color:var(--muted);min-width:14px">${i+1}.</span>
+      <div style="flex:1;background:var(--bg3);border-radius:4px;height:6px;overflow:hidden">
+        <div style="height:100%;background:var(--neon);width:${Math.round((rev/topProds[0][1])*100)}%;border-radius:4px"></div>
+      </div>
+      <span style="font-size:12px;color:var(--text);white-space:nowrap;max-width:120px;overflow:hidden;text-overflow:ellipsis" title="${name}">${name}</span>
+      <span style="font-size:12px;color:var(--neon);min-width:52px;text-align:right">${currency}${rev.toFixed(2)}</span>
+    </div>`).join(''):'<p style="color:var(--muted);font-size:13px">No completed orders in this period.</p>';
+
+  // Status chart (filtered)
+  const total=Math.max(1,filtered.length);
+  document.getElementById('dash-status-chart').innerHTML=filtered.length?[
+    {label:'Pending',count:pending.length,color:'#eab308'},
+    {label:'Completed',count:complete.length,color:'#4ade80'},
+    {label:'Cancelled',count:cancelled.length,color:'#f87171'},
+  ].map(r=>`
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px">
+      <span style="font-size:12px;color:var(--muted);min-width:72px">${r.label}</span>
+      <div style="flex:1;background:var(--bg3);border-radius:4px;height:8px;overflow:hidden">
+        <div style="height:100%;background:${r.color};width:${Math.round((r.count/total)*100)}%;border-radius:4px;transition:width .4s"></div>
+      </div>
+      <span style="font-size:12px;font-weight:600;color:${r.color};min-width:30px;text-align:right">${r.count}</span>
+    </div>`).join(''):'<p style="color:var(--muted);font-size:13px">No orders in this period.</p>';
+
+  // Recent orders (filtered, latest 6)
+  const rec=filtered.slice(0,6);
+  document.getElementById('dash-orders').innerHTML=rec.length?`<table class="tbl"><thead><tr><th>Order</th><th>Customer</th><th>Total</th><th>Status</th><th>Updated by</th><th>Date</th></tr></thead><tbody>${rec.map(o=>`<tr>
+    <td style="font-family:'Share Tech Mono',monospace;font-size:11px">${o.id}</td>
+    <td>${o.customer}</td>
+    <td class="gv">${currency}${parseFloat(o.total).toFixed(2)}</td>
+    <td><span class="sbadge o-${o.status}">${o.status}</span></td>
+    <td style="font-size:11px;color:var(--muted)">${o.updated_by||'—'}</td>
+    <td style="color:var(--muted)">${o.date||''}</td>
+  </tr>`).join('')}</tbody></table>`:'<p style="color:var(--muted);font-size:13px;padding:8px 0">No orders in this period.</p>';
+}
+
+// ══ CMS PRODUCTS ══
+function renderCMSProds(){
+  const el=document.getElementById('prod-tbl');
+  if(!prods.length){el.innerHTML='<div style="padding:32px;text-align:center;color:var(--muted);font-size:13px">No products yet.</div>';return;}
+  el.innerHTML=`<table class="tbl" style="table-layout:fixed;width:100%">
+    <thead><tr><th style="width:36px"></th><th>Name</th><th style="width:90px">Platform</th><th style="width:72px">Price</th><th style="width:110px">Stock</th><th style="width:60px">Featured</th><th style="width:80px">Actions</th></tr></thead>
+    <tbody>${prods.map(p=>`<tr>
+      <td>${p.img?`<img src="${p.img}" style="width:28px;height:28px;object-fit:cover;border-radius:4px" onerror="this.style.display='none'"/>`:(p.icon||'🎮')}</td>
+      <td style="font-weight:500;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${p.name}">${p.name}</td>
+      <td><span class="ppill">${p.platform}</span></td>
+      <td class="gv">${currency}${parseFloat(p.price).toFixed(2)}</td>
+      <td>${sBadge(p.stock,p)}</td>
+      <td style="text-align:center">${featured.includes(p.id)?'<span style="color:var(--neon)">&#11088;</span>':''}</td>
+      <td style="display:flex;gap:5px">
+        <button class="bsm" onclick="editProd('${p.id}')" style="padding:4px 9px">&#9998;</button>
+        <button class="bdanger" onclick="delProd('${p.id}')" style="padding:4px 9px">&#128465;</button>
+      </td>
+    </tr>`).join('')}</tbody>
+  </table>`;
+}
+
+// ══ FEATURED PICKER ══
+function renderFeatPicker(){
+  document.getElementById('feat-picker').innerHTML=prods.map(p=>`
+    <label class="feat-toggle">
+      <input type="checkbox" value="${p.id}" ${featured.includes(p.id)?'checked':''} />
+      <span>${p.icon||'🎮'}</span> <span style="font-weight:500">${p.name}</span>
+      <span style="margin-left:auto;color:var(--muted);font-size:12px">${p.platform} &middot; ${currency}${parseFloat(p.price).toFixed(2)}</span>
+    </label>
+  `).join('');
+}
+
+async function saveFeatured(){
+  featured=Array.from(document.querySelectorAll('#feat-picker input:checked')).map(el=>el.value);
+  await setSettingVal('featured',featured);
+  refreshDash(); renderCMSProds(); renderHome();
+  showCMSToast('toast-feat');
+}
+
+// ══ SAVE PRODUCT ══
+async function saveProd(){
+  const name=document.getElementById('f-name').value.trim();
+  const price=parseFloat(document.getElementById('f-price').value);
+  if(!name||isNaN(price)){alert('Please enter at least a name and price.');return;}
+  const stockVal=document.getElementById('f-stock').value;
+  const stockLimit=document.getElementById('f-stock-limit')?.checked||false;
+  const stockQty=stockLimit?parseInt(document.getElementById('f-stock-qty')?.value||0):null;
+  const preorderNote=document.getElementById('f-preorder-note')?.value.trim()||'';
+  // Auto-mark out of stock if limit active and qty is 0
+  const finalStock=(stockLimit&&stockQty===0)?'out':stockVal;
+  const bnpl=document.getElementById('f-bnpl')?.checked||false;
+  const bnplLogos=bnpl?[0,1,2].map(i=>(document.getElementById(`f-bnpl-logo-${i}`)?.value||'').trim()).filter(Boolean):[];
+  const p={
+    id:editId||('p'+Date.now()),name,price,
+    cat:document.getElementById('f-cat').value,
+    platform:document.getElementById('f-plat').value,
+    icon:document.getElementById('f-icon').value||'🎮',
+    img:document.getElementById('f-img').value.trim(),
+    description:document.getElementById('f-desc').value.trim(),
+    tags:document.getElementById('f-tags').value.trim(),
+    stock:finalStock,
+    stockLimit,stockQty,preorderNote,bnpl,bnplLogos,
+  };
+  await sbUpsert('products',p);
+  const actor=currentUser?.display_name||currentUser?.displayName||currentUser?.username||'Unknown';
+  await writeLog('product',`Product "${p.name}" ${editId?'updated':'added'}`,actor,{product:p.name,action:editId?'edit':'add'});
+  if(editId){const i=prods.findIndex(x=>x.id===editId);if(i>-1)prods[i]={...p,desc:p.description};else prods.push({...p,desc:p.description});}
+  else{prods.push({...p,desc:p.description});}
+  clearForm(); refreshDash(); renderCMSProds(); renderHome(); renderShop();
+  cmsTab('prods');
+  showCMSToast('toast-prods');
+}
+
+function editProd(id){
+  const p=prods.find(x=>x.id===id); if(!p) return;
+  editId=id;
+  document.getElementById('f-name').value=p.name;
+  document.getElementById('f-price').value=p.price;
+  document.getElementById('f-cat').value=p.cat;
+  document.getElementById('f-plat').value=p.platform;
+  document.getElementById('f-icon').value=p.icon||'';
+  document.getElementById('f-img').value=p.img||'';
+  document.getElementById('f-desc').value=p.desc||p.description||'';
+  document.getElementById('f-tags').value=p.tags||'';
+  document.getElementById('f-stock').value=p.stock||'in';
+  const slEl=document.getElementById('f-stock-limit');
+  if(slEl){slEl.checked=!!p.stockLimit;toggleStockQty();}
+  const sqEl=document.getElementById('f-stock-qty');
+  if(sqEl)sqEl.value=p.stockQty||0;
+  const pnEl=document.getElementById('f-preorder-note');
+  if(pnEl)pnEl.value=p.preorderNote||'';
+  const bnplEl=document.getElementById('f-bnpl');
+  if(bnplEl){bnplEl.checked=!!p.bnpl;toggleBNPLFields();}
+  const logos=p.bnplLogos||[];
+  [0,1,2].forEach(i=>{const el=document.getElementById(`f-bnpl-logo-${i}`);if(el)el.value=logos[i]||'';});
+  if(p.bnpl)updateBNPLPreview();
+  document.getElementById('add-title').textContent='Edit Product';
+  toggleStockFields();
+  cmsTab('add');
+}
+
+async function delProd(id){
+  if(!confirm('Delete this product?')) return;
+  await sbDelete('products',id);
+  prods=prods.filter(p=>p.id!==id);
+  featured=featured.filter(f=>f!==id);
+  await setSettingVal('featured',featured);
+  refreshDash(); renderCMSProds();
+  showCMSToast('toast-prods');
+}
+
+function clearForm(){
+  editId=null;
+  ['f-name','f-price','f-icon','f-img','f-desc','f-tags','f-preorder-note','f-bnpl-logo-0','f-bnpl-logo-1','f-bnpl-logo-2'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
+  document.getElementById('f-cat').value='Gift Cards';
+  document.getElementById('f-plat').value='Steam';
+  document.getElementById('f-stock').value='in';
+  const sl=document.getElementById('f-stock-limit');if(sl)sl.checked=false;
+  const sq=document.getElementById('f-stock-qty');if(sq)sq.value='';
+  const bnplEl=document.getElementById('f-bnpl');if(bnplEl)bnplEl.checked=false;
+  document.getElementById('add-title').textContent='Add Product';
+  toggleStockFields();
+  toggleBNPLFields();
+}
+function toggleBNPLFields(){
+  const on=document.getElementById('f-bnpl')?.checked||false;
+  const fields=document.getElementById('bnpl-fields');
+  if(fields)fields.style.display=on?'block':'none';
+  if(on)updateBNPLPreview();
+}
+function updateBNPLPreview(){
+  const prev=document.getElementById('bnpl-logo-preview');if(!prev)return;
+  const logos=[0,1,2].map(i=>(document.getElementById(`f-bnpl-logo-${i}`)?.value||'').trim()).filter(Boolean);
+  prev.innerHTML=logos.length
+    ?`<span style="font-size:11px;color:var(--muted)">Preview:</span>`+logos.map(l=>`<img src="${l}" style="height:24px;max-width:60px;object-fit:contain;border-radius:4px;background:#fff;padding:2px 4px" onerror="this.style.opacity='.3'"/>`).join('')
+    :`<span style="font-size:11px;color:var(--muted)">No logos yet</span>`;
+}
+// Show/hide stock limit and pre-order fields based on stock status
+function toggleStockFields(){
+  const val=document.getElementById('f-stock')?.value;
+  const limitRow=document.getElementById('stock-limit-row');
+  const preRow=document.getElementById('preorder-info-row');
+  if(limitRow) limitRow.style.display=(val==='in'||val==='low')?'block':'none';
+  if(preRow) preRow.style.display=val==='preorder'?'block':'none';
+  toggleStockQty();
+}
+function toggleStockQty(){
+  const checked=document.getElementById('f-stock-limit')?.checked||false;
+  const qRow=document.getElementById('stock-qty-row');
+  if(qRow) qRow.style.display=checked?'block':'none';
+}
+
+// ══ ORDERS ══
+function renderCMSOrders(){
+  const el=document.getElementById('orders-tbl');
+  document.getElementById('orders-count').textContent=orders.length+' total';
+  if(!orders.length){el.innerHTML='<div style="padding:32px;text-align:center;color:var(--muted);font-size:13px">No orders yet.</div>';return;}
+  el.innerHTML=`<table class="tbl"><thead><tr><th>Order ID</th><th>Customer</th><th>Items</th><th>Total</th><th>Status</th><th>Updated by</th><th>Date</th></tr></thead><tbody>${orders.map(o=>`<tr>
+    <td style="font-family:'Share Tech Mono',monospace;font-size:11px">${o.id}</td>
+    <td><div style="font-weight:500">${o.customer}</div><div style="font-size:11px;color:var(--muted)">${o.email}</div></td>
+    <td style="color:var(--muted);font-size:12px">${o.items?o.items.map(i=>i.name+' x'+i.qty).join(', '):'—'}</td>
+    <td class="gv">${currency}${parseFloat(o.total).toFixed(2)}</td>
+    <td>
+      <select onchange="updateOrderStatus('${o.id}',this.value)" style="background:#141d2b;border:1px solid var(--border);color:var(--text);padding:3px 7px;border-radius:6px;font-size:12px;cursor:pointer">
+        <option value="pending" ${o.status==='pending'?'selected':''}>Pending</option>
+        <option value="complete" ${o.status==='complete'?'selected':''}>Complete</option>
+        <option value="cancelled" ${o.status==='cancelled'?'selected':''}>Cancelled</option>
+      </select>
+    </td>
+    <td style="font-size:12px;color:var(--muted)">${o.updated_by?`<span style="color:var(--neon)">${o.updated_by}</span><br/><span style="font-size:10px">${o.updated_at||''}</span>`:'—'}</td>
+    <td style="color:var(--muted);white-space:nowrap;font-size:12px">${o.date||''}${o.time?' '+o.time:''}</td>
+  </tr>`).join('')}</tbody></table>`;
+}
+
+async function updateOrderStatus(id,status){
+  const actor=currentUser?.display_name||currentUser?.displayName||currentUser?.username||'Unknown';
+  const now=new Date();
+  const ts=now.toLocaleDateString('en-GB')+' '+now.toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit'});
+  await fetch(`${SB_URL}/rest/v1/orders?id=eq.${id}`,{method:'PATCH',headers:{'apikey':SB_KEY,'Authorization':`Bearer ${SB_KEY}`,'Content-Type':'application/json'},body:JSON.stringify({status,updated_by:actor,updated_at:ts})});
+  const o=orders.find(x=>x.id===id);
+  if(o){const prev=o.status;o.status=status;o.updated_by=actor;o.updated_at=ts;
+    await writeLog('order_status',`Order ${id} changed from "${prev}" to "${status}"`,actor,{order_id:id,from:prev,to:status});
+  }
+  refreshDash();
+}
+
+async function nukeOrders(){
+  if(!confirm('Delete all orders?'))return;
+  await sbDeleteAll('orders');
+  orders=[];refreshDash();renderCMSOrders();
+}
+
+// ══ SETTINGS ══
+async function saveSettings(){
+  settings={storeName:document.getElementById('s-name').value.trim()||'XPFlex',hero:document.getElementById('s-hero').value.trim(),sub:document.getElementById('s-sub').value.trim(),email:document.getElementById('s-email').value.trim(),pay:document.getElementById('s-pay').value.trim(),footer:document.getElementById('s-footer').value.trim(),currency:document.getElementById('s-currency').value,comingSoon:document.getElementById('s-coming-soon')?.checked||false};
+  await setSettingVal('main',settings);
+  const actor=currentUser?.display_name||currentUser?.displayName||currentUser?.username||'Unknown';
+  await writeLog('settings','Store settings updated',actor,{});
+  applySettings(); renderHome(); renderShop(); showCMSToast('toast-settings');
+}
+
+async function saveEmailJS(){
+  ejsConfig={serviceId:document.getElementById('ejs-service').value.trim(),templateId:document.getElementById('ejs-template').value.trim(),pubkey:document.getElementById('ejs-pubkey').value.trim(),adminEmail:document.getElementById('ejs-adminemail').value.trim()};
+  await setSettingVal('emailjs',ejsConfig);
+  if(ejsConfig.pubkey) emailjs.init(ejsConfig.pubkey);
+  showCMSToast('toast-settings');
+}
+
+async function saveDesign(){
+  design={fontHead:document.getElementById('d-font-head').value,fontBody:document.getElementById('d-font-body').value,fontPrice:document.getElementById('d-font-price').value,colHeading:document.getElementById('dc-heading').value,colBody:document.getElementById('dc-body').value,colPrice:document.getElementById('dc-price').value,colBtnBg:document.getElementById('dc-btnbg').value,colBtnText:document.getElementById('dc-btntext').value,colNav:document.getElementById('dc-nav').value,colCard:document.getElementById('dc-card').value};
+  await setSettingVal('design',design);
+  applyDesign(); renderHome(); renderShop(); showCMSToast('toast-design');
+}
+async function resetDesign(){design={...DEFAULT_DESIGN};await setSettingVal('design',design);applyDesign();showCMSToast('toast-design');}
+
+async function nukeProds(){
+  if(!confirm('Permanently delete ALL products?'))return;
+  await sbDeleteAll('products');
+  prods=[];featured=[];
+  await setSettingVal('featured',[]);
+  refreshDash();renderCMSProds();renderHome();renderShop();
+}
+
+// ══ ADMIN USERS — Supabase ══
+async function addAdmin(){
+  const username=document.getElementById('na-user').value.trim();
+  const password=document.getElementById('na-pass').value;
+  const displayName=document.getElementById('na-display').value.trim();
+  const role=document.getElementById('na-role').value;
+  const email=document.getElementById('na-email').value.trim();
+  if(!username||!password){alert('Username and password are required.');return;}
+  if(adminUsers.find(a=>a.username===username)){alert('That username already exists.');return;}
+  if(password.length<6){alert('Password must be at least 6 characters.');return;}
+  const newAdmin={id:'a'+Date.now(),username,password,display_name:displayName||username,role,email,created_at:new Date().toLocaleDateString('en-GB')};
+  await sbUpsert('admins',newAdmin);
+  adminUsers.push({...newAdmin,displayName:newAdmin.display_name});
+  ['na-user','na-pass','na-display','na-email'].forEach(id=>document.getElementById(id).value='');
+  document.getElementById('na-role').value='editor';
+  renderAdminsTbl();
+  showCMSToast('toast-admins');
+}
+
+async function removeAdmin(id){
+  const a=adminUsers.find(x=>x.id===id);
+  if(!a) return;
+  if(a.username===SUPER_ADMIN_USER){alert('Cannot delete the super admin account.');return;}
+  if(!confirm(`Remove admin "${a.display_name||a.displayName||a.username}"?`)) return;
+  await sbDelete('admins',id);
+  adminUsers=adminUsers.filter(x=>x.id!==id);
+  renderAdminsTbl();
+  showCMSToast('toast-admins');
+}
+
+async function changeOwnPassword(){
+  const current=document.getElementById('cp-current').value;
+  const newPw=document.getElementById('cp-new').value;
+  const conf=document.getElementById('cp-confirm').value;
+  const errEl=document.getElementById('cp-err');
+  errEl.textContent='';
+  if(!currentUser){errEl.textContent='Not logged in.';return;}
+  if(currentUser.password!==current){errEl.textContent='Current password is incorrect.';return;}
+  if(newPw.length<6){errEl.textContent='New password must be at least 6 characters.';return;}
+  if(newPw!==conf){errEl.textContent='Passwords do not match.';return;}
+  // Update password in Supabase
+  if(currentUser.id){
+    await fetch(`${SB_URL}/rest/v1/admins?id=eq.${currentUser.id}`,{method:'PATCH',headers:{'apikey':SB_KEY,'Authorization':`Bearer ${SB_KEY}`,'Content-Type':'application/json'},body:JSON.stringify({password:newPw})});
+  }
+  currentUser.password=newPw;
+  const idx=adminUsers.findIndex(a=>a.id===currentUser.id);
+  if(idx>-1) adminUsers[idx].password=newPw;
+  ['cp-current','cp-new','cp-confirm'].forEach(id=>document.getElementById(id).value='');
+  errEl.style.color='#4ade80';errEl.textContent='Password updated successfully.';
+  setTimeout(()=>{errEl.textContent='';errEl.style.color='#f87171';},3000);
+}
+
+// ══ PLACE ORDER — save to Supabase ══
+async function placeOrder(){
+  const name=document.getElementById('ck-name').value.trim();
+  const email=document.getElementById('ck-email').value.trim();
+  if(!name||!email){alert('Please enter your name and email.');return;}
+  const btn=document.getElementById('place-btn');
+  btn.disabled=true; btn.textContent='Processing…';
+  const orderId=genOrderId();
+  const sub=cart.reduce((s,x)=>s+(x.price*x.qty),0);
+  const now=new Date();
+  const order={
+    id:orderId,customer:name,email,
+    country:document.getElementById('ck-country').value,
+    phone:document.getElementById('ck-phone').value,
+    items:cart.map(i=>({id:i.id,name:i.name,qty:i.qty,price:i.price})),
+    total:sub,status:'pending',
+    date:now.toLocaleDateString('en-GB'),
+    time:now.toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit'}),
+  };
+  await sbUpsert('orders',order);
+  orders.unshift(order);
+  await sendOrderEmail(order);
+  cart=[]; refreshATCButtons(); updateBadge();
+  document.getElementById('success-msg').textContent=`Thank you ${name}! Your digital codes will be delivered to ${email} shortly.`;
+  document.getElementById('success-order-id').textContent='Order ID: '+orderId;
+  btn.disabled=false; btn.textContent='Place Order';
+  storeGo('success');
+}
+
+// ══ DISCOUNTS CMS ══
+// ══ DISCOUNT VALIDITY HELPERS ══
+function discIsActive(d){
+  if(!d||!d.enabled) return false;
+  const now=new Date(); now.setHours(0,0,0,0);
+  if(d.startDate){const s=new Date(d.startDate);if(now<s)return false;}
+  if(d.endDate){const e=new Date(d.endDate);e.setHours(23,59,59,999);if(new Date()>e)return false;}
+  return true;
+}
+function discStatusLabel(d){
+  if(!d||!d.enabled) return '';
+  const now=new Date(); now.setHours(0,0,0,0);
+  if(d.startDate){const s=new Date(d.startDate);if(now<s)return `<span style="color:#eab308;font-size:11px">⏳ Starts ${d.startDate}</span>`;}
+  if(d.endDate){
+    const e=new Date(d.endDate);e.setHours(23,59,59,999);
+    if(new Date()>e) return `<span style="color:#f87171;font-size:11px">✕ Expired ${d.endDate}</span>`;
+    const days=Math.ceil((e-new Date())/(1000*60*60*24));
+    return `<span style="color:#4ade80;font-size:11px">✓ Active · ${days}d left</span>`;
+  }
+  return `<span style="color:#4ade80;font-size:11px">✓ Active · No expiry</span>`;
+}
+
+function renderDiscList(){
+  const el=document.getElementById('disc-list'); if(!el) return;
+  if(!prods.length){el.innerHTML='<p style="color:var(--muted);font-size:13px">No products yet. Add products first.</p>';return;}
+  el.innerHTML=prods.map(p=>{
+    const d=discounts[p.id]||{enabled:false,type:'pct',value:0,startDate:'',endDate:''};
+    const active=discIsActive(d);
+    return `<div style="background:#141d2b;border:1px solid var(--border);border-radius:10px;padding:14px;margin-bottom:10px">
+      <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:${d.enabled?'12px':'0'}">
+        <label class="toggle-wrap"><input type="checkbox" id="de-${p.id}" ${d.enabled?'checked':''} onchange="toggleDiscRow('${p.id}')"/><span class="toggle-slider"></span></label>
+        <span style="font-size:13px;font-weight:500;flex:1;min-width:140px">${p.icon||'🎮'} ${p.name}</span>
+        <span style="font-size:12px;color:var(--muted)">${currency}${parseFloat(p.price).toFixed(2)}</span>
+        <span id="dstatus-${p.id}">${discStatusLabel(d)}</span>
+      </div>
+      <div id="dfields-${p.id}" style="display:${d.enabled?'grid':'none'};grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:10px;align-items:end">
+        <div class="cf" style="margin:0">
+          <label style="font-size:11px;color:var(--muted)">Type</label>
+          <select id="dt-${p.id}" style="width:100%;background:#0e1520;border:1px solid var(--border);color:var(--text);padding:6px 9px;border-radius:7px;font-size:12px" onchange="calcDiscPreview('${p.id}')">
+            <option value="pct" ${d.type==='pct'?'selected':''}>% Off</option>
+            <option value="fixed" ${d.type==='fixed'?'selected':''}>Fixed ${currency} Off</option>
+          </select>
+        </div>
+        <div class="cf" style="margin:0">
+          <label style="font-size:11px;color:var(--muted)">Amount</label>
+          <input type="number" id="dv-${p.id}" value="${d.value||0}" min="0" step="0.01" style="width:100%;background:#0e1520;border:1px solid var(--border);color:var(--text);padding:6px 9px;border-radius:7px;font-size:12px;outline:none" oninput="calcDiscPreview('${p.id}')"/>
+        </div>
+        <div class="cf" style="margin:0">
+          <label style="font-size:11px;color:var(--muted)">Start Date</label>
+          <input type="date" id="dsd-${p.id}" value="${d.startDate||''}" style="width:100%;background:#0e1520;border:1px solid var(--border);color:var(--text);padding:6px 9px;border-radius:7px;font-size:12px;outline:none;color-scheme:dark" onchange="calcDiscPreview('${p.id}')"/>
+        </div>
+        <div class="cf" style="margin:0">
+          <label style="font-size:11px;color:var(--muted)">End Date</label>
+          <input type="date" id="ded-${p.id}" value="${d.endDate||''}" style="width:100%;background:#0e1520;border:1px solid var(--border);color:var(--text);padding:6px 9px;border-radius:7px;font-size:12px;outline:none;color-scheme:dark" onchange="calcDiscPreview('${p.id}')"/>
+        </div>
+        <div class="cf" style="margin:0">
+          <label style="font-size:11px;color:var(--muted)">Preview</label>
+          <span id="dp-${p.id}" style="font-size:13px;color:var(--neon);font-weight:600;display:block;padding:6px 0">${discPreviewText(p,d)}</span>
+        </div>
       </div>
     </div>`;
   }).join('');
-
-  const segCards = SEGMENTS.map(seg => {
-    const d = segMap[seg] || {};
-    const isMgmt = seg === 'Management';
-    return `<div class="seg-card" data-seg="${seg}">
-      <div class="seg-name">${seg}</div>
-      <div class="seg-stats">
-        <div><div class="stat-label">Revenue (LKR)</div><div class="stat-inputs">${fi('rev_actual','Actual',d.rev_actual)}${fi('rev_budget','Budget',d.rev_budget)}</div></div>
-        <div><div class="stat-label">Room nights</div><div class="stat-inputs">${fi('rn_actual','Actual',d.rn_actual)}${fi('rn_budget','Budget',d.rn_budget)}</div></div>
-        <div><div class="stat-label">ARR (LKR)</div><div class="stat-inputs">${fi('arr_actual','Actual',d.arr_actual)}${fi('arr_budget','Budget',d.arr_budget)}</div></div>
-        <div><div class="stat-label">Occupancy (%)</div><div class="stat-inputs">${fi('occu_actual','Actual',d.occu_actual)}${fi('occu_budget','Budget',d.occu_budget)}</div></div>
-        <div><div class="stat-label">Tonik Share (LKR)</div><div class="stat-inputs">${fi('share_actual','Actual',d.share_actual)}${fi('share_budget','Budget',d.share_budget)}</div></div>
-        <div><div class="stat-label">Active villas</div><div class="stat-inputs">${fi('villas_actual','Actual',d.villas_actual)}${fi('villas_budget','Budget',d.villas_budget)}</div></div>
-        ${isMgmt ? `<div><div class="stat-label">Room nights sellable</div><div class="stat-inputs">${fi('rooms_actual','Actual',d.rooms_actual)}${fi('rooms_budget','Budget',d.rooms_budget)}</div></div>` : ''}
-      </div>
-    </div>`;
-  }).join('');
-
-  form.innerHTML = `
-    <div class="section-header" style="margin-top:0.25rem;">Property statistics — ${MONTH_NAMES[month-1]} ${year}</div>
-    <div class="prop-grid">${propCards}</div>
-    <div class="section-header">TONIK portfolio statistics — ${MONTH_NAMES[month-1]} ${year}</div>
-    <div class="seg-grid">${segCards}</div>
-    <div class="save-bar">
-      <button class="btn btn-primary" id="save-btn" onclick="saveMonth(${month},${year})">Save ${MONTH_NAMES[month-1]} ${year}</button>
-    </div>`;
 }
-
-// ── Save month ────────────────────────────────────────────────────────────────
-function getInputs(container) {
-  const result = {};
-  container.querySelectorAll('input[name]').forEach(i => { result[i.name] = i.value === '' ? null : +i.value; });
-  return result;
+function discPreviewText(p,d){
+  if(!d||!d.value) return '—';
+  const ep=d.type==='pct'?Math.max(0,p.price*(1-d.value/100)):Math.max(0,p.price-d.value);
+  return `${currency}${p.price.toFixed(2)} → ${currency}${ep.toFixed(2)}`;
 }
-
-async function saveMonth(month, year) {
-  const btn = document.getElementById('save-btn');
-  btn.disabled = true; btn.textContent = 'Saving…';
-  try {
-    const propUpserts = [...document.querySelectorAll('.prop-card')].map(c => ({
-      property_name: c.dataset.prop, property_type: c.dataset.type,
-      stat_year: year, stat_month: month, ...getInputs(c)
-    }));
-    const segUpserts = [...document.querySelectorAll('.seg-card')].map(c => ({
-      segment: c.dataset.seg, stat_year: year, stat_month: month, ...getInputs(c)
-    }));
-    const [{ error: e1 }, { error: e2 }] = await Promise.all([
-      sb.from('property_stats').upsert(propUpserts, { onConflict: 'property_name,stat_year,stat_month' }),
-      sb.from('tonik_stats').upsert(segUpserts, { onConflict: 'segment,stat_year,stat_month' }),
-    ]);
-    if (e1 || e2) throw new Error(e1?.message || e2?.message);
-    showToast('Saved successfully ✓');
-    setTimeout(() => showTab('home'), 800);
-  } catch(err) {
-    showToast('Error: ' + err.message, true);
-  } finally {
-    btn.disabled = false; btn.textContent = `Save ${MONTH_NAMES[month-1]} ${year}`;
-  }
+function toggleDiscRow(pid){
+  const checked=document.getElementById('de-'+pid)?.checked||false;
+  const fields=document.getElementById('dfields-'+pid);
+  if(fields) fields.style.display=checked?'grid':'none';
+  calcDiscPreview(pid);
 }
-
-// ── All records ───────────────────────────────────────────────────────────────
-async function loadAllRecords() {
-  const el = document.getElementById('all-records');
-  el.innerHTML = '<div class="loading-overlay">Loading…</div>';
-  const { data, error } = await sb.from('property_stats').select('*')
-    .order('stat_year', { ascending: false }).order('stat_month', { ascending: false });
-  if (error) { el.innerHTML = `<div style="color:#993C1D;font-size:12px;">${error.message}</div>`; return; }
-  if (!data.length) { el.innerHTML = '<div class="loading-overlay">No records yet.</div>'; return; }
-  el.innerHTML = '<div class="records-list">' + data.map(r => `
-    <div class="record-row">
-      <div>
-        <div class="record-info">${r.property_name} — ${MONTH_NAMES[r.stat_month-1]} ${r.stat_year}</div>
-        <div class="record-meta">Rev: LKR ${Math.round(r.rev_actual||0).toLocaleString('en-US')} · RN: ${r.rn_actual||0} · Occ: ${(r.occu_actual||0).toFixed(1)}%</div>
-        <div class="record-meta" style="color:#b4b2a9;">Created: ${new Date(r.created_at).toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'numeric'})} · Updated: ${new Date(r.updated_at).toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'numeric'})}</div>
-      </div>
-      <div class="record-actions">
-        <button class="btn btn-secondary btn-sm" onclick="jumpToMonth(${r.stat_month},${r.stat_year})">Edit</button>
-      </div>
-    </div>`).join('') + '</div>';
+function calcDiscPreview(pid){
+  const p=prods.find(x=>x.id===pid); if(!p) return;
+  const type=document.getElementById('dt-'+pid)?.value||'pct';
+  const val=parseFloat(document.getElementById('dv-'+pid)?.value)||0;
+  const enabled=document.getElementById('de-'+pid)?.checked||false;
+  const startDate=document.getElementById('dsd-'+pid)?.value||'';
+  const endDate=document.getElementById('ded-'+pid)?.value||'';
+  const d={enabled,type,value:val,startDate,endDate};
+  const prev=document.getElementById('dp-'+pid); if(prev) prev.textContent=discPreviewText(p,d);
+  const status=document.getElementById('dstatus-'+pid); if(status) status.innerHTML=discStatusLabel(d);
 }
-
-function jumpToMonth(month, year) {
-  document.getElementById('sel-month').value = month;
-  document.getElementById('sel-year').value  = year;
-  showTab('entry');
-  loadMonth();
-}
-
-// ── Toast ─────────────────────────────────────────────────────────────────────
-function showToast(msg, isError=false) {
-  const t = document.getElementById('toast');
-  t.textContent = msg;
-  t.className = 'toast show' + (isError ? ' error' : '');
-  setTimeout(() => { t.className = 'toast'; }, 3000);
-}
-
-// ── Settings ──────────────────────────────────────────────────────────────────
-function getProperties() {
-  const stored = localStorage.getItem('tonik_properties');
-  if (stored) return JSON.parse(stored);
-  return [
-    { name:'KAHA', type:'Management' }, { name:'Villa Sayura', type:'Management' },
-    { name:'Garfield Bungalow', type:'Franchise' }, { name:'Garfield Cottage', type:'Franchise' },
-  ];
-}
-function saveProperties(props) {
-  localStorage.setItem('tonik_properties', JSON.stringify(props));
-  PROPERTIES.length = 0; props.forEach(p => PROPERTIES.push(p));
-}
-function getFySetting() { return parseInt(localStorage.getItem('tonik_fy_start') || '4'); }
-
-async function loadSettings() {
-  const props = getProperties();
-  document.getElementById('prop-list').innerHTML = props.length
-    ? props.map((p,i) => `<div class="settings-list-item"><span>${p.name}</span><span class="prop-badge">${p.type}</span><button class="btn btn-danger btn-sm" onclick="removeProperty(${i})">Remove</button></div>`).join('')
-    : '<div style="font-size:12px;color:#b4b2a9;">No properties yet.</div>';
-  document.getElementById('fy-start').value = getFySetting();
-
-  // Load USD rate from Supabase, fall back to localStorage
-  const { data } = await sb.from('app_settings').select('value').eq('key', 'usd_rate').single();
-  const rate = data?.value || localStorage.getItem('tonik_usd_rate') || '333';
-  document.getElementById('usd-rate').value = rate;
-  localStorage.setItem('tonik_usd_rate', rate); // update local cache
-}
-
-async function saveUsdRate() {
-  const val = parseFloat(document.getElementById('usd-rate').value);
-  if (!val || val <= 0) { showToast('Please enter a valid rate.', true); return; }
-  const { error } = await sb.from('app_settings').upsert({ key: 'usd_rate', value: val.toString() }, { onConflict: 'key' });
-  if (error) { showToast('Error: ' + error.message, true); return; }
-  localStorage.setItem('tonik_usd_rate', val.toString()); // keep local copy as cache
-  showToast(`Exchange rate saved: LKR ${val} per USD ✓`);
-}
-
-function addProperty() {
-  const name = document.getElementById('new-prop-name').value.trim();
-  const type = document.getElementById('new-prop-type').value;
-  if (!name) { showToast('Please enter a property name.', true); return; }
-  const props = getProperties();
-  if (props.find(p => p.name.toLowerCase() === name.toLowerCase())) { showToast('Property already exists.', true); return; }
-  props.push({ name, type }); saveProperties(props);
-  document.getElementById('new-prop-name').value = '';
-  loadSettings(); showToast(`${name} added ✓`);
-}
-
-function removeProperty(index) {
-  const props = getProperties();
-  const name = props[index].name;
-  if (!confirm(`Remove "${name}"? This won't delete its historical data.`)) return;
-  props.splice(index, 1); saveProperties(props); loadSettings(); showToast(`${name} removed`);
-}
-
-function saveFySetting() {
-  const val = document.getElementById('fy-start').value;
-  localStorage.setItem('tonik_fy_start', val);
-  showToast(`FY start set to ${MONTH_NAMES[+val-1]} ✓`);
-}
-
-async function confirmZero() {
-  const fyYear  = +document.getElementById('zero-fy').value;
-  const field   = document.getElementById('zero-field').value;
-  const table   = document.getElementById('zero-table').value;
-  const status  = document.getElementById('zero-status');
-  if (!confirm(`Zero ${field} for ${table} in FY${String(fyYear).slice(2)}–${String(fyYear+1).slice(2)}? This cannot be undone.`)) return;
-  const fyStart = getFySetting();
-  const months  = [];
-  for (let m=1; m<=12; m++) months.push({ stat_year: m>=fyStart?fyYear:fyYear+1, stat_month:m });
-  const pPay = {}, tPay = {};
-  if (field==='budgets'||field==='both') { Object.assign(pPay,{rev_budget:0,arr_budget:0,rn_budget:0,occu_budget:0}); Object.assign(tPay,{rev_budget:0,arr_budget:0,rn_budget:0,occu_budget:0,share_budget:0,rooms_budget:0,villas_budget:0}); }
-  if (field==='actuals'||field==='both') { Object.assign(pPay,{rev_actual:0,arr_actual:0,rn_actual:0,occu_actual:0}); Object.assign(tPay,{rev_actual:0,arr_actual:0,rn_actual:0,occu_actual:0,share_actual:0,rooms_actual:0,villas_actual:0}); }
-  status.textContent = 'Zeroing…';
-  try {
-    const tasks = [];
-    for (const {stat_year,stat_month} of months) {
-      if (table==='property'||table==='both') tasks.push(sb.from('property_stats').update(pPay).eq('stat_year',stat_year).eq('stat_month',stat_month));
-      if (table==='tonik'||table==='both')    tasks.push(sb.from('tonik_stats').update(tPay).eq('stat_year',stat_year).eq('stat_month',stat_month));
-    }
-    const results = await Promise.all(tasks);
-    const errs = results.filter(r=>r.error).map(r=>r.error.message);
-    if (errs.length) throw new Error(errs[0]);
-    status.textContent = ''; showToast('Data zeroed successfully ✓');
-  } catch(err) { status.textContent=''; showToast('Error: '+err.message, true); }
-}
-
-(function() {
-  const stored = localStorage.getItem('tonik_properties');
-  if (stored) { const props=JSON.parse(stored); PROPERTIES.length=0; props.forEach(p=>PROPERTIES.push(p)); }
-})();
-
-// ── Pace CSV ──────────────────────────────────────────────────────────────────
-function setPaceMode(mode) {
-  document.getElementById('pace-csv').style.display    = mode === 'csv'    ? '' : 'none';
-  document.getElementById('pace-manual').style.display = mode === 'manual' ? '' : 'none';
-  document.getElementById('pace-mode-csv-btn').className    = mode === 'csv'    ? 'btn btn-primary' : 'btn btn-secondary';
-  document.getElementById('pace-mode-manual-btn').className = mode === 'manual' ? 'btn btn-primary' : 'btn btn-secondary';
-}
-
-function downloadPaceTemplate() {
-  const now = new Date();
-  // Generate next 4 weeks as example rows
-  const rows = [];
-  for (let i = 0; i < 4; i++) {
-    const mon = new Date(now);
-    mon.setDate(now.getDate() - now.getDay() + 1 + (i * 7));
-    const sun = new Date(mon); sun.setDate(mon.getDate() + 6);
-    const fmt = d => d.getDate() + ' ' + d.toLocaleString('en-GB', { month: 'short' });
-    const label = fmt(mon) + ' – ' + fmt(sun);
-    const startStr = mon.toISOString().slice(0, 10);
-    rows.push(`${label},${startStr},0,0,0,0`);
-  }
-  const headers = 'week_label,week_start,KAHA,Villa Sayura,Garfield Bungalow,Garfield Cottage';
-  downloadCSVFile('tonik_pace_template.csv', headers + '\n' + rows.join('\n'));
-}
-
-async function uploadPaceCSV() {
-  const file    = document.getElementById('pace-csv-file').files[0];
-  const preview = document.getElementById('pace-csv-preview');
-  if (!file) { showToast('Please select a CSV file.', true); return; }
-
-  const text = await file.text();
-  const rows = parseUploadedCSV(text);
-  if (!rows.length) { showToast('No data found in CSV.', true); return; }
-
-  // Validate required columns
-  const required = ['week_label', 'week_start'];
-  const missing = required.filter(k => !(k in rows[0]));
-  if (missing.length) { showToast('Missing columns: ' + missing.join(', '), true); return; }
-
-  preview.innerHTML = `<div style="font-size:12px;color:#73726c;margin-bottom:0.75rem;">${rows.length} week(s) found — previewing first 5:</div>
-    <div class="table-scroll"><table class="data-table" style="min-width:unset;">
-      <thead><tr>${Object.keys(rows[0]).map(h=>`<th>${h}</th>`).join('')}</tr></thead>
-      <tbody>${rows.slice(0,5).map(r=>`<tr>${Object.values(r).map(v=>`<td>${v}</td>`).join('')}</tr>`).join('')}</tbody>
-    </table></div>
-    <div style="margin-top:1rem;display:flex;gap:8px;align-items:center;">
-      <button class="btn btn-primary" onclick="confirmPaceUpload()">&#10003; Confirm &amp; save ${rows.length} week(s)</button>
-      <button class="btn btn-secondary" onclick="document.getElementById('pace-csv-preview').innerHTML=''">Cancel</button>
-    </div>`;
-
-  window._pendingPaceRows = rows;
-}
-
-async function confirmPaceUpload() {
-  const rows = window._pendingPaceRows;
-  const preview = document.getElementById('pace-csv-preview');
-  if (!rows?.length) return;
-
-  preview.innerHTML = '<div style="font-size:12px;color:#73726c;">Saving…</div>';
-
-  try {
-    const upserts = [];
-    rows.forEach(r => {
-      PACE_PROPS.forEach(prop => {
-        const rn = parseInt(r[prop] || r[prop.toLowerCase()] || 0) || 0;
-        upserts.push({
-          week_label:    r.week_label,
-          week_start:    r.week_start,
-          property_name: prop,
-          room_nights:   rn,
-        });
-      });
-    });
-
-    const { error } = await sb.from('pace_stats').upsert(upserts, { onConflict: 'week_start,property_name' });
-    if (error) throw new Error(error.message);
-
-    preview.innerHTML = `<div style="background:#e6f6f1;border:1px solid #9FE1CB;border-radius:8px;padding:0.875rem 1rem;font-size:12px;color:#0F6E56;">
-      ✓ ${rows.length} week(s) saved successfully.
-    </div>`;
-    document.getElementById('pace-csv-file').value = '';
-    window._pendingPaceRows = null;
-    showToast(`${rows.length} week(s) saved ✓`);
-    loadPaceRecent();
-
-  } catch(e) {
-    preview.innerHTML = `<div style="color:#993C1D;font-size:12px;">Error: ${e.message}</div>`;
-    showToast('Upload failed: ' + e.message, true);
-  }
-}
-
-// ── Pace ──────────────────────────────────────────────────────────────────────
-const PACE_PROPS = ['KAHA','Villa Sayura','Garfield Bungalow','Garfield Cottage'];
-
-async function loadPaceRecent() {
-  const el = document.getElementById('pace-recent');
-  el.innerHTML = '<div class="loading-overlay">Loading…</div>';
-  const { data, error } = await sb.from('pace_stats')
-    .select('*').order('week_start', { ascending: false }).limit(70); // last 10 weeks × 7 props
-  if (error) { el.innerHTML = `<div style="color:#993C1D;font-size:12px;">${error.message}</div>`; return; }
-
-  // Group by week
-  const weeks = {};
-  (data||[]).forEach(r => {
-    if (!weeks[r.week_start]) weeks[r.week_start] = { label: r.week_label, props: {} };
-    weeks[r.week_start].props[r.property_name] = r.room_nights;
+async function saveDiscounts(){
+  const newDisc={};
+  prods.forEach(p=>{
+    const enabled=document.getElementById('de-'+p.id)?.checked||false;
+    const type=document.getElementById('dt-'+p.id)?.value||'pct';
+    const value=parseFloat(document.getElementById('dv-'+p.id)?.value)||0;
+    const startDate=document.getElementById('dsd-'+p.id)?.value||'';
+    const endDate=document.getElementById('ded-'+p.id)?.value||'';
+    if(enabled||value>0) newDisc[p.id]={enabled,type,value,startDate,endDate};
   });
-
-  const sorted = Object.entries(weeks).sort((a,b) => b[0].localeCompare(a[0])).slice(0,10);
-  if (!sorted.length) { el.innerHTML = '<div class="loading-overlay">No pace records yet.</div>'; return; }
-
-  el.innerHTML = '<div class="records-list">' + sorted.map(([ws, w]) => {
-    const total = PACE_PROPS.reduce((s,p) => s + (w.props[p]||0), 0);
-    const details = PACE_PROPS.filter(p => w.props[p] > 0).map(p => `${p}: ${w.props[p]}`).join(' · ');
-    return `<div class="record-row">
-      <div>
-        <div class="record-info">${w.label} <span style="color:#185FA5;font-weight:600;">Total: ${total} RN</span></div>
-        <div class="record-meta">${details || 'No bookings'}</div>
-      </div>
-      <div class="record-actions">
-        <button class="btn btn-secondary btn-sm" onclick="loadPaceWeekFromDate('${ws}','${w.label}')">Edit</button>
-      </div>
-    </div>`;
-  }).join('') + '</div>';
+  discounts=newDisc;
+  await setSettingVal('discounts',discounts);
+  const actor=currentUser?.display_name||currentUser?.displayName||currentUser?.username||'Unknown';
+  await writeLog('discount','Discounts updated',actor,{count:Object.values(newDisc).filter(d=>d.enabled).length+' active'});
+  refreshDash(); renderHome(); renderShop();
+  showCMSToast('toast-disc');
 }
 
-async function loadPaceWeek() {
-  const label = document.getElementById('pace-week-label').value.trim();
-  const start = document.getElementById('pace-week-start').value;
-  if (!label || !start) { showToast('Please enter both a week label and start date.', true); return; }
-  await loadPaceWeekFromDate(start, label);
+// ══ BANNER CMS (up to 5 slides, image URL only) ══
+function renderBannerCMS(){
+  const el=document.getElementById('banner-slots'); if(!el) return;
+  const count=bannerSlides.length;
+  const addBtn=document.getElementById('banner-add-btn');
+  const maxNote=document.getElementById('banner-max-note');
+  const countLabel=document.getElementById('banner-count-label');
+  if(addBtn) addBtn.style.display=count>=5?'none':'inline-flex';
+  if(maxNote) maxNote.style.display=count>=5?'block':'none';
+  if(countLabel) countLabel.textContent=count>0?`${count} / 5 slides`:'No slides yet';
+  el.innerHTML=bannerSlides.map((s,i)=>bannerSlotHTML(s,i)).join('');
+}
+function bannerSlotHTML(s,i){
+  return `<div style="background:#141d2b;border:1px solid var(--border);border-radius:10px;padding:14px;margin-bottom:10px">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
+      <span style="font-size:12px;font-weight:600;color:var(--neon);letter-spacing:1px">SLIDE ${i+1} <span style="color:var(--muted);font-weight:400">of ${bannerSlides.length}</span></span>
+      <button class="bdanger" onclick="removeBannerSlot(${i})" style="padding:3px 10px;font-size:11px">&#128465; Remove</button>
+    </div>
+    <div class="img-guide" style="margin-bottom:10px"><strong>&#128444; Image requirements</strong>Size: <strong>1440 × 340px</strong> (wide landscape) &middot; Max: <strong>1MB</strong> &middot; Format: <strong>JPG, PNG or WebP</strong><br/>Host on Imgur, Cloudinary or any public URL — paste the direct image link below</div>
+    <div class="cf" style="margin:0">
+      <label>Image URL</label>
+      <input type="url" id="bi-${i}" value="${s.img||''}" placeholder="https://i.imgur.com/yourimage.jpg" oninput="previewBannerSlot(${i})" style="width:100%"/>
+    </div>
+    <div id="bprev-${i}" style="margin-top:10px;border-radius:8px;overflow:hidden;height:90px;background:#000;display:${s.img?'block':'none'}">
+      <img id="bprevimg-${i}" src="${s.img||''}" style="width:100%;height:100%;object-fit:cover" onerror="this.parentElement.style.display='none'"/>
+    </div>
+  </div>`;
+}
+function previewBannerSlot(i){
+  const val=document.getElementById('bi-'+i)?.value||'';
+  const wrap=document.getElementById('bprev-'+i);
+  const img=document.getElementById('bprevimg-'+i);
+  if(wrap&&img){wrap.style.display=val?'block':'none';img.src=val;}
+}
+function addBannerSlot(){
+  if(bannerSlides.length>=5) return;
+  bannerSlides.push({img:''});
+  renderBannerCMS();
+}
+function removeBannerSlot(i){
+  bannerSlides.splice(i,1);
+  renderBannerCMS();
+}
+async function saveBanner(){
+  bannerSlides=bannerSlides.map((_,i)=>({
+    img:(document.getElementById('bi-'+i)?.value||'').trim(),
+  })).filter(s=>s.img);
+  await setSettingVal('banner',bannerSlides);
+  renderBanner();
+  showCMSToast('toast-banner');
 }
 
-async function loadPaceWeekFromDate(weekStart, weekLabel) {
-  document.getElementById('pace-week-label').value = weekLabel;
-  document.getElementById('pace-week-start').value = weekStart;
-
-  const { data } = await sb.from('pace_stats').select('*').eq('week_start', weekStart);
-  const existing = {};
-  (data||[]).forEach(r => existing[r.property_name] = r.room_nights || 0);
-
-  const fi = (prop) => `
-    <div class="prop-card" style="padding:0.75rem 1rem;">
-      <div class="prop-card-header" style="margin-bottom:0.5rem;">
-        <div class="prop-name" style="font-size:12px;">${prop}</div>
-      </div>
-      <div class="field">
-        <label>Room nights booked</label>
-        <input type="number" name="${prop}" value="${existing[prop]||0}" min="0" step="1" style="max-width:120px;" />
-      </div>
-    </div>`;
-
-  document.getElementById('pace-entry-form').innerHTML = `
-    <div class="prop-grid" style="gap:0.5rem;">${PACE_PROPS.map(fi).join('')}</div>
-    <div class="save-bar">
-      <button class="btn btn-primary" onclick="savePaceWeek()">Save ${weekLabel}</button>
-    </div>`;
+// ══ ACTIVITY LOG ══
+const LOG_TYPE_META={
+  login:{icon:'🔑',color:'#a78bfa',label:'Login'},
+  order_status:{icon:'📋',color:'#60a5fa',label:'Order Update'},
+  product:{icon:'📦',color:'#34d399',label:'Product'},
+  discount:{icon:'🏷️',color:'#f59e0b',label:'Discount'},
+  settings:{icon:'⚙️',color:'#94a3b8',label:'Settings'},
+};
+async function writeLog(type,message,actor,meta={}){
+  const now=new Date();
+  const entry={
+    id:'log_'+Date.now()+'_'+Math.random().toString(36).slice(2,6),
+    type,message,actor,meta:JSON.stringify(meta),
+    ts_ms:now.getTime(),
+    date:now.toLocaleDateString('en-GB'),
+    time:now.toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit',second:'2-digit'}),
+  };
+  try{await sbUpsert('activity_log',entry);}catch(e){console.warn('Log write failed:',e);}
+  activityLog.unshift(entry);
 }
-
-async function savePaceWeek() {
-  const label = document.getElementById('pace-week-label').value.trim();
-  const start = document.getElementById('pace-week-start').value;
-  if (!label || !start) { showToast('Missing week label or date.', true); return; }
-
-  const upserts = PACE_PROPS.map(prop => {
-    const input = document.querySelector(`#pace-entry-form input[name="${prop}"]`);
-    return { week_label: label, week_start: start, property_name: prop, room_nights: input ? +input.value : 0 };
-  });
-
-  const { error } = await sb.from('pace_stats').upsert(upserts, { onConflict: 'week_start,property_name' });
-  if (error) { showToast('Error: ' + error.message, true); return; }
-  showToast('Pace saved ✓');
-  setTimeout(() => showTab('home'), 800);
-}
-
-// ── Widget Builder ────────────────────────────────────────────────────────────
-const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbw08zBzu_dl66FF460NFvemEtYy7smqKJNoxdDhWdnNm5101sAlPITauwuFWO-zM46_/exec';
-let sheetFields = [];
-let sheetFieldValues = {}; // field -> unique values for filter dropdowns
-
-const WIDGET_TYPE_LABELS = { kpi:'KPI Card', bar:'Bar Chart', line:'Line Chart', doughnut:'Doughnut', table:'Table' };
-const WIDGET_TYPE_ICONS  = { kpi:'🔢', bar:'📊', line:'📈', doughnut:'🍩', table:'📋' };
-
-async function loadSheetFields() {
-  const status = document.getElementById('w-status');
-  status.textContent = 'Loading fields…';
-  try {
-    const resp = await fetch(APPS_SCRIPT_URL);
-    const json = await resp.json();
-    if (!json.length) throw new Error('No data returned');
-    sheetFields = Object.keys(json[0]).filter(k => k.trim());
-
-    // Cache unique values per field for filter dropdowns
-    sheetFields.forEach(f => {
-      sheetFieldValues[f] = [...new Set(json.map(r => String(r[f] || '').trim()).filter(Boolean))].sort();
-    });
-
-    const opts = sheetFields.map(f => `<option value="${f}">${f}</option>`).join('');
-    document.getElementById('w-x').innerHTML = '<option value="">— select field —</option>' + opts;
-
-    // Y axis: count + numeric fields
-    const yOpts = '<option value="count">Count of records</option>' +
-      sheetFields.map(f => `<option value="${f}">${f}</option>`).join('');
-    document.getElementById('w-y').innerHTML = yOpts;
-
-    // Refresh any existing filter rows
-    document.querySelectorAll('.w-filter-field').forEach(sel => {
-      const cur = sel.value;
-      sel.innerHTML = opts;
-      sel.value = cur;
-    });
-
-    status.textContent = `✓ ${sheetFields.length} fields loaded`;
-  } catch(e) {
-    status.textContent = 'Error: ' + e.message;
-  }
-}
-
-function onWidgetTypeChange() {
-  const type = document.getElementById('w-type').value;
-  document.getElementById('w-x-wrap').style.display      = type === 'kpi' ? 'none' : '';
-  document.getElementById('w-cluster-wrap').style.display = type === 'timeseries' ? '' : 'none';
-  document.getElementById('w-agg-wrap').style.display     = type === 'table' ? 'none' : '';
-  // For time-series, auto-set x to Inquiry Date
-  if (type === 'timeseries' && document.getElementById('w-x').options.length > 1) {
-    const sel = document.getElementById('w-x');
-    const opt = [...sel.options].find(o => o.value === 'Inquiry Date');
-    if (opt) sel.value = 'Inquiry Date';
-  }
-}
-
-// ── Date clustering helper ────────────────────────────────────────────────────
-function clusterDate(dateStr, unit) {
-  const d = new Date(dateStr);
-  if (isNaN(d)) return 'Unknown';
-  if (unit === 'day') return d.toISOString().slice(0,10);
-  if (unit === 'month') return d.toLocaleString('en-GB', { month:'short', year:'numeric' });
-  if (unit === 'week') {
-    // ISO week start (Monday)
-    const day = d.getDay() || 7;
-    const mon = new Date(d); mon.setDate(d.getDate() - day + 1);
-    const sun = new Date(mon); sun.setDate(mon.getDate() + 6);
-    const fmt = (dt) => dt.getDate() + ' ' + dt.toLocaleString('en-GB',{month:'short'});
-    return fmt(mon) + ' – ' + fmt(sun);
-  }
-  return dateStr;
-}
-
-// ── Widget preview ────────────────────────────────────────────────────────────
-let previewChartInstance = null;
-let cachedSheetData = null;
-
-async function previewWidget(id) {
-  const modal = document.getElementById('preview-modal');
-  const body  = document.getElementById('preview-body');
-  const titleEl = document.getElementById('preview-title');
-  modal.classList.add('open');
-  body.innerHTML = '<div style="text-align:center;color:#73726c;font-size:13px;padding:2rem;">Loading data…</div>';
-
-  // Fetch widget config
-  const { data: w, error } = await sb.from('dashboard_widgets').select('*').eq('id', id).single();
-  if (error || !w) { body.innerHTML = '<div style="color:#993C1D;">Could not load widget.</div>'; return; }
-  titleEl.textContent = '🔍 Preview — ' + w.title;
-
-  // Fetch sheet data if not cached
-  if (!cachedSheetData) {
-    try {
-      const resp = await fetch(APPS_SCRIPT_URL);
-      cachedSheetData = await resp.json();
-    } catch(e) {
-      body.innerHTML = `<div style="color:#993C1D;font-size:12px;">Could not load sheet data: ${e.message}</div>`;
-      return;
-    }
-  }
-
-  // Apply filters
-  const filters = (typeof w.filters === 'string' ? JSON.parse(w.filters) : w.filters) || [];
-  let rows = cachedSheetData.filter(r => {
-    if (w.date_from || w.date_to) {
-      const d = new Date(r['Inquiry Date']);
-      if (w.date_from && d < new Date(w.date_from)) return false;
-      if (w.date_to   && d > new Date(w.date_to))   return false;
-    }
-    return filters.every(f => {
-      const val = String(r[f.field]||'').trim().toLowerCase();
-      const fv  = String(f.value||'').toLowerCase();
-      if (f.operator === 'equals')     return val === fv;
-      if (f.operator === 'not_equals') return val !== fv;
-      if (f.operator === 'contains')   return val.includes(fv);
-      return true;
-    });
-  });
-
-  const filterSummary = filters.length
-    ? '<div style="font-size:11px;color:#73726c;margin-bottom:1rem;">Filters: ' + filters.map(f=>`<strong>${f.field}</strong> ${f.operator} "${f.value}"`).join(' AND ') + '</div>'
-    : '';
-  const dateSummary = (w.date_from||w.date_to)
-    ? `<div style="font-size:11px;color:#73726c;margin-bottom:0.5rem;">Date: ${w.date_from||'any'} → ${w.date_to||'any'}</div>` : '';
-
-  // Aggregate
-  const counts = {};
-  const isTimeSeries = w.widget_type === 'timeseries';
-  const cluster = w.date_cluster || 'week';
-  const xField = isTimeSeries ? 'Inquiry Date' : w.x_field;
-
-  if (xField) {
-    rows.forEach(r => {
-      const key = isTimeSeries
-        ? clusterDate(String(r[xField]||''), cluster)
-        : String(r[xField]||'Unknown').trim()||'Unknown';
-      if (w.y_aggregation === 'sum' && w.y_field !== 'count') {
-        counts[key] = (counts[key]||0) + (parseFloat(r[w.y_field])||0);
-      } else {
-        counts[key] = (counts[key]||0) + 1;
-      }
-    });
-  }
-
-  // Sort time-series by date key
-  let entries = Object.entries(counts);
-  if (isTimeSeries) entries.sort((a,b) => a[0].localeCompare(b[0]));
-  const labels = entries.map(e=>e[0]);
-  const data   = entries.map(e=>e[1]);
-
-  const COLORS = ['#185FA5','#1D9E75','#534AB7','#D85A30','#C9A84C','#888780','#E06C9F','#2C7BB6'];
-
-  if (w.widget_type === 'kpi') {
-    const val = w.y_aggregation === 'sum' && w.y_field !== 'count'
-      ? rows.reduce((s,r) => s+(parseFloat(r[w.y_field])||0),0)
-      : rows.length;
-    body.innerHTML = `${filterSummary}${dateSummary}
-      <div style="text-align:center;padding:2rem 0;">
-        <div style="font-size:11px;color:#888780;margin-bottom:8px;text-transform:uppercase;letter-spacing:0.08em;">${w.title}</div>
-        <div style="font-size:48px;font-weight:500;color:#185FA5;">${Math.round(val).toLocaleString('en-US')}</div>
-        <div style="font-size:12px;color:#b4b2a9;margin-top:4px;">from ${rows.length} records</div>
-      </div>`;
+function renderActivityLog(){
+  const el=document.getElementById('activity-tbl'); if(!el) return;
+  const filter=document.getElementById('log-filter')?.value||'all';
+  const filtered=filter==='all'?activityLog:activityLog.filter(l=>l.type===filter);
+  const countEl=document.getElementById('log-count');
+  if(countEl) countEl.textContent=filtered.length+' entries';
+  if(!filtered.length){
+    el.innerHTML='<div style="padding:32px;text-align:center;color:var(--muted);font-size:13px">No activity yet'+(filter!=='all'?' for this filter':'')+'.</div>';
     return;
   }
-
-  if (w.widget_type === 'table') {
-    const tableRows = entries.sort((a,b)=>b[1]-a[1]);
-    body.innerHTML = `${filterSummary}${dateSummary}
-      <table style="width:100%;border-collapse:collapse;font-size:12px;">
-        <thead><tr>
-          <th style="text-align:left;padding:6px 8px;background:#f9f8f5;border-bottom:1px solid #e8e7e1;">${xField}</th>
-          <th style="text-align:right;padding:6px 8px;background:#f9f8f5;border-bottom:1px solid #e8e7e1;">Count</th>
-        </tr></thead>
-        <tbody>${tableRows.map(([k,v])=>`<tr><td style="padding:6px 8px;border-bottom:1px solid #f1efe8;">${k}</td><td style="text-align:right;padding:6px 8px;border-bottom:1px solid #f1efe8;">${Math.round(v).toLocaleString('en-US')}</td></tr>`).join('')}</tbody>
-      </table>`;
-    return;
-  }
-
-  // Chart types
-  body.innerHTML = `${filterSummary}${dateSummary}<div style="position:relative;height:280px;"><canvas id="preview-chart"></canvas></div>`;
-
-  if (previewChartInstance) { previewChartInstance.destroy(); previewChartInstance = null; }
-
-  setTimeout(() => {
-    const canvas = document.getElementById('preview-chart');
-    if (!canvas) return;
-    const type = (w.widget_type === 'timeseries' || w.widget_type === 'line') ? 'line' : w.widget_type === 'doughnut' ? 'doughnut' : 'bar';
-    const colors = COLORS.slice(0, labels.length);
-    previewChartInstance = new Chart(canvas, {
-      type,
-      data: { labels, datasets: [{ label: w.title, data,
-        backgroundColor: type==='line' ? colors[0]+'20' : colors,
-        borderColor: type==='line' ? colors[0] : colors,
-        borderWidth: type==='line' ? 2 : 1,
-        fill: type==='line', tension: 0.3,
-        pointBackgroundColor: type==='line' ? colors[0] : undefined,
-        pointRadius: type==='line' ? 4 : undefined,
-      }]},
-      options: {
-        responsive: true, maintainAspectRatio: false,
-        layout: { padding: { top: 20 } },
-        plugins: {
-          legend: { display: type==='doughnut', position:'right', labels:{font:{size:10},boxWidth:12} },
-          datalabels: {
-            display: true, anchor:'end', align: type==='doughnut'?'center':'end',
-            font:{size:9,weight:'600'}, color: type==='doughnut'?'#fff':'#444',
-            formatter: (v,ctx) => {
-              if (type==='doughnut') { const t=ctx.dataset.data.reduce((a,b)=>a+b,0); return t>0?Math.round(v/t*100)+'%':''; }
-              return v===0?'':v;
-            }
-          }
-        },
-        scales: type==='doughnut'?{}:{
-          x:{ticks:{font:{size:9},maxRotation:45,autoSkip:labels.length>12}},
-          y:{beginAtZero:true,ticks:{font:{size:10}}}
-        }
-      }
-    });
-  }, 50);
+  el.innerHTML=`<table class="tbl"><thead><tr>
+    <th style="width:80px">Time</th>
+    <th style="width:110px">Type</th>
+    <th>Action</th>
+    <th style="width:130px">Admin</th>
+    <th style="width:80px">Date</th>
+  </tr></thead><tbody>${filtered.map(l=>{
+    const m=LOG_TYPE_META[l.type]||{icon:'📝',color:'var(--muted)',label:l.type};
+    let meta='';
+    try{const parsed=JSON.parse(l.meta||'{}');const keys=Object.keys(parsed);if(keys.length)meta=keys.map(k=>`<span style="font-size:10px;background:var(--bg3);border:1px solid var(--border);border-radius:3px;padding:1px 5px;margin-right:3px">${k}: ${parsed[k]}</span>`).join('');}catch(e){}
+    return `<tr>
+      <td style="font-family:'Share Tech Mono',monospace;font-size:11px;color:var(--muted)">${l.time||''}</td>
+      <td><span style="font-size:11px;background:${m.color}22;color:${m.color};border:1px solid ${m.color}44;padding:2px 7px;border-radius:10px;white-space:nowrap">${m.icon} ${m.label}</span></td>
+      <td><div style="font-size:13px">${l.message||''}</div>${meta?`<div style="margin-top:4px">${meta}</div>`:''}</div></td>
+      <td style="font-size:12px;color:var(--neon);font-weight:500">${l.actor||'—'}</td>
+      <td style="font-size:11px;color:var(--muted)">${l.date||''}</td>
+    </tr>`;
+  }).join('')}</tbody></table>`;
 }
 
-function closePreview() {
-  document.getElementById('preview-modal').classList.remove('open');
-  if (previewChartInstance) { previewChartInstance.destroy(); previewChartInstance = null; }
-}
-
-// Close modal on backdrop click
-document.getElementById('preview-modal').addEventListener('click', function(e) {
-  if (e.target === this) closePreview();
-});
-
-let filterCount = 0;
-function addFilterRow() {
-  filterCount++;
-  const id = filterCount;
-  const opts = sheetFields.map(f => `<option value="${f}">${f}</option>`).join('');
-  const div = document.createElement('div');
-  div.id = `filter-row-${id}`;
-  div.style.cssText = 'display:flex;gap:8px;align-items:flex-end;flex-wrap:wrap;margin-bottom:8px;';
-  div.innerHTML = `
-    <div class="field" style="flex:2;">
-      <label>Field</label>
-      <select class="w-filter-field" onchange="updateFilterValues(${id})" style="width:100%;">
-        <option value="">— select —</option>${opts}
-      </select>
-    </div>
-    <div class="field" style="flex:1;">
-      <label>Operator</label>
-      <select class="w-filter-op" style="width:100%;">
-        <option value="equals">equals</option>
-        <option value="not_equals">not equals</option>
-        <option value="contains">contains</option>
-      </select>
-    </div>
-    <div class="field" style="flex:2;">
-      <label>Value</label>
-      <select class="w-filter-val" id="filter-val-${id}" style="width:100%;"><option value="">— select field first —</option></select>
-    </div>
-    <button class="btn btn-danger btn-sm" onclick="document.getElementById('filter-row-${id}').remove()" style="margin-bottom:1px;">✕</button>`;
-  document.getElementById('w-filters').appendChild(div);
-}
-
-function updateFilterValues(id) {
-  const field = document.querySelector(`#filter-row-${id} .w-filter-field`).value;
-  const vals  = sheetFieldValues[field] || [];
-  const sel   = document.getElementById(`filter-val-${id}`);
-  sel.innerHTML = '<option value="">— any —</option>' + vals.map(v => `<option value="${v}">${v}</option>`).join('');
-}
-
-async function saveWidget() {
-  const title    = document.getElementById('w-title').value.trim();
-  const type     = document.getElementById('w-type').value;
-  const xField   = document.getElementById('w-x').value;
-  const yField   = document.getElementById('w-y').value;
-  const agg      = document.getElementById('w-agg').value;
-  const dateFrom = document.getElementById('w-date-from').value;
-  const dateTo   = document.getElementById('w-date-to').value;
-  const cluster  = document.getElementById('w-cluster').value;
-  const status   = document.getElementById('w-status');
-
-  if (!title) { showToast('Please enter a widget title.', true); return; }
-  if (type !== 'kpi' && !xField) { showToast('Please select an X axis field.', true); return; }
-
-  // Collect filters
-  const filters = [];
-  document.querySelectorAll('[id^="filter-row-"]').forEach(row => {
-    const field = row.querySelector('.w-filter-field').value;
-    const op    = row.querySelector('.w-filter-op').value;
-    const val   = row.querySelector('.w-filter-val').value;
-    if (field && val) filters.push({ field, operator: op, value: val });
-  });
-
-  const { data: existing } = await sb.from('dashboard_widgets').select('sort_order').order('sort_order', { ascending: false }).limit(1);
-  const nextOrder = existing?.length ? (existing[0].sort_order + 1) : 0;
-
-  const { error } = await sb.rpc('insert_dashboard_widget', {
-    p_title:         title,
-    p_widget_type:   type,
-    p_x_field:       xField || '',
-    p_y_field:       yField || 'count',
-    p_y_aggregation: agg,
-    p_filters:       JSON.stringify(filters),
-    p_date_from:     dateFrom || '',
-    p_date_to:       dateTo || '',
-    p_date_cluster:  cluster || 'week',
-    p_sort_order:    nextOrder
-  });
-
-  if (error) { showToast('Error: ' + error.message, true); return; }
-
-  // Reset form
-  document.getElementById('w-title').value = '';
-  document.getElementById('w-date-from').value = '';
-  document.getElementById('w-date-to').value = '';
-  document.getElementById('w-filters').innerHTML = '';
-  filterCount = 0;
-  showToast('Widget added ✓');
-  loadWidgets();
-}
-
-async function loadWidgets() {
-  const el = document.getElementById('widget-list');
-  if (!el) return;
-  el.innerHTML = '<div class="loading-overlay">Loading…</div>';
-
-  const { data, error } = await sb.from('dashboard_widgets').select('*').order('sort_order');
-  if (error) { el.innerHTML = `<div style="color:#993C1D;font-size:12px;">${error.message}</div>`; return; }
-
-  document.getElementById('widget-count').textContent = `(${data?.length || 0})`;
-
-  if (!data?.length) {
-    el.innerHTML = '<div class="loading-overlay">No widgets yet — create your first one above.</div>';
-    return;
-  }
-
-  el.innerHTML = '<div class="records-list">' + data.map(w => {
-    const filters = (typeof w.filters === 'string' ? JSON.parse(w.filters) : w.filters) || [];
-    const filterStr = filters.length ? filters.map(f => `${f.field} ${f.operator} "${f.value}"`).join(', ') : 'No filters';
-    const dateStr = (w.date_from || w.date_to) ? ` · ${w.date_from||'any'} → ${w.date_to||'any'}` : '';
-    return `<div class="record-row" id="widget-row-${w.id}">
-      <div style="flex:1;">
-        <div class="record-info">${WIDGET_TYPE_ICONS[w.widget_type]} ${w.title}</div>
-        <div class="record-meta">${WIDGET_TYPE_LABELS[w.widget_type]} · X: ${w.x_field||'—'} · Y: ${w.y_field} (${w.y_aggregation})</div>
-        <div class="record-meta" style="color:#b4b2a9;">Filters: ${filterStr}${dateStr}</div>
-      </div>
-      <div class="record-actions">
-        <button class="btn btn-secondary btn-sm" onclick="previewWidget('${w.id}')">Preview</button>
-        <button class="btn btn-secondary btn-sm" onclick="moveWidget('${w.id}',${w.sort_order},-1)">↑</button>
-        <button class="btn btn-secondary btn-sm" onclick="moveWidget('${w.id}',${w.sort_order},1)">↓</button>
-        <button class="btn btn-secondary btn-sm" onclick="toggleWidget('${w.id}',${w.active})">${w.active?'Hide':'Show'}</button>
-        <button class="btn btn-danger btn-sm" onclick="deleteWidget('${w.id}')">Delete</button>
-      </div>
-    </div>`;
-  }).join('') + '</div>';
-}
-
-async function deleteWidget(id) {
-  if (!confirm('Delete this widget?')) return;
-  const { error } = await sb.from('dashboard_widgets').delete().eq('id', id);
-  if (error) { showToast('Error: ' + error.message, true); return; }
-  showToast('Widget deleted'); loadWidgets();
-}
-
-async function toggleWidget(id, currentActive) {
-  const { error } = await sb.from('dashboard_widgets').update({ active: !currentActive }).eq('id', id);
-  if (error) { showToast('Error: ' + error.message, true); return; }
-  showToast(currentActive ? 'Widget hidden' : 'Widget shown'); loadWidgets();
-}
-
-async function moveWidget(id, currentOrder, direction) {
-  const { data: all } = await sb.from('dashboard_widgets').select('id,sort_order').order('sort_order');
-  const idx = all.findIndex(w => w.id === id);
-  const swapIdx = idx + direction;
-  if (swapIdx < 0 || swapIdx >= all.length) return;
-  const swapWith = all[swapIdx];
-  await Promise.all([
-    sb.from('dashboard_widgets').update({ sort_order: swapWith.sort_order }).eq('id', id),
-    sb.from('dashboard_widgets').update({ sort_order: currentOrder }).eq('id', swapWith.id),
-  ]);
-  loadWidgets();
-}
-
-// ── Clear YTD override ────────────────────────────────────────────────────────
-async function clearYtdOverride() {
-  const fyYear = +document.getElementById('ytd-override-fy').value;
-  const status = document.getElementById('ytd-override-status');
-  if (!confirm(`This will remove the hardcoded YTD override for FY${String(fyYear).slice(2)}–${String(fyYear+1).slice(2)}. The dashboard will then calculate YTD by summing your individual monthly entries. Continue?`)) return;
-  status.textContent = 'Clearing…';
-  try {
-    const [{ error: e1 }, { error: e2 }] = await Promise.all([
-      sb.from('property_stats').delete().eq('stat_year', fyYear).eq('stat_month', 99),
-      sb.from('tonik_stats').delete().eq('stat_year', fyYear).eq('stat_month', 99),
-    ]);
-    if (e1 || e2) throw new Error(e1?.message || e2?.message);
-    status.textContent = '';
-    showToast('YTD override cleared ✓ — dashboard now uses monthly totals');
-  } catch(err) {
-    status.textContent = '';
-    showToast('Error: ' + err.message, true);
-  }
-}
-
-document.addEventListener('keydown', e => {
-  if (e.key==='Enter' && !document.getElementById('auth-screen').classList.contains('hidden')) signIn();
-});
+// ══ TOAST ══
+function showCMSToast(id,ms=3000){const el=document.getElementById(id);if(!el)return;el.classList.add('show');setTimeout(()=>el.classList.remove('show'),ms);}
 </script>
 </body>
 </html>

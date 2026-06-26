@@ -88,16 +88,12 @@ body{background:var(--bg);color:var(--col-body);font-family:var(--font-body);min
 .disc-badge{position:absolute;top:7px;left:7px;background:#f43f5e;color:#fff;font-size:10px;font-weight:700;padding:2px 8px;border-radius:4px;z-index:4;letter-spacing:.3px}
 
 /* SLASH PRICING */
-.price-wrap{display:flex;flex-direction:column;line-height:1.2}
-.price-row{display:flex;align-items:baseline;gap:8px;flex-wrap:wrap}
-.pprice{font-family:var(--font-price);font-size:18px;font-weight:700;color:var(--col-price);line-height:1}
-.pprice-orig{font-family:var(--font-price);font-size:18px;font-weight:700;color:var(--muted);text-decoration:line-through;opacity:.55;line-height:1}
-.pprice-save{font-size:10px;color:#f43f5e;font-weight:700;background:rgba(244,63,94,.1);border:1px solid rgba(244,63,94,.25);padding:1px 6px;border-radius:4px;white-space:nowrap;align-self:center}
+.price-wrap{display:flex;flex-direction:column;line-height:1.15}
+.pprice-orig{font-family:var(--font-price);font-size:12px;color:var(--muted);text-decoration:line-through}
+.pprice-save{font-size:10px;color:#f43f5e;font-weight:600}
 
 /* DETAIL DISCOUNT */
-.det-price-row{display:flex;align-items:baseline;gap:12px;flex-wrap:wrap;margin:6px 0}
-.det-orig{font-family:var(--font-price);font-size:34px;font-weight:700;color:var(--muted);text-decoration:line-through;opacity:.45;line-height:1}
-.det-new{font-family:var(--font-price);font-size:34px;font-weight:700;color:var(--col-price);line-height:1}
+.det-orig{font-family:var(--font-price);font-size:18px;color:var(--muted);text-decoration:line-through}
 .det-save{display:inline-block;background:#f43f5e;color:#fff;font-size:12px;font-weight:700;padding:3px 10px;border-radius:4px;margin-top:6px}
 .det-price-block{margin:12px 0}
 
@@ -435,9 +431,75 @@ body{background:var(--bg);color:var(--col-body);font-family:var(--font-body);min
 .bnpl-detail-val{font-family:var(--font-price);font-size:16px;font-weight:700;color:#a78bfa}
 .bnpl-detail-logos{display:flex;gap:6px;margin-top:8px;flex-wrap:wrap;align-items:center}
 .bnpl-detail-logos img{height:20px;width:auto;max-width:56px;object-fit:contain;border-radius:4px;background:#fff;padding:2px 4px}
+
+/* ══ COMING SOON ══ */
+#screen-soon{background:var(--bg);min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:28px;text-align:center;position:relative;overflow:hidden}
+.soon-grid{position:absolute;inset:0;background-image:linear-gradient(rgba(0,240,160,.03) 1px,transparent 1px),linear-gradient(90deg,rgba(0,240,160,.03) 1px,transparent 1px);background-size:44px 44px;pointer-events:none}
+.soon-glow{position:absolute;top:-200px;left:50%;transform:translateX(-50%);width:600px;height:600px;background:radial-gradient(circle,rgba(0,240,160,.08) 0%,transparent 70%);pointer-events:none}
+.soon-logo{font-family:var(--font-head);font-size:42px;font-weight:700;letter-spacing:4px;color:var(--col-heading);position:relative;margin-bottom:4px}
+.soon-logo em{color:var(--col-body);font-style:normal}
+.soon-tagline-line{font-family:var(--font-head);font-size:13px;letter-spacing:4px;color:var(--muted);text-transform:uppercase;position:relative;margin-bottom:32px}
+.soon-title{font-family:var(--font-head);font-size:48px;font-weight:700;color:var(--col-body);letter-spacing:1px;line-height:1.1;position:relative;margin-bottom:12px}
+.soon-title span{color:var(--col-heading)}
+.soon-sub{font-size:15px;color:var(--muted);max-width:520px;line-height:1.75;position:relative;margin-bottom:16px}
+.soon-sub strong{color:var(--col-body);font-weight:600}
+.soon-sub-accent{font-family:var(--font-head);font-size:20px;font-weight:700;letter-spacing:2px;color:var(--col-heading);margin-bottom:16px;position:relative}
+.countdown{display:flex;gap:16px;justify-content:center;position:relative;margin-bottom:44px;flex-wrap:wrap}
+.cd-block{background:rgba(0,240,160,.05);border:1px solid rgba(0,240,160,.15);border-radius:14px;padding:18px 24px;min-width:88px}
+.cd-num{font-family:var(--font-head);font-size:48px;font-weight:700;color:var(--col-heading);line-height:1;display:block}
+.cd-label{font-size:11px;color:var(--muted);letter-spacing:1.5px;text-transform:uppercase;margin-top:4px;display:block}
+.cd-sep{font-family:var(--font-head);font-size:40px;color:rgba(0,240,160,.3);align-self:center;margin-top:-8px}
+.soon-form{display:flex;gap:10px;max-width:440px;width:100%;position:relative;flex-wrap:wrap;justify-content:center}
+.soon-input{flex:1;min-width:220px;background:rgba(255,255,255,.05);border:1px solid var(--border);color:var(--col-body);padding:12px 16px;border-radius:9px;font-size:14px;outline:none;transition:.15s;font-family:var(--font-body)}
+.soon-input:focus{border-color:var(--col-heading)}
+.soon-input::placeholder{color:var(--muted)}
+.soon-btn{background:var(--col-btn-bg);color:var(--col-btn-text);border:none;padding:12px 22px;border-radius:9px;font-weight:700;font-size:14px;cursor:pointer;white-space:nowrap;transition:.15s}
+.soon-btn:hover{opacity:.85}
+.soon-thanks{font-size:13px;color:var(--col-heading);margin-top:12px;position:relative;display:none}
+.soon-thanks.show{display:block}
+.soon-footer{position:absolute;bottom:20px;font-size:12px;color:var(--muted)}
+@media(max-width:480px){
+  .soon-title{font-size:30px}
+  .cd-num{font-size:36px}
+  .cd-block{min-width:68px;padding:14px 16px}
+  .soon-logo{font-size:30px}
+  .soon-sub{font-size:14px}
+}
 </style>
 </head>
 <body>
+
+<!-- ══════════════ COMING SOON ══════════════ -->
+<div id="screen-soon" class="screen">
+  <div class="soon-grid"></div>
+  <div class="soon-glow"></div>
+  <div class="soon-logo">XP<em>FLEX</em></div>
+  <div class="soon-tagline-line">Don't just Play. Flex.</div>
+  <h1 class="soon-title">Sri Lanka's First<br/><span>BNPL</span> Gaming Platform</h1>
+  <p class="soon-sub soon-sub-accent">Early Access. Limited Spots.</p>
+  <p class="soon-sub">
+    Steam Wallet top-ups, PSN gift cards, Xbox credits and in-game currency —
+    delivered instantly to your inbox.<br/><br/>
+    <strong>Own it today, three easy payments.</strong>
+  </p>
+  <div style="margin-bottom:24px"></div>
+  <div class="countdown">
+    <div class="cd-block"><span class="cd-num" id="cd-days">00</span><span class="cd-label">Days</span></div>
+    <div class="cd-sep">:</div>
+    <div class="cd-block"><span class="cd-num" id="cd-hours">00</span><span class="cd-label">Hours</span></div>
+    <div class="cd-sep">:</div>
+    <div class="cd-block"><span class="cd-num" id="cd-mins">00</span><span class="cd-label">Minutes</span></div>
+    <div class="cd-sep">:</div>
+    <div class="cd-block"><span class="cd-num" id="cd-secs">00</span><span class="cd-label">Seconds</span></div>
+  </div>
+  <div class="soon-form">
+    <input class="soon-input" type="email" id="soon-email" placeholder="Enter your email for early access"/>
+    <button class="soon-btn" onclick="soonSubscribe()">Get Early Access</button>
+  </div>
+  <div class="soon-thanks" id="soon-thanks">&#10003; You're on the list — we'll notify you on launch day!</div>
+  <div class="soon-footer">&copy; 2026 XPFlex &mdash; xpflex.com</div>
+</div>
+
 <!-- ══════════════ STORE ══════════════ -->
 <div id="screen-store" class="screen active">
   <nav class="s-nav">
@@ -663,8 +725,51 @@ window.addEventListener('load',async()=>{
   const sbAdmins=await sbGet('admins'); adminUsers=sbAdmins||[];
   if(ejsConfig.pubkey)emailjs.init(ejsConfig.pubkey);
   if(window.location.hash==='#admin'){window.location.href='admin.html';return;}
-  applyDesign();applySettings();renderHome();renderShop();renderBanner();setupSecretKnock();
+  applyDesign();applySettings();
+  if(settings.comingSoon){
+    document.getElementById('screen-soon').classList.add('active');
+    document.getElementById('screen-store').classList.remove('active');
+    startCountdown();
+  } else {
+    document.getElementById('screen-store').classList.add('active');
+    document.getElementById('screen-soon').classList.remove('active');
+    renderHome();renderShop();renderBanner();setupSecretKnock();
+  }
 });
+
+// ══ COMING SOON ══
+const LAUNCH_DATE=new Date('2026-07-15T00:00:00');
+function startCountdown(){
+  function tick(){
+    const diff=LAUNCH_DATE-new Date();
+    if(diff<=0){['cd-days','cd-hours','cd-mins','cd-secs'].forEach(id=>document.getElementById(id).textContent='00');return;}
+    const d=Math.floor(diff/(1000*60*60*24));
+    const h=Math.floor((diff%(1000*60*60*24))/(1000*60*60));
+    const m=Math.floor((diff%(1000*60*60))/(1000*60));
+    const s=Math.floor((diff%(1000*60))/1000);
+    document.getElementById('cd-days').textContent=String(d).padStart(2,'0');
+    document.getElementById('cd-hours').textContent=String(h).padStart(2,'0');
+    document.getElementById('cd-mins').textContent=String(m).padStart(2,'0');
+    document.getElementById('cd-secs').textContent=String(s).padStart(2,'0');
+  }
+  tick();setInterval(tick,1000);
+}
+async function soonSubscribe(){
+  const email=document.getElementById('soon-email').value.trim();
+  if(!email||!email.includes('@')){alert('Please enter a valid email address.');return;}
+  const btn=document.querySelector('.soon-btn');
+  btn.textContent='Saving...';btn.disabled=true;
+  try{
+    await fetch(`${SB_URL}/rest/v1/waitlist`,{
+      method:'POST',
+      headers:{'apikey':SB_KEY,'Authorization':`Bearer ${SB_KEY}`,'Content-Type':'application/json','Prefer':'resolution=merge-duplicates'},
+      body:JSON.stringify({email,date:new Date().toLocaleDateString('en-GB'),ts:Date.now()})
+    });
+  }catch(e){console.warn('Waitlist save:',e);}
+  document.getElementById('soon-email').value='';
+  document.getElementById('soon-thanks').classList.add('show');
+  btn.textContent='Get Early Access';btn.disabled=false;
+}
 
 // ══ SCREENS ══
 function showScreen(id){document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));document.getElementById(id).classList.add('active');}
@@ -741,7 +846,7 @@ function cardHTML(p,isFeat=false){
   const stockTag=p.stock==='low'?'<span class="stock-tag stock-low">Low Stock</span>':isOut?'<span class="stock-tag stock-out">Out of Stock</span>':isPreorder?'<span class="preorder-tag">Pre-Order</span>':'';
   const countBadge=stockCountBadge(p);
   const discBadge=dl?`<span class="disc-badge">${dl}</span>`:'';
-  const priceHTML=dp!=null?`<div class="price-wrap"><div class="price-row"><div class="pprice-orig">${priceFmt(p.price)}</div><div class="pprice">${priceFmt(dp)}</div><span class="pprice-save">${dl}</span></div>${bnplCardStrip(p,dp)}</div>`:`<div class="price-wrap"><div class="pprice">${priceFmt(p.price)}</div>${bnplCardStrip(p,p.price)}</div>`;
+  const priceHTML=dp!=null?`<div class="price-wrap"><div class="pprice-orig">${priceFmt(p.price)}</div><div class="pprice">${priceFmt(dp)}</div><div class="pprice-save">Save ${priceFmt(p.price-dp)}</div>${bnplCardStrip(p,dp)}</div>`:`<div class="price-wrap"><div class="pprice">${priceFmt(p.price)}</div>${bnplCardStrip(p,p.price)}</div>`;
   // CTA button logic
   let atc;
   if(isOut){
@@ -756,7 +861,7 @@ function cardHTML(p,isFeat=false){
       :`<div class="atc-wrap" id="atc-${p.id}"><button class="atc-add" style="display:none" onclick="event.stopPropagation();addCart('${p.id}')">+</button><div class="atc-ctrl show" id="atcc-${p.id}"><button class="atc-btn" onclick="event.stopPropagation();decCart('${p.id}')">&#8722;</button><span class="atc-qty" id="atcq-${p.id}">${qty}</span><button class="atc-btn" onclick="event.stopPropagation();incCart('${p.id}')">+</button></div></div>`;
   }
   if(isFeat){
-    const fPrice=dp!=null?`<div class="price-wrap"><div class="price-row"><div class="pprice-orig">${priceFmt(p.price)}</div><div class="pprice" style="font-size:20px">${priceFmt(dp)}</div><span class="pprice-save">${dl}</span></div>${bnplCardStrip(p,dp)}</div>`:`<div class="price-wrap"><div class="pprice" style="font-size:20px">${priceFmt(p.price)}</div>${bnplCardStrip(p,p.price)}</div>`;
+    const fPrice=dp!=null?`<div class="price-wrap"><div class="pprice-orig" style="font-size:12px">${priceFmt(p.price)}</div><div style="font-family:var(--font-price);font-size:20px;font-weight:700;color:var(--col-price)">${priceFmt(dp)}</div>${bnplCardStrip(p,dp)}</div>`:`<div class="price-wrap"><div style="font-family:var(--font-price);font-size:20px;font-weight:700;color:var(--col-price)">${priceFmt(p.price)}</div>${bnplCardStrip(p,p.price)}</div>`;
     return `<div class="feat-card" onclick="showDetail('${p.id}')">
       ${!p.img?'<div class="feat-ribbon">Featured</div>':''}${dl?`<span class="disc-badge" style="top:10px;right:10px;left:auto">${dl}</span>`:''}
       <div class="feat-img ${bgClass(p.platform)}">${img}<span class="feat-emoji" ${emojiHide}>${p.icon||'🎮'}</span><span class="plat-tag ${platClass(p.platform)}">${p.platform}</span>${stockTag}${countBadge}</div>
@@ -866,7 +971,7 @@ function showDetail(id){
   const dp=discountedPrice(p); const dl=discountLabel(p);
   const ep=dp!=null?dp:p.price;
   if(dp!=null){
-    document.getElementById('det-price').innerHTML=`<div class="det-price-block"><div class="det-price-row"><div class="det-orig">${priceFmt(p.price)}</div><div class="det-new">${priceFmt(dp)}</div></div><span class="det-save">${dl} &nbsp; You save ${priceFmt(p.price-dp)}</span></div>${bnplDetailBlock(p,ep)}`;
+    document.getElementById('det-price').innerHTML=`<div class="det-price-block"><div class="det-orig">${priceFmt(p.price)}</div><div style="font-family:var(--font-price);font-size:34px;color:var(--col-price);font-weight:700">${priceFmt(dp)}</div><span class="det-save">${dl} &nbsp; Save ${priceFmt(p.price-dp)}</span></div>${bnplDetailBlock(p,ep)}`;
   } else {
     document.getElementById('det-price').innerHTML=`<div style="font-family:var(--font-price);font-size:34px;color:var(--col-price);font-weight:700;margin:14px 0">${priceFmt(p.price)}</div>${bnplDetailBlock(p,ep)}`;
   }
@@ -1533,7 +1638,7 @@ async function placeOrder(){
 function discIsActive(d){
   if(!d||!d.enabled) return false;
   const now=new Date(); now.setHours(0,0,0,0);
-  if(d.startDate){const s=new Date(d.startDate);s.setHours(0,0,0,0);if(now<s)return false;}
+  if(d.startDate){const s=new Date(d.startDate);if(now<s)return false;}
   if(d.endDate){const e=new Date(d.endDate);e.setHours(23,59,59,999);if(new Date()>e)return false;}
   return true;
 }
