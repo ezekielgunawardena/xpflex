@@ -448,7 +448,8 @@ body{background:var(--bg);color:var(--col-body);font-family:var(--font-body);min
 .bnpl-detail-logos img{height:20px;width:auto;max-width:56px;object-fit:contain;border-radius:4px;background:#fff;padding:2px 4px}
 
 /* ══ COMING SOON ══ */
-#screen-soon{background:var(--bg);min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:28px;text-align:center;position:relative;overflow:hidden}
+#screen-soon{background:var(--bg);min-height:100vh;flex-direction:column;align-items:center;justify-content:center;padding:28px;text-align:center;position:relative;overflow:hidden}
+#screen-soon.active{display:flex}
 .soon-grid{position:absolute;inset:0;background-image:linear-gradient(rgba(0,240,160,.03) 1px,transparent 1px),linear-gradient(90deg,rgba(0,240,160,.03) 1px,transparent 1px);background-size:44px 44px;pointer-events:none}
 .soon-glow{position:absolute;top:-200px;left:50%;transform:translateX(-50%);width:600px;height:600px;background:radial-gradient(circle,rgba(0,240,160,.08) 0%,transparent 70%);pointer-events:none}
 .soon-logo{font-family:var(--font-head);font-size:42px;font-weight:700;letter-spacing:4px;color:var(--col-heading);position:relative;margin-bottom:4px}
@@ -1670,7 +1671,7 @@ async function placeOrder(){
 function discIsActive(d){
   if(!d||!d.enabled) return false;
   const now=new Date(); now.setHours(0,0,0,0);
-  if(d.startDate){const s=new Date(d.startDate);if(now<s)return false;}
+  if(d.startDate){const s=new Date(d.startDate);s.setHours(0,0,0,0);if(now<s)return false;}
   if(d.endDate){const e=new Date(d.endDate);e.setHours(23,59,59,999);if(new Date()>e)return false;}
   return true;
 }
