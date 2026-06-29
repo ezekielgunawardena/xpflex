@@ -509,7 +509,7 @@ body{background:var(--bg);color:var(--col-body);font-family:var(--font-body);min
   </div>
   <div class="soon-thanks" id="soon-thanks">&#10003; You're on the list — we'll notify you on launch day!</div>
   <div class="soon-footer">&copy; 2026 XPFlex &mdash; xpflex.com</div>
-  <div id="soon-secret" style="position:absolute;bottom:0;left:0;right:0;height:48px;cursor:default"></div>
+  <div id="soon-secret" style="position:fixed;bottom:0;left:0;right:0;height:48px;cursor:default;z-index:1"></div>
 </div>
 
 <!-- ══════════════ STORE ══════════════ -->
@@ -739,6 +739,15 @@ window.addEventListener('load',async()=>{
   if(ejsConfig.pubkey)emailjs.init(ejsConfig.pubkey);
   if(window.location.hash==='#admin'){window.location.href='admin.html';return;}
   applyDesign();applySettings();
+  // Setup secret knock on all screens at boot
+  function setupKnock(id){
+    const el=document.getElementById(id); if(!el) return;
+    el.addEventListener('dblclick',()=>window.location.href='admin.html');
+    let lt=0;
+    el.addEventListener('touchend',e=>{const now=Date.now();if(now-lt<350){window.location.href='admin.html';e.preventDefault();}lt=now;});
+  }
+  setupKnock('secret-zone');
+  setupKnock('soon-secret');
   if(settings.comingSoon){
     document.getElementById('screen-soon').classList.add('active');
     document.getElementById('screen-store').classList.remove('active');
@@ -767,17 +776,6 @@ function startCountdown(){
     document.getElementById('cd-secs').textContent=String(s).padStart(2,'0');
   }
   tick();setInterval(tick,1000);
-  // Secret knock on coming soon page
-  const soonSecret=document.getElementById('soon-secret');
-  if(soonSecret){
-    soonSecret.addEventListener('dblclick',()=>window.location.href='admin.html');
-    let lastTap=0;
-    soonSecret.addEventListener('touchend',e=>{
-      const now=Date.now();
-      if(now-lastTap<350){window.location.href='admin.html';e.preventDefault();}
-      lastTap=now;
-    });
-  }
 }
 async function soonSubscribe(){
   const email=document.getElementById('soon-email').value.trim();
@@ -1099,13 +1097,6 @@ function applySettings(){
   if(settings.hero) document.getElementById('hero-title').innerHTML=settings.hero;
   if(settings.sub) document.getElementById('hero-sub').textContent=settings.sub;
   if(settings.footer) document.getElementById('store-footer').textContent=settings.footer;
-  // Coming soon dynamic content
-  const csTitle=document.getElementById('cs-dyn-title');
-  const csAccent=document.getElementById('cs-dyn-accent');
-  const csSub=document.getElementById('cs-dyn-sub');
-  if(csTitle&&settings.csTitle) csTitle.innerHTML=settings.csTitle.replace('BNPL','<span style="color:var(--steam,#1b9cff)">BNPL</span>');
-  if(csAccent&&settings.csAccent) csAccent.textContent=settings.csAccent;
-  if(csSub&&settings.csSub) csSub.innerHTML=settings.csSub+'<br/><br/><strong>Own it today, three easy payments.</strong>';
   // Launch date from CMS
   if(settings.launchDate){
     const p=settings.launchDate.split('-');
