@@ -490,13 +490,9 @@ body{background:var(--bg);color:var(--col-body);font-family:var(--font-body);min
   <div class="soon-glow"></div>
   <div class="soon-logo">XP<em>FLEX</em></div>
   <div class="soon-tagline-line">Don't just Play. Flex.</div>
-  <h1 class="soon-title">Sri Lanka's First<br/><span>BNPL</span> Gaming Platform</h1>
-  <p class="soon-sub soon-sub-accent">Early Access. Limited Spots.</p>
-  <p class="soon-sub">
-    Steam Wallet top-ups, PSN gift cards, Xbox credits and in-game currency —
-    delivered instantly to your inbox.<br/><br/>
-    <strong>Own it today, three easy payments.</strong>
-  </p>
+  <h1 class="soon-title" id="cs-dyn-title">Sri Lanka's First<br/><span>BNPL</span> Gaming Platform</h1>
+  <p class="soon-sub soon-sub-accent" id="cs-dyn-accent">Early Access. Limited Spots.</p>
+  <p class="soon-sub" id="cs-dyn-sub">Steam Wallet top-ups, PSN gift cards, Xbox credits and in-game currency — delivered instantly to your inbox.<br/><br/><strong>Own it today, three easy payments.</strong></p>
   <div style="margin-bottom:24px"></div>
   <div class="countdown">
     <div class="cd-block"><span class="cd-num" id="cd-days">00</span><span class="cd-label">Days</span></div>
@@ -758,7 +754,8 @@ window.addEventListener('load',async()=>{
 const LAUNCH_DATE=new Date('2026-07-15T00:00:00');
 function startCountdown(){
   function tick(){
-    const diff=LAUNCH_DATE-new Date();
+    const target=window._launchDate||LAUNCH_DATE;
+    const diff=target-new Date();
     if(diff<=0){['cd-days','cd-hours','cd-mins','cd-secs'].forEach(id=>document.getElementById(id).textContent='00');return;}
     const d=Math.floor(diff/(1000*60*60*24));
     const h=Math.floor((diff%(1000*60*60*24))/(1000*60*60));
@@ -1102,6 +1099,22 @@ function applySettings(){
   if(settings.hero) document.getElementById('hero-title').innerHTML=settings.hero;
   if(settings.sub) document.getElementById('hero-sub').textContent=settings.sub;
   if(settings.footer) document.getElementById('store-footer').textContent=settings.footer;
+  // Coming soon dynamic content
+  const csTitle=document.getElementById('cs-dyn-title');
+  const csAccent=document.getElementById('cs-dyn-accent');
+  const csSub=document.getElementById('cs-dyn-sub');
+  if(csTitle&&settings.csTitle) csTitle.innerHTML=settings.csTitle.replace('BNPL','<span style="color:var(--steam,#1b9cff)">BNPL</span>');
+  if(csAccent&&settings.csAccent) csAccent.textContent=settings.csAccent;
+  if(csSub&&settings.csSub) csSub.innerHTML=settings.csSub+'<br/><br/><strong>Own it today, three easy payments.</strong>';
+  // Launch date from CMS
+  if(settings.launchDate){
+    const p=settings.launchDate.split('-');
+    if(p.length===3) window._launchDate=new Date(+p[0],+p[1]-1,+p[2]);
+  }
+  // Update OG meta tags dynamically
+  if(settings.ogTitle){document.title=settings.ogTitle;['og:title','twitter:title'].forEach(n=>{const el=document.querySelector(`meta[property="${n}"],meta[name="${n}"]`);if(el)el.setAttribute('content',settings.ogTitle);});}
+  if(settings.ogDesc){['og:description','twitter:description','description'].forEach(n=>{const el=document.querySelector(`meta[property="${n}"],meta[name="${n}"]`);if(el)el.setAttribute('content',settings.ogDesc);});}
+  if(settings.ogImage){['og:image','twitter:image'].forEach(n=>{const el=document.querySelector(`meta[property="${n}"],meta[name="${n}"]`);if(el)el.setAttribute('content',settings.ogImage);});}
 }
 
 // ══ DESIGN ══

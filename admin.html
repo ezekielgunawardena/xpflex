@@ -465,8 +465,62 @@ body{background:var(--bg);color:var(--text);font-family:var(--font-body);min-hei
         </div>
         <button class="bcms" onclick="saveSettings()" style="margin-top:6px">Save Settings</button>
       </div>
+
+      <!-- COMING SOON CONFIG -->
       <div class="fcard">
-        <h3>EmailJS — Order Notifications</h3>
+        <h3>&#9200; Coming Soon Page</h3>
+        <p style="font-size:13px;color:var(--muted);margin-bottom:16px">Configure what appears on the coming soon countdown page.</p>
+        <div class="fr2">
+          <div class="cf">
+            <label>Launch Date</label>
+            <input type="date" id="s-launch-date" style="color-scheme:dark"/>
+            <div style="font-size:11px;color:var(--muted);margin-top:4px">The countdown timer counts down to this date</div>
+          </div>
+          <div class="cf">
+            <label>Coming Soon Headline</label>
+            <input type="text" id="s-cs-title" placeholder="Sri Lanka's First BNPL Gaming Platform"/>
+          </div>
+        </div>
+        <div class="cf">
+          <label>Coming Soon Subtext</label>
+          <input type="text" id="s-cs-sub" placeholder="Steam Wallet top-ups, PSN gift cards..."/>
+        </div>
+        <div class="cf">
+          <label>Accent Line (shown in neon green)</label>
+          <input type="text" id="s-cs-accent" placeholder="Early Access. Limited Spots."/>
+        </div>
+        <button class="bcms" onclick="saveSettings()" style="margin-top:6px">Save Coming Soon Config</button>
+      </div>
+
+      <!-- OPEN GRAPH -->
+      <div class="fcard">
+        <h3>&#128279; Open Graph — Link Previews</h3>
+        <p style="font-size:13px;color:var(--muted);margin-bottom:16px">Controls how your site looks when shared on WhatsApp, Facebook, Twitter/X and iMessage.</p>
+        <div class="cf">
+          <label>OG Title</label>
+          <input type="text" id="s-og-title" placeholder="XPFlex — Don't just Play. Flex."/>
+        </div>
+        <div class="cf">
+          <label>OG Description</label>
+          <input type="text" id="s-og-desc" placeholder="Sri Lanka's first BNPL gaming platform..."/>
+        </div>
+        <div class="cf">
+          <label>OG Image URL</label>
+          <input type="url" id="s-og-image" placeholder="https://pxsajdecyrifqwaonfpy.supabase.co/storage/v1/object/public/..."/>
+          <div style="font-size:11px;color:var(--muted);margin-top:4px">Recommended: 1200×630px · JPG or PNG · max 1MB</div>
+        </div>
+        <div id="s-og-preview" style="margin-top:12px;display:none">
+          <div style="background:#1a1a1a;border-radius:8px;overflow:hidden;max-width:400px;border:1px solid var(--border)">
+            <img id="s-og-preview-img" src="" style="width:100%;height:auto;display:block" onerror="this.style.display='none'"/>
+            <div style="padding:10px 14px">
+              <div style="font-size:11px;color:var(--muted)">xpflex.com</div>
+              <div id="s-og-preview-title" style="font-size:13px;font-weight:600;color:var(--text);margin:3px 0"></div>
+              <div id="s-og-preview-desc" style="font-size:12px;color:var(--muted)"></div>
+            </div>
+          </div>
+        </div>
+        <button class="bcms" onclick="saveSettings()" style="margin-top:14px">Save Open Graph</button>
+      </div>
         <div class="emailjs-note">
           <strong>&#9888; Setup required to activate email notifications</strong>
           1. Create a free account at <strong>emailjs.com</strong><br/>
@@ -1123,6 +1177,18 @@ async function initCMSShell(){
   document.getElementById('s-currency').value=settings.currency||'Rs.';
   const csEl=document.getElementById('s-coming-soon');
   if(csEl)csEl.checked=!!settings.comingSoon;
+  const ldEl=document.getElementById('s-launch-date');if(ldEl)ldEl.value=settings.launchDate||'2026-07-15';
+  const csTitleEl=document.getElementById('s-cs-title');if(csTitleEl)csTitleEl.value=settings.csTitle||"Sri Lanka's First BNPL Gaming Platform";
+  const csSubEl=document.getElementById('s-cs-sub');if(csSubEl)csSubEl.value=settings.csSub||'Steam Wallet top-ups, PSN gift cards, Xbox credits and in-game currency — delivered instantly to your inbox.';
+  const csAccEl=document.getElementById('s-cs-accent');if(csAccEl)csAccEl.value=settings.csAccent||'Early Access. Limited Spots.';
+  const ogTitleEl=document.getElementById('s-og-title');if(ogTitleEl)ogTitleEl.value=settings.ogTitle||"XPFlex — Don't just Play. Flex.";
+  const ogDescEl=document.getElementById('s-og-desc');if(ogDescEl)ogDescEl.value=settings.ogDesc||"Sri Lanka's first BNPL gaming platform.";
+  const ogImgEl=document.getElementById('s-og-image');
+  if(ogImgEl){
+    ogImgEl.value=settings.ogImage||'https://pxsajdecyrifqwaonfpy.supabase.co/storage/v1/object/public/XPFlex%20Logo/OG%20Logo.jpg';
+    ogImgEl.addEventListener('input',updateOGPreview);
+  }
+  updateOGPreview();
   document.getElementById('ejs-service').value=ejsConfig.serviceId||'';
   document.getElementById('ejs-template').value=ejsConfig.templateId||'';
   document.getElementById('ejs-pubkey').value=ejsConfig.pubkey||'';
@@ -1506,8 +1572,44 @@ async function nukeOrders(){
 }
 
 // ══ SETTINGS ══
+// ══ OG PREVIEW ══
+function updateOGPreview(){
+  const img=document.getElementById('s-og-image')?.value.trim()||'';
+  const title=document.getElementById('s-og-title')?.value.trim()||'XPFlex';
+  const desc=document.getElementById('s-og-desc')?.value.trim()||'';
+  const prev=document.getElementById('s-og-preview');
+  if(!prev)return;
+  if(img||title||desc){
+    prev.style.display='block';
+    const pImg=document.getElementById('s-og-preview-img');
+    const pTitle=document.getElementById('s-og-preview-title');
+    const pDesc=document.getElementById('s-og-preview-desc');
+    if(pImg){pImg.src=img;pImg.style.display=img?'block':'none';}
+    if(pTitle)pTitle.textContent=title;
+    if(pDesc)pDesc.textContent=desc;
+  } else {
+    prev.style.display='none';
+  }
+}
+
 async function saveSettings(){
-  settings={storeName:document.getElementById('s-name').value.trim()||'XPFlex',hero:document.getElementById('s-hero').value.trim(),sub:document.getElementById('s-sub').value.trim(),email:document.getElementById('s-email').value.trim(),pay:document.getElementById('s-pay').value.trim(),footer:document.getElementById('s-footer').value.trim(),currency:document.getElementById('s-currency').value,comingSoon:document.getElementById('s-coming-soon')?.checked||false};
+  settings={
+    storeName:document.getElementById('s-name').value.trim()||'XPFlex',
+    hero:document.getElementById('s-hero').value.trim(),
+    sub:document.getElementById('s-sub').value.trim(),
+    email:document.getElementById('s-email').value.trim(),
+    pay:document.getElementById('s-pay').value.trim(),
+    footer:document.getElementById('s-footer').value.trim(),
+    currency:document.getElementById('s-currency').value,
+    comingSoon:document.getElementById('s-coming-soon')?.checked||false,
+    launchDate:document.getElementById('s-launch-date')?.value||'',
+    csTitle:document.getElementById('s-cs-title')?.value.trim()||'',
+    csSub:document.getElementById('s-cs-sub')?.value.trim()||'',
+    csAccent:document.getElementById('s-cs-accent')?.value.trim()||'',
+    ogTitle:document.getElementById('s-og-title')?.value.trim()||'',
+    ogDesc:document.getElementById('s-og-desc')?.value.trim()||'',
+    ogImage:document.getElementById('s-og-image')?.value.trim()||'',
+  };
   await setSettingVal('main',settings);
   const actor=currentUser?.display_name||currentUser?.displayName||currentUser?.username||'Unknown';
   await writeLog('settings','Store settings updated',actor,{});
