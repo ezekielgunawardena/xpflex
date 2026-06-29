@@ -1228,9 +1228,11 @@ function cmsTab(t){
   const panel=document.getElementById('cp-'+t);
   if(panel) panel.classList.add('on');
   // Match tab button by onclick content rather than fragile index
-  document.querySelectorAll('.ctab').forEach(b=>{
+  document.querySelectorAll('.ctab,.ctab-steam').forEach(b=>{
     if(b.getAttribute('onclick')===`cmsTab('${t}')`) b.classList.add('on');
   });
+  // Always scroll to top of panel when switching tabs
+  window.scrollTo({top:0,behavior:'smooth'});
   if(t==='featured') renderFeatPicker();
   if(t==='admins') renderAdminsPanel();
   if(t==='discounts') renderDiscList();

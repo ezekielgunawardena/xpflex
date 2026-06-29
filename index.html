@@ -9,6 +9,10 @@
 <meta property="og:title" content="XPFlex — Don't just Play. Flex."/>
 <meta property="og:description" content="Sri Lanka's first BNPL gaming platform. Steam, PSN, Xbox — own it today, three easy payments."/>
 <meta property="og:image" content="https://pxsajdecyrifqwaonfpy.supabase.co/storage/v1/object/public/XPFlex%20Logo/OG%20Logo%20large.png"/>
+<meta property="og:image:type" content="image/png"/>
+<meta property="og:image:width" content="1200"/>
+<meta property="og:image:height" content="630"/>
+<meta property="og:image:alt" content="XPFlex — Don't just Play. Flex."/>
 <meta property="og:url" content="https://xpflex.com"/>
 <meta property="og:type" content="website"/>
 <meta property="og:site_name" content="XPFlex"/>
@@ -887,13 +891,13 @@ function cardHTML(p,isFeat=false){
   if(isFeat){
     const fPrice=dp!=null?`<div class="price-wrap"><div class="pprice-orig" style="font-size:12px">${priceFmt(p.price)}</div><div style="font-family:var(--font-price);font-size:20px;font-weight:700;color:var(--col-price)">${priceFmt(dp)}</div>${bnplCardStrip(p,dp)}</div>`:`<div class="price-wrap"><div style="font-family:var(--font-price);font-size:20px;font-weight:700;color:var(--col-price)">${priceFmt(p.price)}</div>${bnplCardStrip(p,p.price)}</div>`;
     return `<div class="feat-card" onclick="showDetail('${p.id}')">
-      ${!p.img?'<div class="feat-ribbon">Featured</div>':''}${dl?`<span class="disc-badge" style="top:10px;right:10px;left:auto">${dl}</span>`:''}
-      <div class="feat-img ${bgClass(p.platform)}">${img}<span class="feat-emoji" ${emojiHide}>${p.icon||'🎮'}</span><span class="plat-tag ${platClass(p.platform)}">${p.platform}</span>${stockTag}${countBadge}</div>
+      ${!p.img?'<div class="feat-ribbon">Featured</div>':''}
+      <div class="feat-img ${bgClass(p.platform)}">${img}<span class="feat-emoji" ${emojiHide}>${p.icon||'🎮'}</span><span class="plat-tag ${platClass(p.platform)}">${p.platform}</span>${dl?`<span class="disc-badge" style="top:auto;bottom:7px;left:7px">${dl}</span>`:''}${stockTag}${countBadge}</div>
       <div class="feat-info"><div class="feat-name">${p.name}</div><div class="feat-desc">${(p.desc||p.description||'').substring(0,80)}${(p.desc||p.description||'').length>80?'…':''}</div>
       <div class="feat-bot">${fPrice}${atc}</div></div></div>`;
   }
-  return `<div class="pcard" onclick="showDetail('${p.id}')">${discBadge}
-    <div class="pimg ${bgClass(p.platform)}">${img}<span class="emoji-icon" ${emojiHide}>${p.icon||'🎮'}</span><span class="plat-tag ${platClass(p.platform)}">${p.platform}</span>${stockTag}${countBadge}</div>
+  return `<div class="pcard" onclick="showDetail('${p.id}')">
+    <div class="pimg ${bgClass(p.platform)}">${img}<span class="emoji-icon" ${emojiHide}>${p.icon||'🎮'}</span><span class="plat-tag ${platClass(p.platform)}">${p.platform}</span>${dl?`<span class="disc-badge" style="top:auto;bottom:7px;left:7px">${dl}</span>`:''}${stockTag}${countBadge}</div>
     <div class="pinfo"><div class="pname">${p.name}</div><div class="pmeta">${p.cat}</div>
     <div class="pbot">${priceHTML}${atc}</div></div></div>`;
 }
