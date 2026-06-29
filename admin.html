@@ -658,11 +658,21 @@ body{background:var(--bg);color:var(--text);font-family:var(--font-body);min-hei
         </div>
         <div class="fr2">
           <div class="cf">
-            <label>Provider 1 Logo URL (e.g. Koko)</label>
+            <label>Provider 1 Name (e.g. Koko)</label>
+            <input type="text" id="sf-name-1" placeholder="Koko"/>
+          </div>
+          <div class="cf">
+            <label>Provider 2 Name (e.g. Mint Pay)</label>
+            <input type="text" id="sf-name-2" placeholder="Mint Pay"/>
+          </div>
+        </div>
+        <div class="fr2">
+          <div class="cf">
+            <label>Provider 1 Logo URL</label>
             <input type="url" id="sf-logo-1" placeholder="https://..." oninput="previewSFLogos()"/>
           </div>
           <div class="cf">
-            <label>Provider 2 Logo URL (e.g. Mint Pay)</label>
+            <label>Provider 2 Logo URL</label>
             <input type="url" id="sf-logo-2" placeholder="https://..." oninput="previewSFLogos()"/>
           </div>
         </div>
@@ -1209,9 +1219,10 @@ function cmsTab(t){
   document.querySelectorAll('.ctab').forEach(b=>b.classList.remove('on'));
   const panel=document.getElementById('cp-'+t);
   if(panel) panel.classList.add('on');
-  const tabs=['dash','prods','add','featured','discounts','banner','orders','design','settings','admins','activity','steamflex'];
-  const i=tabs.indexOf(t);
-  if(i>-1){const btns=document.querySelectorAll('.ctab');if(btns[i])btns[i].classList.add('on');}
+  // Match tab button by onclick content rather than fragile index
+  document.querySelectorAll('.ctab').forEach(b=>{
+    if(b.getAttribute('onclick')===`cmsTab('${t}')`) b.classList.add('on');
+  });
   if(t==='featured') renderFeatPicker();
   if(t==='admins') renderAdminsPanel();
   if(t==='discounts') renderDiscList();
@@ -1724,7 +1735,7 @@ async function placeOrder(){
 function discIsActive(d){
   if(!d||!d.enabled) return false;
   const now=new Date(); now.setHours(0,0,0,0);
-  if(d.startDate){const s=new Date(d.startDate);if(now<s)return false;}
+  if(d.startDate){const s=new Date(d.startDate);s.setHours(0,0,0,0);if(now<s)return false;}
   if(d.endDate){const e=new Date(d.endDate);e.setHours(23,59,59,999);if(new Date()>e)return false;}
   return true;
 }
@@ -1936,8 +1947,11 @@ async function loadSFSettingsCMS(){
     if(document.getElementById('sf-steam-name'))document.getElementById('sf-steam-name').value=cfg.steamName||'';
     if(document.getElementById('sf-steam-url'))document.getElementById('sf-steam-url').value=cfg.steamUrl||'';
     const logos=cfg.bnplLogos||[];
+    const names=cfg.bnplNames||[];
     if(document.getElementById('sf-logo-1'))document.getElementById('sf-logo-1').value=logos[0]||'';
     if(document.getElementById('sf-logo-2'))document.getElementById('sf-logo-2').value=logos[1]||'';
+    if(document.getElementById('sf-name-1'))document.getElementById('sf-name-1').value=names[0]||'Koko';
+    if(document.getElementById('sf-name-2'))document.getElementById('sf-name-2').value=names[1]||'Mint Pay';
     previewSFLogos();
   }catch(e){console.warn('SF settings load:',e);}
 }
@@ -1949,6 +1963,10 @@ async function saveSFSettings(){
       (document.getElementById('sf-logo-1')?.value||'').trim(),
       (document.getElementById('sf-logo-2')?.value||'').trim(),
     ].filter(Boolean),
+    bnplNames:[
+      (document.getElementById('sf-name-1')?.value||'Koko').trim(),
+      (document.getElementById('sf-name-2')?.value||'Mint Pay').trim(),
+    ],
   };
   await fetch(`${SB_URL}/rest/v1/settings`,{
     method:'POST',
@@ -1981,11 +1999,12 @@ async function loadSFRequests(){
       return;
     }
     if(countEl)countEl.textContent=requests.length+' requests';
-    if(tbl)tbl.innerHTML=`<table class="tbl"><thead><tr><th>ID</th><th>Name</th><th>Game</th><th>Steam</th><th>Status</th><th>Date</th></tr></thead><tbody>${requests.map(req=>`<tr>
+    if(tbl)tbl.innerHTML=`<table class="tbl"><thead><tr><th>ID</th><th>Name</th><th>Game</th><th>Steam</th><th>BNPL</th><th>Status</th><th>Date</th></tr></thead><tbody>${requests.map(req=>`<tr>
       <td style="font-family:'Share Tech Mono',monospace;font-size:11px">${req.id}</td>
       <td><div style="font-weight:500">${req.name}</div><div style="font-size:11px;color:var(--muted)">${req.email}</div></td>
-      <td><div style="font-size:13px">${req.game}</div><div style="font-size:11px"><a href="${req.game_url}" target="_blank" style="color:var(--steam);text-decoration:none">View on Steam ↗</a></div></td>
+      <td><div style="font-size:13px">${req.game}</div><div style="font-size:11px"><a href="${req.game_url}" target="_blank" style="color:var(--steam,#1b9cff);text-decoration:none">View on Steam ↗</a></div></td>
       <td><div style="font-size:12px">${req.steam_username}</div><div style="font-size:11px"><a href="${req.steam_profile}" target="_blank" style="color:var(--muted);text-decoration:none">Profile ↗</a></div></td>
+      <td><span style="background:rgba(139,92,246,.12);color:#a78bfa;border:1px solid rgba(139,92,246,.3);font-size:11px;padding:2px 8px;border-radius:10px;font-weight:500">${req.bnpl_provider||'—'}</span></td>
       <td><select onchange="updateSFStatus('${req.id}',this.value)" style="background:#141d2b;border:1px solid var(--border);color:var(--text);padding:3px 7px;border-radius:6px;font-size:12px;cursor:pointer">
         <option value="pending" ${req.status==='pending'?'selected':''}>Pending</option>
         <option value="confirmed" ${req.status==='confirmed'?'selected':''}>Confirmed</option>
