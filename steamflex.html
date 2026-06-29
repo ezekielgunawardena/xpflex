@@ -1,0 +1,345 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>SteamFlex — Gift Any Steam Game | XPFlex</title>
+<meta name="description" content="Request any Steam game, pay in 3 easy instalments, receive the gift in 3 days. Sri Lanka's first Steam gifting service."/>
+<meta property="og:title" content="SteamFlex — Gift Any Steam Game"/>
+<meta property="og:description" content="Request any Steam game, pay via BNPL, receive it in 3 days."/>
+<meta property="og:image" content="https://pxsajdecyrifqwaonfpy.supabase.co/storage/v1/object/public/XPFlex%20Logo/OG%20Logo.jpg"/>
+<meta property="og:url" content="https://xpflex.com/steamflex.html"/>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+<link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@500;700&family=Barlow:wght@400;500;600&display=swap" rel="stylesheet"/>
+<style>
+:root{
+  --neon:#00f0a0;--steam:#1b9cff;--accent:#f43f5e;
+  --bg:#080c12;--bg2:#0e1520;--bg3:#141d2b;
+  --border:#1e2d42;--text:#e2e8f0;--muted:#64748b;
+  --font-head:'Rajdhani',sans-serif;--font-body:'Barlow',sans-serif;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--bg);color:var(--text);font-family:var(--font-body);min-height:100vh}
+
+/* NAV */
+.s-nav{background:var(--bg);border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;padding:0 24px;height:58px;position:sticky;top:0;z-index:200;gap:12px}
+.s-logo{font-family:var(--font-head);font-size:22px;font-weight:700;color:var(--neon);letter-spacing:3px;cursor:pointer;text-decoration:none;line-height:1.1;flex-shrink:0}
+.s-logo em{color:var(--text);font-style:normal}
+.s-logo .tagline{display:block;font-size:8px;font-family:var(--font-body);font-weight:500;letter-spacing:2px;color:var(--muted);text-transform:uppercase}
+.nav-back{background:rgba(255,255,255,.05);border:1px solid var(--border);color:var(--muted);padding:6px 14px;border-radius:8px;font-size:13px;cursor:pointer;text-decoration:none;transition:.15s;display:flex;align-items:center;gap:6px}
+.nav-back:hover{border-color:var(--neon);color:var(--neon)}
+
+/* HERO */
+.sf-hero{padding:56px 24px 48px;text-align:center;position:relative;overflow:hidden;background:linear-gradient(180deg,rgba(27,156,255,.05) 0%,transparent 60%)}
+.sf-hero-grid{position:absolute;inset:0;background-image:linear-gradient(rgba(27,156,255,.04) 1px,transparent 1px),linear-gradient(90deg,rgba(27,156,255,.04) 1px,transparent 1px);background-size:44px 44px;pointer-events:none}
+.sf-badge{display:inline-flex;align-items:center;gap:8px;background:rgba(27,156,255,.1);border:1px solid rgba(27,156,255,.25);border-radius:20px;padding:5px 14px;font-size:12px;font-weight:600;color:var(--steam);letter-spacing:.5px;margin-bottom:18px;position:relative}
+.sf-badge .dot{width:7px;height:7px;background:var(--steam);border-radius:50%;animation:pulse 1.5s infinite}
+@keyframes pulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.6;transform:scale(1.3)}}
+.sf-title{font-family:var(--font-head);font-size:52px;font-weight:700;letter-spacing:2px;line-height:1.05;position:relative;margin-bottom:10px}
+.sf-title .sf{color:var(--steam)}
+.sf-title .fx{color:var(--neon)}
+.sf-sub{font-size:16px;color:var(--muted);max-width:500px;margin:0 auto 14px;line-height:1.7;position:relative}
+.sf-sub strong{color:var(--text)}
+.sf-exclusive{display:inline-flex;align-items:center;gap:6px;background:rgba(27,156,255,.07);border:1px solid rgba(27,156,255,.2);border-radius:6px;padding:4px 12px;font-size:11px;color:var(--steam);font-weight:600;letter-spacing:1px;text-transform:uppercase;position:relative;margin-bottom:36px}
+
+/* WORKFLOW */
+.workflow{padding:0 24px 56px;max-width:920px;margin:0 auto}
+.wf-title{font-family:var(--font-head);font-size:22px;font-weight:700;letter-spacing:1px;color:var(--neon);margin-bottom:28px;text-align:center}
+.wf-steps{display:grid;grid-template-columns:repeat(4,1fr);gap:0;position:relative}
+.wf-steps::before{content:'';position:absolute;top:36px;left:12.5%;right:12.5%;height:2px;background:linear-gradient(90deg,var(--steam),var(--neon));z-index:0;border-radius:1px}
+.wf-step{display:flex;flex-direction:column;align-items:center;text-align:center;padding:0 12px;position:relative;z-index:1}
+.wf-num{width:72px;height:72px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:28px;margin-bottom:14px;position:relative;flex-shrink:0}
+.wf-num.s1{background:rgba(27,156,255,.12);border:2px solid rgba(27,156,255,.4)}
+.wf-num.s2{background:rgba(139,92,246,.12);border:2px solid rgba(139,92,246,.4)}
+.wf-num.s3{background:rgba(234,179,8,.12);border:2px solid rgba(234,179,8,.4)}
+.wf-num.s4{background:rgba(0,240,160,.12);border:2px solid rgba(0,240,160,.4)}
+.wf-label{font-family:var(--font-head);font-size:15px;font-weight:700;letter-spacing:.5px;margin-bottom:6px;color:var(--text)}
+.wf-desc{font-size:12px;color:var(--muted);line-height:1.6}
+.wf-day{font-size:10px;font-weight:700;padding:2px 8px;border-radius:10px;margin-top:8px;letter-spacing:.5px}
+.wf-day.instant{background:rgba(0,240,160,.1);color:var(--neon);border:1px solid rgba(0,240,160,.25)}
+.wf-day.d3{background:rgba(234,179,8,.1);color:#eab308;border:1px solid rgba(234,179,8,.25)}
+
+/* 3-DAY NOTICE */
+.three-day{background:rgba(234,179,8,.07);border:1px solid rgba(234,179,8,.25);border-radius:12px;padding:18px 22px;max-width:720px;margin:0 auto 48px;display:flex;align-items:flex-start;gap:14px}
+.three-day .icon{font-size:24px;flex-shrink:0;margin-top:2px}
+.three-day-text h4{font-size:14px;font-weight:600;color:#eab308;margin-bottom:5px}
+.three-day-text p{font-size:13px;color:var(--muted);line-height:1.7}
+
+/* STEAM PROFILE */
+.steam-profile-card{background:var(--bg2);border:1px solid rgba(27,156,255,.25);border-radius:12px;padding:18px 22px;max-width:720px;margin:0 auto 48px;display:flex;align-items:center;gap:16px}
+.steam-avatar{width:56px;height:56px;border-radius:10px;background:linear-gradient(135deg,var(--steam),#0066cc);display:flex;align-items:center;justify-content:center;font-size:24px;flex-shrink:0;overflow:hidden}
+.steam-avatar img{width:100%;height:100%;object-fit:cover}
+.steam-info{flex:1}
+.steam-name{font-family:var(--font-head);font-size:18px;font-weight:700;color:var(--steam);letter-spacing:1px;margin-bottom:3px}
+.steam-url{font-size:12px;color:var(--muted)}
+.steam-url a{color:var(--steam);text-decoration:none}
+.steam-url a:hover{text-decoration:underline}
+.steam-add-btn{background:rgba(27,156,255,.1);border:1px solid rgba(27,156,255,.3);color:var(--steam);padding:8px 18px;border-radius:8px;font-size:12px;font-weight:600;text-decoration:none;white-space:nowrap;transition:.15s;display:flex;align-items:center;gap:6px}
+.steam-add-btn:hover{background:rgba(27,156,255,.2)}
+
+/* FORM */
+.sf-form-wrap{max-width:720px;margin:0 auto;padding:0 24px 64px}
+.sf-form-card{background:var(--bg2);border:1px solid var(--border);border-radius:16px;padding:32px}
+.sf-form-title{font-family:var(--font-head);font-size:24px;font-weight:700;letter-spacing:1px;color:var(--neon);margin-bottom:6px}
+.sf-form-sub{font-size:13px;color:var(--muted);margin-bottom:26px}
+.ff{margin-bottom:18px}
+.ff label{display:block;font-size:12px;color:var(--muted);margin-bottom:6px;font-weight:500;letter-spacing:.3px}
+.ff input,.ff textarea,.ff select{width:100%;background:var(--bg3);border:1px solid var(--border);color:var(--text);padding:11px 14px;border-radius:9px;font-size:14px;outline:none;transition:.15s;font-family:var(--font-body)}
+.ff input:focus,.ff textarea:focus,.ff select:focus{border-color:var(--neon)}
+.ff textarea{resize:vertical;min-height:90px;line-height:1.6}
+.ff .hint{font-size:11px;color:var(--muted);margin-top:5px}
+.ff-row{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+
+/* PAYMENT */
+.sf-payment{background:var(--bg3);border:1px solid var(--border);border-radius:12px;padding:20px;margin-bottom:22px}
+.sf-payment-title{font-size:13px;font-weight:600;color:var(--text);margin-bottom:14px;display:flex;align-items:center;gap:8px}
+.bnpl-providers{display:flex;gap:12px;flex-wrap:wrap;align-items:center}
+.bnpl-pill{background:var(--bg2);border:1px solid var(--border);border-radius:8px;padding:8px 16px;display:flex;align-items:center;gap:8px;font-size:13px;font-weight:600;color:var(--text)}
+.bnpl-pill img{height:22px;width:auto;max-width:60px;object-fit:contain}
+.bnpl-pill.placeholder{color:var(--muted);font-size:12px;border-style:dashed}
+.sf-instalment{font-size:12px;color:#a78bfa;margin-top:10px;font-weight:500}
+
+/* SUBMIT */
+.sf-submit{background:var(--neon);color:#080c12;border:none;padding:14px;border-radius:10px;font-weight:700;font-size:16px;cursor:pointer;width:100%;transition:.15s;font-family:var(--font-head);letter-spacing:1px}
+.sf-submit:hover{opacity:.88}
+.sf-submit:disabled{opacity:.5;cursor:not-allowed}
+.sf-terms{font-size:11px;color:var(--muted);text-align:center;margin-top:12px;line-height:1.7}
+
+/* SUCCESS */
+.sf-success{display:none;text-align:center;padding:40px 20px}
+.sf-success.show{display:block}
+.sf-success h3{font-family:var(--font-head);font-size:28px;font-weight:700;color:var(--neon);margin-bottom:10px;letter-spacing:1px}
+.sf-success p{font-size:14px;color:var(--muted);line-height:1.7;max-width:420px;margin:0 auto}
+
+/* FOOTER */
+.sf-footer{background:var(--bg2);border-top:1px solid var(--border);padding:18px 24px;text-align:center;color:var(--muted);font-size:12px}
+.sf-footer a{color:var(--neon);text-decoration:none}
+
+/* MOBILE */
+@media(max-width:640px){
+  .sf-title{font-size:36px}
+  .wf-steps{grid-template-columns:1fr 1fr;gap:24px}
+  .wf-steps::before{display:none}
+  .ff-row{grid-template-columns:1fr}
+  .steam-profile-card{flex-direction:column;text-align:center}
+  .sf-form-card{padding:20px}
+  .three-day{flex-direction:column;gap:10px}
+}
+</style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav class="s-nav">
+  <a href="index.html" class="s-logo">XP<em>FLEX</em><span class="tagline">Don't just Play. Flex.</span></a>
+  <a href="index.html" class="nav-back">&#8592; Back to Store</a>
+</nav>
+
+<!-- HERO -->
+<div class="sf-hero">
+  <div class="sf-hero-grid"></div>
+  <div class="sf-badge"><span class="dot"></span> Steam Exclusive Service</div>
+  <h1 class="sf-title"><span class="sf">Steam</span><span class="fx">Flex</span></h1>
+  <p class="sf-sub">Request <strong>any game on Steam</strong> — we purchase and gift it directly to your library. Pay in three easy instalments.</p>
+  <div class="sf-exclusive">&#127918; Steam Platform Only</div>
+</div>
+
+<!-- WORKFLOW -->
+<div class="workflow">
+  <div class="wf-title">How it works</div>
+  <div class="wf-steps">
+    <div class="wf-step">
+      <div class="wf-num s1">&#128269;</div>
+      <div class="wf-label">Request</div>
+      <div class="wf-desc">Fill out the form with the game you want and your Steam profile URL</div>
+      <span class="wf-day instant">Instant</span>
+    </div>
+    <div class="wf-step">
+      <div class="wf-num s2">&#128179;</div>
+      <div class="wf-label">Pay</div>
+      <div class="wf-desc">Split your payment across 3 easy instalments via Koko or Mint Pay</div>
+      <span class="wf-day instant">Instant</span>
+    </div>
+    <div class="wf-step">
+      <div class="wf-num s3">&#128101;</div>
+      <div class="wf-label">Add Friend</div>
+      <div class="wf-desc">Add XPFlex on Steam — Steam requires 3 days of friendship before gifting</div>
+      <span class="wf-day d3">3-Day Hold</span>
+    </div>
+    <div class="wf-step">
+      <div class="wf-num s4">&#127873;</div>
+      <div class="wf-label">Receive</div>
+      <div class="wf-desc">After 3 days your game is gifted directly into your Steam library</div>
+      <span class="wf-day d3">Day 3+</span>
+    </div>
+  </div>
+</div>
+
+<!-- 3-DAY NOTICE -->
+<div style="padding:0 24px">
+  <div class="three-day">
+    <div class="icon">&#9888;&#65039;</div>
+    <div class="three-day-text">
+      <h4>The Steam 3-Day Rule — What you need to know</h4>
+      <p>Steam requires two accounts to be friends for a minimum of <strong style="color:#eab308">3 days</strong> before a game can be gifted between them. This is a Steam security policy we cannot bypass. Your game will be delivered on <strong style="color:#eab308">day 3</strong> after you add us as a friend — not instantly. We will notify you via email when the gift has been sent.</p>
+    </div>
+  </div>
+</div>
+
+<!-- STEAM PROFILE -->
+<div style="padding:0 24px">
+  <div class="steam-profile-card">
+    <div class="steam-avatar" id="sf-avatar">&#127918;</div>
+    <div class="steam-info">
+      <div class="steam-name" id="sf-steam-name">XPFlex</div>
+      <div class="steam-url">Steam: <a href="#" id="sf-steam-link" target="_blank" id="sf-steam-url">Add our Steam profile to get started</a></div>
+      <div style="font-size:11px;color:var(--muted);margin-top:4px">Add us as a friend before submitting your request</div>
+    </div>
+    <a href="#" id="sf-steam-btn" target="_blank" class="steam-add-btn">&#43; Add on Steam</a>
+  </div>
+</div>
+
+<!-- REQUEST FORM -->
+<div class="sf-form-wrap">
+  <div class="sf-form-card">
+    <div class="sf-form-title">Request a Game</div>
+    <div class="sf-form-sub">Fill in your details below. We'll confirm your order within 24 hours.</div>
+
+    <div id="sf-form">
+      <div class="ff-row">
+        <div class="ff">
+          <label>Your Full Name *</label>
+          <input type="text" id="sf-name" placeholder="e.g. Kasun Perera"/>
+        </div>
+        <div class="ff">
+          <label>Your Email *</label>
+          <input type="email" id="sf-email" placeholder="you@example.com"/>
+        </div>
+      </div>
+
+      <div class="ff">
+        <label>Game Name *</label>
+        <input type="text" id="sf-game" placeholder="e.g. Elden Ring, Cyberpunk 2077, GTA VI..."/>
+      </div>
+
+      <div class="ff">
+        <label>Steam Store URL *</label>
+        <input type="url" id="sf-game-url" placeholder="https://store.steampowered.com/app/..."/>
+        <div class="hint">Go to the game on Steam → copy the URL from your browser</div>
+      </div>
+
+      <div class="ff">
+        <label>Your Steam Profile URL *</label>
+        <input type="url" id="sf-profile" placeholder="https://steamcommunity.com/id/yourprofile"/>
+        <div class="hint">Your public Steam profile link — make sure your profile is set to Public</div>
+      </div>
+
+      <div class="ff">
+        <label>Your Steam Username *</label>
+        <input type="text" id="sf-username" placeholder="Your Steam display name"/>
+        <div class="hint">So we can find you when you send the friend request</div>
+      </div>
+
+      <div class="ff">
+        <label>Any notes? (optional)</label>
+        <textarea id="sf-notes" placeholder="e.g. preferred region, specific edition, anything else we should know..."></textarea>
+      </div>
+
+      <!-- PAYMENT -->
+      <div class="sf-payment">
+        <div class="sf-payment-title">&#128179; Payment — Buy Now, Pay Later</div>
+        <div class="bnpl-providers" id="sf-bnpl-logos">
+          <div class="bnpl-pill placeholder" id="sf-provider-1">BNPL Partner 1</div>
+          <div class="bnpl-pill placeholder" id="sf-provider-2">BNPL Partner 2</div>
+        </div>
+        <div class="sf-instalment" id="sf-instalment-note">Split your purchase into 3 easy instalments — payment link will be sent to your email after we confirm your order.</div>
+      </div>
+
+      <button class="sf-submit" id="sf-submit-btn" onclick="submitSteamFlex()">Submit Request &#8594;</button>
+      <div class="sf-terms">By submitting you agree to add XPFlex on Steam before delivery. Payment is collected before gifting begins. All sales are final once the game is gifted.</div>
+    </div>
+
+    <!-- SUCCESS STATE -->
+    <div class="sf-success" id="sf-success">
+      <div style="font-size:52px;margin-bottom:16px">&#127919;</div>
+      <h3>Request Received!</h3>
+      <p>Thanks — we'll review your request and send a payment link to your email within <strong style="color:var(--text)">24 hours</strong>. Make sure you've added <strong style="color:var(--steam)">XPFlex</strong> on Steam so we're ready to gift on day 3.</p>
+      <br/>
+      <a href="index.html" style="display:inline-block;margin-top:8px;background:var(--neon);color:#080c12;padding:11px 28px;border-radius:9px;font-weight:700;text-decoration:none;font-family:var(--font-head);letter-spacing:1px">Back to Store</a>
+    </div>
+  </div>
+</div>
+
+<!-- FOOTER -->
+<footer class="sf-footer">
+  <a href="index.html">XPFlex</a> &mdash; SteamFlex is a Steam-exclusive gifting service &middot; &copy; 2026 XPFlex
+</footer>
+
+<script>
+const SB_URL='https://pxsajdecyrifqwaonfpy.supabase.co';
+const SB_KEY='sb_publishable_Cym_d_X9P9PsvhM_3KFhZw_bHtyBzXG';
+
+// Load SteamFlex settings from Supabase
+async function loadSFSettings(){
+  try{
+    const r=await fetch(`${SB_URL}/rest/v1/settings?key=eq.steamflex&select=value`,{
+      headers:{'apikey':SB_KEY,'Authorization':`Bearer ${SB_KEY}`}
+    });
+    const d=await r.json();
+    if(!d||!d.length)return;
+    const cfg=d[0].value;
+    // Steam profile
+    const steamUrl=cfg.steamUrl||'#';
+    const steamName=cfg.steamName||'XPFlex';
+    document.getElementById('sf-steam-name').textContent=steamName;
+    document.getElementById('sf-steam-link').textContent=steamUrl==='#'?'Coming soon — check back soon':steamUrl;
+    document.getElementById('sf-steam-link').href=steamUrl;
+    document.getElementById('sf-steam-btn').href=steamUrl;
+    if(steamUrl==='#'){document.getElementById('sf-steam-btn').style.opacity='.5';document.getElementById('sf-steam-btn').style.pointerEvents='none';}
+    // BNPL logos
+    const logos=cfg.bnplLogos||[];
+    const container=document.getElementById('sf-bnpl-logos');
+    if(logos.length){
+      container.innerHTML=logos.filter(Boolean).map(l=>`<div class="bnpl-pill"><img src="${l}" alt="BNPL partner" onerror="this.parentElement.style.display='none'"/></div>`).join('');
+    }
+  }catch(e){console.warn('SteamFlex settings:',e);}
+}
+
+async function submitSteamFlex(){
+  const name=document.getElementById('sf-name').value.trim();
+  const email=document.getElementById('sf-email').value.trim();
+  const game=document.getElementById('sf-game').value.trim();
+  const gameUrl=document.getElementById('sf-game-url').value.trim();
+  const profile=document.getElementById('sf-profile').value.trim();
+  const username=document.getElementById('sf-username').value.trim();
+  const notes=document.getElementById('sf-notes').value.trim();
+  if(!name||!email||!game||!gameUrl||!profile||!username){
+    alert('Please fill in all required fields.');return;
+  }
+  if(!email.includes('@')){alert('Please enter a valid email address.');return;}
+  const btn=document.getElementById('sf-submit-btn');
+  btn.disabled=true;btn.textContent='Submitting...';
+  const request={
+    id:'SF-'+Date.now().toString(36).toUpperCase(),
+    name,email,game,game_url:gameUrl,
+    steam_profile:profile,steam_username:username,
+    notes,status:'pending',
+    date:new Date().toLocaleDateString('en-GB'),
+    ts:Date.now()
+  };
+  try{
+    await fetch(`${SB_URL}/rest/v1/steamflex_requests`,{
+      method:'POST',
+      headers:{'apikey':SB_KEY,'Authorization':`Bearer ${SB_KEY}`,'Content-Type':'application/json','Prefer':'resolution=merge-duplicates'},
+      body:JSON.stringify(request)
+    });
+  }catch(e){console.warn('Submit error:',e);}
+  document.getElementById('sf-form').style.display='none';
+  document.getElementById('sf-success').classList.add('show');
+}
+
+loadSFSettings();
+</script>
+</body>
+</html>

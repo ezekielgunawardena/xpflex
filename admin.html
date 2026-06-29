@@ -150,6 +150,7 @@ body{background:var(--bg);color:var(--text);font-family:var(--font-body);min-hei
         <button class="ctab" onclick="cmsTab('settings')">&#9881; Settings</button>
         <button class="ctab" id="tab-admins" onclick="cmsTab('admins')">&#128100; Admins</button>
         <button class="ctab" id="tab-activity" onclick="cmsTab('activity')">&#128221; Activity Log</button>
+        <button class="ctab" onclick="cmsTab('steamflex')">&#127918; SteamFlex</button>
       </div>
       <div class="cms-bar-right">
         <button class="view-store-btn" onclick="goStore()">&#8592; View Store</button>
@@ -566,6 +567,66 @@ body{background:var(--bg);color:var(--text);font-family:var(--font-body);min-hei
         </div>
       </div>
       <div class="fcard" style="padding:0;overflow:hidden"><div id="activity-tbl"></div></div>
+    </div>
+
+    <!-- STEAMFLEX -->
+    <div id="cp-steamflex" class="cpanel">
+      <div class="ph">
+        <div class="pt">&#127918; SteamFlex Settings</div>
+        <a href="steamflex.html" target="_blank" class="view-store-btn">&#8599; View SteamFlex Page</a>
+      </div>
+      <div class="toast" id="toast-steamflex">SteamFlex settings saved.</div>
+
+      <!-- STEAM PROFILE -->
+      <div class="fcard">
+        <h3>Your Steam Profile</h3>
+        <p style="font-size:13px;color:var(--muted);margin-bottom:16px">This is displayed on the SteamFlex page so customers know who to add as a friend on Steam.</p>
+        <div class="fr2">
+          <div class="cf">
+            <label>Steam Display Name</label>
+            <input type="text" id="sf-steam-name" placeholder="e.g. XPFlex"/>
+          </div>
+          <div class="cf">
+            <label>Steam Profile URL</label>
+            <input type="url" id="sf-steam-url" placeholder="https://steamcommunity.com/id/xpflex"/>
+          </div>
+        </div>
+      </div>
+
+      <!-- BNPL LOGOS -->
+      <div class="fcard">
+        <h3>BNPL Provider Logos</h3>
+        <p style="font-size:13px;color:var(--muted);margin-bottom:14px">These logos appear in the payment section of the SteamFlex page.</p>
+        <div class="img-guide" style="margin-bottom:14px">
+          <strong>&#128444; Logo guidelines</strong>
+          Recommended: <strong>120 × 40px</strong> (horizontal) &middot; Max: <strong>100KB</strong> &middot; Format: <strong>PNG or WebP with transparent background</strong><br/>
+          Host on Supabase Storage or Imgur and paste the direct URL below
+        </div>
+        <div class="fr2">
+          <div class="cf">
+            <label>Provider 1 Logo URL (e.g. Koko)</label>
+            <input type="url" id="sf-logo-1" placeholder="https://..." oninput="previewSFLogos()"/>
+          </div>
+          <div class="cf">
+            <label>Provider 2 Logo URL (e.g. Mint Pay)</label>
+            <input type="url" id="sf-logo-2" placeholder="https://..." oninput="previewSFLogos()"/>
+          </div>
+        </div>
+        <div id="sf-logo-preview" style="display:flex;gap:10px;align-items:center;margin-top:10px;min-height:32px;flex-wrap:wrap">
+          <span style="font-size:11px;color:var(--muted)">Logo preview will appear here</span>
+        </div>
+      </div>
+
+      <!-- REQUESTS -->
+      <div class="fcard" style="padding:0;overflow:hidden">
+        <div style="padding:16px 20px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between">
+          <div class="pt" style="font-size:14px">&#128203; Game Requests</div>
+          <span style="font-size:12px;color:var(--muted)" id="sf-req-count"></span>
+        </div>
+        <div id="sf-requests-tbl"></div>
+      </div>
+
+      <button class="bcms" onclick="saveSFSettings()">Save SteamFlex Settings</button>
     </div>
 
   </div><!-- end cms-shell -->
@@ -1082,7 +1143,7 @@ function cmsTab(t){
   document.querySelectorAll('.ctab').forEach(b=>b.classList.remove('on'));
   const panel=document.getElementById('cp-'+t);
   if(panel) panel.classList.add('on');
-  const tabs=['dash','prods','add','featured','discounts','banner','orders','design','settings','admins','activity'];
+  const tabs=['dash','prods','add','featured','discounts','banner','orders','design','settings','admins','activity','steamflex'];
   const i=tabs.indexOf(t);
   if(i>-1){const btns=document.querySelectorAll('.ctab');if(btns[i])btns[i].classList.add('on');}
   if(t==='featured') renderFeatPicker();
@@ -1090,6 +1151,7 @@ function cmsTab(t){
   if(t==='discounts') renderDiscList();
   if(t==='banner') renderBannerCMS();
   if(t==='activity') renderActivityLog();
+  if(t==='steamflex'){loadSFSettingsCMS();loadSFRequests();}
 }
 
 // ══ ADMIN USERS MANAGEMENT ══
@@ -1758,6 +1820,90 @@ function renderActivityLog(){
       <td style="font-size:11px;color:var(--muted)">${l.date||''}</td>
     </tr>`;
   }).join('')}</tbody></table>`;
+}
+
+// ══ STEAMFLEX CMS ══
+async function loadSFSettingsCMS(){
+  try{
+    const r=await fetch(`${SB_URL}/rest/v1/settings?key=eq.steamflex&select=value`,{
+      headers:{'apikey':SB_KEY,'Authorization':`Bearer ${SB_KEY}`}
+    });
+    const d=await r.json();
+    if(!d||!d.length)return;
+    const cfg=d[0].value;
+    if(document.getElementById('sf-steam-name'))document.getElementById('sf-steam-name').value=cfg.steamName||'';
+    if(document.getElementById('sf-steam-url'))document.getElementById('sf-steam-url').value=cfg.steamUrl||'';
+    const logos=cfg.bnplLogos||[];
+    if(document.getElementById('sf-logo-1'))document.getElementById('sf-logo-1').value=logos[0]||'';
+    if(document.getElementById('sf-logo-2'))document.getElementById('sf-logo-2').value=logos[1]||'';
+    previewSFLogos();
+  }catch(e){console.warn('SF settings load:',e);}
+}
+async function saveSFSettings(){
+  const cfg={
+    steamName:document.getElementById('sf-steam-name')?.value.trim()||'XPFlex',
+    steamUrl:document.getElementById('sf-steam-url')?.value.trim()||'#',
+    bnplLogos:[
+      (document.getElementById('sf-logo-1')?.value||'').trim(),
+      (document.getElementById('sf-logo-2')?.value||'').trim(),
+    ].filter(Boolean),
+  };
+  await fetch(`${SB_URL}/rest/v1/settings`,{
+    method:'POST',
+    headers:{'apikey':SB_KEY,'Authorization':`Bearer ${SB_KEY}`,'Content-Type':'application/json','Prefer':'resolution=merge-duplicates'},
+    body:JSON.stringify({key:'steamflex',value:cfg})
+  });
+  showCMSToast('toast-steamflex');
+}
+function previewSFLogos(){
+  const prev=document.getElementById('sf-logo-preview');if(!prev)return;
+  const l1=(document.getElementById('sf-logo-1')?.value||'').trim();
+  const l2=(document.getElementById('sf-logo-2')?.value||'').trim();
+  const logos=[l1,l2].filter(Boolean);
+  prev.innerHTML=logos.length
+    ?logos.map(l=>`<img src="${l}" style="height:28px;max-width:80px;object-fit:contain;border-radius:6px;background:#fff;padding:3px 8px" onerror="this.style.opacity='.3'"/>`)
+    .join('')+'<span style="font-size:11px;color:var(--muted)">Preview</span>'
+    :'<span style="font-size:11px;color:var(--muted)">Paste logo URLs above to see preview</span>';
+}
+async function loadSFRequests(){
+  try{
+    const r=await fetch(`${SB_URL}/rest/v1/steamflex_requests?select=*&order=ts.desc`,{
+      headers:{'apikey':SB_KEY,'Authorization':`Bearer ${SB_KEY}`}
+    });
+    const requests=await r.json();
+    const countEl=document.getElementById('sf-req-count');
+    const tbl=document.getElementById('sf-requests-tbl');
+    if(!requests||!requests.length){
+      if(countEl)countEl.textContent='0 requests';
+      if(tbl)tbl.innerHTML='<div style="padding:32px;text-align:center;color:var(--muted);font-size:13px">No requests yet.</div>';
+      return;
+    }
+    if(countEl)countEl.textContent=requests.length+' requests';
+    if(tbl)tbl.innerHTML=`<table class="tbl"><thead><tr><th>ID</th><th>Name</th><th>Game</th><th>Steam</th><th>Status</th><th>Date</th></tr></thead><tbody>${requests.map(req=>`<tr>
+      <td style="font-family:'Share Tech Mono',monospace;font-size:11px">${req.id}</td>
+      <td><div style="font-weight:500">${req.name}</div><div style="font-size:11px;color:var(--muted)">${req.email}</div></td>
+      <td><div style="font-size:13px">${req.game}</div><div style="font-size:11px"><a href="${req.game_url}" target="_blank" style="color:var(--steam);text-decoration:none">View on Steam ↗</a></div></td>
+      <td><div style="font-size:12px">${req.steam_username}</div><div style="font-size:11px"><a href="${req.steam_profile}" target="_blank" style="color:var(--muted);text-decoration:none">Profile ↗</a></div></td>
+      <td><select onchange="updateSFStatus('${req.id}',this.value)" style="background:#141d2b;border:1px solid var(--border);color:var(--text);padding:3px 7px;border-radius:6px;font-size:12px;cursor:pointer">
+        <option value="pending" ${req.status==='pending'?'selected':''}>Pending</option>
+        <option value="confirmed" ${req.status==='confirmed'?'selected':''}>Confirmed</option>
+        <option value="waiting" ${req.status==='waiting'?'selected':''}>Waiting 3 Days</option>
+        <option value="gifted" ${req.status==='gifted'?'selected':''}>Gifted ✓</option>
+        <option value="cancelled" ${req.status==='cancelled'?'selected':''}>Cancelled</option>
+      </select></td>
+      <td style="color:var(--muted);font-size:12px">${req.date||''}</td>
+    </tr>`).join('')}</tbody></table>`;
+  }catch(e){
+    const tbl=document.getElementById('sf-requests-tbl');
+    if(tbl)tbl.innerHTML='<div style="padding:24px;color:var(--muted);font-size:13px">Create the steamflex_requests table in Supabase to see requests here.</div>';
+  }
+}
+async function updateSFStatus(id,status){
+  await fetch(`${SB_URL}/rest/v1/steamflex_requests?id=eq.${id}`,{
+    method:'PATCH',
+    headers:{'apikey':SB_KEY,'Authorization':`Bearer ${SB_KEY}`,'Content-Type':'application/json'},
+    body:JSON.stringify({status})
+  });
 }
 
 // ══ TOAST ══

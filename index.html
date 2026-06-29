@@ -148,6 +148,8 @@ body{background:var(--bg);color:var(--col-body);font-family:var(--font-body);min
 .btn-p:hover{opacity:.85}
 .btn-g{background:none;border:1px solid var(--border);color:var(--col-body);padding:11px 28px;border-radius:8px;font-size:14px;cursor:pointer;transition:.15s}
 .btn-g:hover{border-color:var(--col-heading);color:var(--col-heading)}
+.btn-steam{background:rgba(27,156,255,.12);border:1px solid rgba(27,156,255,.35);color:#1b9cff;padding:11px 28px;border-radius:8px;font-size:14px;font-weight:600;text-decoration:none;transition:.15s;display:inline-flex;align-items:center;gap:7px}
+.btn-steam:hover{background:rgba(27,156,255,.22);color:#5bb8ff}
 
 /* CATEGORY CHIPS */
 .cat-bar{display:flex;gap:8px;padding:14px 28px;overflow-x:auto;border-bottom:1px solid var(--border);background:var(--bg2);scrollbar-width:none}
@@ -553,6 +555,7 @@ body{background:var(--bg);color:var(--col-body);font-family:var(--font-body);min
       <div class="hero-btns">
         <button class="btn-p" onclick="filterShop('All');storeGo('shop')">Browse Store</button>
         <button class="btn-g" onclick="filterShop('Gift Cards');storeGo('shop')">Gift Cards</button>
+        <a href="steamflex.html" class="btn-steam">&#127918; SteamFlex</a>
       </div>
     </div>
     <!-- FEATURED -->
