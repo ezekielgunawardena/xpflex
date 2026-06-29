@@ -36,13 +36,17 @@ body{background:var(--bg);color:var(--text);font-family:var(--font-body);min-hei
 .login-err{font-size:12px;color:#f87171;margin-top:10px;text-align:center}
 .cms-shell{display:none;min-height:100vh;background:var(--bg)}
 .cms-shell.on{display:block}
-.cms-bar{background:#0a0f18;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;padding:0 22px;height:52px;position:sticky;top:0;z-index:200;flex-wrap:wrap;gap:4px}
+.cms-bar{background:#0a0f18;border-bottom:1px solid var(--border);padding:8px 22px 0;position:sticky;top:0;z-index:200}
+.cms-bar-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;gap:12px}
 .cms-brand{font-family:var(--font-head);font-size:17px;font-weight:700;color:var(--neon);letter-spacing:2px;white-space:nowrap}
 .cms-brand em{color:var(--text);font-style:normal;font-size:12px;font-weight:400;letter-spacing:0;margin-left:4px}
-.cms-tabs{display:flex;gap:3px;flex-wrap:wrap}
-.ctab{background:none;border:none;color:var(--muted);font-size:12px;padding:5px 11px;border-radius:7px;cursor:pointer;font-family:var(--font-body);transition:.15s;white-space:nowrap}
+.cms-bar-right{display:flex;gap:8px;align-items:center;flex-shrink:0}
+.cms-tabs{display:flex;gap:2px;overflow-x:auto;padding-bottom:8px;scrollbar-width:none}
+.cms-tabs::-webkit-scrollbar{display:none}
+.ctab{background:none;border:none;color:var(--muted);font-size:12px;padding:5px 11px;border-radius:7px;cursor:pointer;font-family:var(--font-body);transition:.15s;white-space:nowrap;flex-shrink:0}
 .ctab:hover,.ctab.on{background:rgba(0,240,160,.08);color:var(--neon)}
-.cms-bar-right{display:flex;gap:8px;align-items:center}
+.ctab-steam{background:rgba(27,156,255,.08);border:1px solid rgba(27,156,255,.2);color:#1b9cff;font-size:12px;padding:4px 12px;border-radius:7px;cursor:pointer;font-family:var(--font-body);transition:.15s;white-space:nowrap;flex-shrink:0}
+.ctab-steam:hover,.ctab-steam.on{background:rgba(27,156,255,.18);color:#5bb8ff}
 .signout{background:none;border:1px solid var(--border);color:var(--muted);font-size:12px;padding:4px 11px;border-radius:7px;cursor:pointer;white-space:nowrap}
 .signout:hover{color:#f87171;border-color:#f87171}
 .view-store-btn{background:rgba(0,240,160,.1);border:1px solid rgba(0,240,160,.25);color:var(--neon);font-size:12px;padding:4px 11px;border-radius:7px;cursor:pointer;white-space:nowrap;font-family:var(--font-body)}
@@ -102,12 +106,13 @@ body{background:var(--bg);color:var(--text);font-family:var(--font-body);min-hei
 .toggle-wrap input:checked + .toggle-slider{background:rgba(0,240,160,.3)}
 .toggle-wrap input:checked + .toggle-slider:before{transform:translateX(16px);background:var(--neon)}
 @media(max-width:768px){
-  .cms-bar{height:auto;padding:8px 14px;flex-direction:column;align-items:stretch;gap:6px}
-  .cms-brand{font-size:15px;text-align:center;padding:4px 0}
-  .cms-tabs{overflow-x:auto;flex-wrap:nowrap;padding-bottom:2px;scrollbar-width:none}
-  .cms-tabs::-webkit-scrollbar{display:none}
-  .ctab{font-size:11px;padding:5px 9px;flex-shrink:0}
-  .cms-bar-right{justify-content:center}
+  .cms-bar{padding:8px 14px 0}
+  .cms-bar-top{margin-bottom:4px}
+  .cms-brand{font-size:14px}
+  .view-store-btn,.signout{font-size:11px;padding:3px 8px}
+  .cms-tabs{gap:2px;padding-bottom:6px}
+  .ctab{font-size:11px;padding:4px 8px}
+  .ctab-steam{font-size:11px;padding:4px 8px}
   .fr2,.fr3{grid-template-columns:1fr!important}
   .stats-grid{grid-template-columns:repeat(2,1fr)!important}
   .fcard{overflow-x:auto}
@@ -137,7 +142,13 @@ body{background:var(--bg);color:var(--text);font-family:var(--font-body);min-hei
 
   <div id="cms-shell" class="cms-shell">
     <div class="cms-bar">
-      <div class="cms-brand">XP<em>FLEX &mdash; CMS</em></div>
+      <div class="cms-bar-top">
+        <div class="cms-brand">XP<em>FLEX &mdash; CMS</em></div>
+        <div class="cms-bar-right">
+          <button class="view-store-btn" onclick="goStore()">&#8592; View Store</button>
+          <button class="signout" onclick="cmsLogout()">Sign out</button>
+        </div>
+      </div>
       <div class="cms-tabs">
         <button class="ctab on"  onclick="cmsTab('dash')">&#9641; Dashboard</button>
         <button class="ctab" onclick="cmsTab('prods')">&#11036; Products</button>
@@ -150,11 +161,8 @@ body{background:var(--bg);color:var(--text);font-family:var(--font-body);min-hei
         <button class="ctab" onclick="cmsTab('settings')">&#9881; Settings</button>
         <button class="ctab" id="tab-admins" onclick="cmsTab('admins')">&#128100; Admins</button>
         <button class="ctab" id="tab-activity" onclick="cmsTab('activity')">&#128221; Activity Log</button>
-        <button class="ctab" onclick="cmsTab('steamflex')">&#127918; SteamFlex</button>
-      </div>
-      <div class="cms-bar-right">
-        <button class="view-store-btn" onclick="goStore()">&#8592; View Store</button>
-        <button class="signout" onclick="cmsLogout()">Sign out</button>
+        <div style="width:1px;background:var(--border);margin:4px 6px;flex-shrink:0"></div>
+        <button class="ctab-steam" onclick="cmsTab('steamflex')">&#127918; SteamFlex</button>
       </div>
     </div>
 
