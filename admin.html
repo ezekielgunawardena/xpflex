@@ -248,6 +248,77 @@ body{background:var(--bg);color:var(--text);font-family:var(--font-body);min-hei
       </div>
     </div>
 
+    <!-- STEAMFLEX -->
+    <div id="cp-steamflex" class="cpanel">
+      <div class="ph">
+        <div class="pt">&#127918; SteamFlex Settings</div>
+        <a href="steamflex.html" target="_blank" class="view-store-btn">&#8599; View SteamFlex Page</a>
+      </div>
+      <div class="toast" id="toast-steamflex">SteamFlex settings saved.</div>
+
+      <!-- STEAM PROFILE -->
+      <div class="fcard">
+        <h3>Your Steam Profile</h3>
+        <p style="font-size:13px;color:var(--muted);margin-bottom:16px">This is displayed on the SteamFlex page so customers know who to add as a friend on Steam.</p>
+        <div class="fr2">
+          <div class="cf">
+            <label>Steam Display Name</label>
+            <input type="text" id="sf-steam-name" placeholder="e.g. XPFlex"/>
+          </div>
+          <div class="cf">
+            <label>Steam Profile URL</label>
+            <input type="url" id="sf-steam-url" placeholder="https://steamcommunity.com/id/xpflex"/>
+          </div>
+        </div>
+      </div>
+
+      <!-- BNPL LOGOS -->
+      <div class="fcard">
+        <h3>BNPL Provider Logos</h3>
+        <p style="font-size:13px;color:var(--muted);margin-bottom:14px">These logos appear in the payment section of the SteamFlex page.</p>
+        <div class="img-guide" style="margin-bottom:14px">
+          <strong>&#128444; Logo guidelines</strong>
+          Recommended: <strong>120 × 40px</strong> (horizontal) &middot; Max: <strong>100KB</strong> &middot; Format: <strong>PNG or WebP with transparent background</strong><br/>
+          Host on Supabase Storage or Imgur and paste the direct URL below
+        </div>
+        <div class="fr2">
+          <div class="cf">
+            <label>Provider 1 Name (e.g. Koko)</label>
+            <input type="text" id="sf-name-1" placeholder="Koko"/>
+          </div>
+          <div class="cf">
+            <label>Provider 2 Name (e.g. Mint Pay)</label>
+            <input type="text" id="sf-name-2" placeholder="Mint Pay"/>
+          </div>
+        </div>
+        <div class="fr2">
+          <div class="cf">
+            <label>Provider 1 Logo URL</label>
+            <input type="url" id="sf-logo-1" placeholder="https://..." oninput="previewSFLogos()"/>
+          </div>
+          <div class="cf">
+            <label>Provider 2 Logo URL</label>
+            <input type="url" id="sf-logo-2" placeholder="https://..." oninput="previewSFLogos()"/>
+          </div>
+        </div>
+        <div id="sf-logo-preview" style="display:flex;gap:10px;align-items:center;margin-top:10px;min-height:32px;flex-wrap:wrap">
+          <span style="font-size:11px;color:var(--muted)">Logo preview will appear here</span>
+        </div>
+      </div>
+
+      <!-- REQUESTS -->
+      <div class="fcard" style="padding:0;overflow:hidden">
+        <div style="padding:16px 20px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between">
+          <div class="pt" style="font-size:14px">&#128203; Game Requests</div>
+          <span style="font-size:12px;color:var(--muted)" id="sf-req-count"></span>
+        </div>
+        <div id="sf-requests-tbl"></div>
+      </div>
+
+      <button class="bcms" onclick="saveSFSettings()">Save SteamFlex Settings</button>
+    </div>
+
+
     <!-- PRODUCTS -->
     <div id="cp-prods" class="cpanel">
       <div class="ph"><div class="pt">All Products</div><button class="bcms" onclick="cmsTab('add')" style="padding:6px 16px;font-size:12px">+ Add New</button></div>
@@ -631,75 +702,6 @@ body{background:var(--bg);color:var(--text);font-family:var(--font-body);min-hei
       <div class="fcard" style="padding:0;overflow:hidden"><div id="activity-tbl"></div></div>
     </div>
 
-    <!-- STEAMFLEX -->
-    <div id="cp-steamflex" class="cpanel">
-      <div class="ph">
-        <div class="pt">&#127918; SteamFlex Settings</div>
-        <a href="steamflex.html" target="_blank" class="view-store-btn">&#8599; View SteamFlex Page</a>
-      </div>
-      <div class="toast" id="toast-steamflex">SteamFlex settings saved.</div>
-
-      <!-- STEAM PROFILE -->
-      <div class="fcard">
-        <h3>Your Steam Profile</h3>
-        <p style="font-size:13px;color:var(--muted);margin-bottom:16px">This is displayed on the SteamFlex page so customers know who to add as a friend on Steam.</p>
-        <div class="fr2">
-          <div class="cf">
-            <label>Steam Display Name</label>
-            <input type="text" id="sf-steam-name" placeholder="e.g. XPFlex"/>
-          </div>
-          <div class="cf">
-            <label>Steam Profile URL</label>
-            <input type="url" id="sf-steam-url" placeholder="https://steamcommunity.com/id/xpflex"/>
-          </div>
-        </div>
-      </div>
-
-      <!-- BNPL LOGOS -->
-      <div class="fcard">
-        <h3>BNPL Provider Logos</h3>
-        <p style="font-size:13px;color:var(--muted);margin-bottom:14px">These logos appear in the payment section of the SteamFlex page.</p>
-        <div class="img-guide" style="margin-bottom:14px">
-          <strong>&#128444; Logo guidelines</strong>
-          Recommended: <strong>120 × 40px</strong> (horizontal) &middot; Max: <strong>100KB</strong> &middot; Format: <strong>PNG or WebP with transparent background</strong><br/>
-          Host on Supabase Storage or Imgur and paste the direct URL below
-        </div>
-        <div class="fr2">
-          <div class="cf">
-            <label>Provider 1 Name (e.g. Koko)</label>
-            <input type="text" id="sf-name-1" placeholder="Koko"/>
-          </div>
-          <div class="cf">
-            <label>Provider 2 Name (e.g. Mint Pay)</label>
-            <input type="text" id="sf-name-2" placeholder="Mint Pay"/>
-          </div>
-        </div>
-        <div class="fr2">
-          <div class="cf">
-            <label>Provider 1 Logo URL</label>
-            <input type="url" id="sf-logo-1" placeholder="https://..." oninput="previewSFLogos()"/>
-          </div>
-          <div class="cf">
-            <label>Provider 2 Logo URL</label>
-            <input type="url" id="sf-logo-2" placeholder="https://..." oninput="previewSFLogos()"/>
-          </div>
-        </div>
-        <div id="sf-logo-preview" style="display:flex;gap:10px;align-items:center;margin-top:10px;min-height:32px;flex-wrap:wrap">
-          <span style="font-size:11px;color:var(--muted)">Logo preview will appear here</span>
-        </div>
-      </div>
-
-      <!-- REQUESTS -->
-      <div class="fcard" style="padding:0;overflow:hidden">
-        <div style="padding:16px 20px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between">
-          <div class="pt" style="font-size:14px">&#128203; Game Requests</div>
-          <span style="font-size:12px;color:var(--muted)" id="sf-req-count"></span>
-        </div>
-        <div id="sf-requests-tbl"></div>
-      </div>
-
-      <button class="bcms" onclick="saveSFSettings()">Save SteamFlex Settings</button>
-    </div>
 
   </div><!-- end cms-shell -->
 </div><!-- end screen-cms -->
