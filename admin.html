@@ -453,16 +453,6 @@ body{background:var(--bg);color:var(--text);font-family:var(--font-body);min-hei
           <div class="cf"><label>Payment Gateway Note</label><input type="text" id="s-pay" placeholder="e.g. PayHere, Stripe, PayPal..."/></div>
         </div>
         <div class="cf"><label>Footer Text</label><input type="text" id="s-footer"/></div>
-        <div style="display:flex;align-items:center;justify-content:space-between;background:rgba(234,179,8,.06);border:1px solid rgba(234,179,8,.2);border-radius:9px;padding:13px 16px;margin-bottom:14px">
-          <div>
-            <div style="font-size:13px;font-weight:600;color:#eab308">&#9888; Coming Soon Mode</div>
-            <div style="font-size:12px;color:var(--muted);margin-top:3px">When on, visitors see the coming soon page instead of the store</div>
-          </div>
-          <label class="toggle-wrap" style="flex-shrink:0">
-            <input type="checkbox" id="s-coming-soon" onchange="saveSettings()"/>
-            <span class="toggle-slider"></span>
-          </label>
-        </div>
         <button class="bcms" onclick="saveSettings()" style="margin-top:6px">Save Settings</button>
       </div>
 
@@ -470,6 +460,16 @@ body{background:var(--bg);color:var(--text);font-family:var(--font-body);min-hei
       <div class="fcard">
         <h3>&#9200; Coming Soon Page</h3>
         <p style="font-size:13px;color:var(--muted);margin-bottom:16px">Configure what appears on the coming soon countdown page.</p>
+        <div style="display:flex;align-items:center;justify-content:space-between;background:rgba(234,179,8,.06);border:1px solid rgba(234,179,8,.2);border-radius:9px;padding:13px 16px;margin-bottom:18px">
+          <div>
+            <div style="font-size:13px;font-weight:600;color:#eab308">&#9888; Coming Soon Mode</div>
+            <div style="font-size:12px;color:var(--muted);margin-top:3px">When on, visitors see the countdown page instead of the store</div>
+          </div>
+          <label class="toggle-wrap" style="flex-shrink:0">
+            <input type="checkbox" id="s-coming-soon" onchange="saveSettings()"/>
+            <span class="toggle-slider"></span>
+          </label>
+        </div>
         <div class="fr2">
           <div class="cf">
             <label>Launch Date</label>
