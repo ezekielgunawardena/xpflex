@@ -1339,6 +1339,8 @@ function closeCMSDrops(){
 document.addEventListener('click',e=>{
   if(!e.target.closest('.cms-dropdown')) closeCMSDrops();
 });
+
+function cmsTab(t){
   if(t==='admins'&&currentUser?.role!=='superadmin'){return;}
   document.querySelectorAll('.cpanel').forEach(p=>p.classList.remove('on'));
   document.querySelectorAll('.ctab,.ctab-steam').forEach(b=>b.classList.remove('on'));
