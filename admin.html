@@ -1201,11 +1201,6 @@ function previewDesign(){
   if(price){price.style.color=cp;}
   if(btn){btn.style.background=cbg;btn.style.color=cbt;}
 }
-async function saveDesign(){
-  design={fontHead:document.getElementById('d-font-head').value,fontBody:document.getElementById('d-font-body').value,fontPrice:document.getElementById('d-font-price').value,colHeading:document.getElementById('dc-heading').value,colBody:document.getElementById('dc-body').value,colPrice:document.getElementById('dc-price').value,colBtnBg:document.getElementById('dc-btnbg').value,colBtnText:document.getElementById('dc-btntext').value,colNav:document.getElementById('dc-nav').value,colCard:document.getElementById('dc-card').value};
-  await setSettingVal('design',design); applyDesign(); renderHome(); renderShop(); showCMSToast('toast-design');
-}
-async function resetDesign(){design={...DEFAULT_DESIGN};await setSettingVal('design',design);applyDesign();showCMSToast('toast-design');}
 
 // ══ CMS LOGIN ══
 function cmsLogin(){
