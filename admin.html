@@ -886,10 +886,6 @@ function setupSecretKnock(){
 }
 
 // ══ SHOP DROPDOWN ══
-function toggleShopDrop(){document.getElementById('shop-drop').classList.toggle('open');}
-function closeShopDrop(){document.getElementById('shop-drop').classList.remove('open');}
-document.addEventListener('click',e=>{if(!e.target.closest('#shop-drop'))closeShopDrop();});
-
 // ══ CAROUSEL ══
 let bannerIdx=0,bannerTimer=null;
 function renderBanner(){
