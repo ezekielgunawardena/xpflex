@@ -440,16 +440,21 @@ body{background:var(--bg);color:var(--col-body);font-family:var(--font-body);min
   .fcard{padding:12px}
 }
 /* BNPL */
-.bnpl-strip{display:flex;align-items:center;gap:6px;margin-top:5px;flex-wrap:wrap}
-.bnpl-instalment{font-size:11px;color:#a78bfa;font-weight:600;white-space:nowrap}
-.bnpl-logo{height:16px;width:auto;max-width:44px;object-fit:contain;border-radius:3px;background:#fff;padding:1px 3px}
-.bnpl-logos{display:flex;align-items:center;gap:4px}
-.bnpl-detail{background:rgba(139,92,246,.07);border:1px solid rgba(139,92,246,.2);border-radius:9px;padding:12px 14px;margin:10px 0}
-.bnpl-detail-title{font-size:11px;font-weight:600;letter-spacing:.5px;text-transform:uppercase;color:#a78bfa;margin-bottom:8px}
-.bnpl-detail-row{display:flex;align-items:center;justify-content:space-between;margin-bottom:4px;font-size:13px}
-.bnpl-detail-val{font-family:var(--font-price);font-size:16px;font-weight:700;color:#a78bfa}
-.bnpl-detail-logos{display:flex;gap:6px;margin-top:8px;flex-wrap:wrap;align-items:center}
-.bnpl-detail-logos img{height:20px;width:auto;max-width:56px;object-fit:contain;border-radius:4px;background:#fff;padding:2px 4px}
+/* BNPL / PAYMENT METHODS ON CARDS */
+.bnpl-strip{display:flex;flex-direction:column;gap:5px;margin-top:8px}
+.bnpl-provider-row{display:flex;align-items:center;gap:7px}
+.bnpl-logo{height:20px;width:auto;max-width:56px;object-fit:contain;border-radius:3px;background:#fff;padding:2px 4px;flex-shrink:0}
+.bnpl-logo-placeholder{height:20px;background:rgba(139,92,246,.15);border:1px solid rgba(139,92,246,.3);border-radius:3px;padding:2px 7px;font-size:10px;font-weight:700;color:#a78bfa;display:flex;align-items:center;flex-shrink:0}
+.bnpl-instalment{font-size:13px;color:#a78bfa;font-weight:700;white-space:nowrap}
+/* BNPL detail block */
+.bnpl-detail{background:rgba(139,92,246,.07);border:1px solid rgba(139,92,246,.2);border-radius:9px;padding:14px 16px;margin:12px 0}
+.bnpl-detail-title{font-size:11px;font-weight:600;letter-spacing:.5px;text-transform:uppercase;color:#a78bfa;margin-bottom:10px}
+.bnpl-detail-provider{display:flex;align-items:center;justify-content:space-between;padding:8px 0;border-bottom:1px solid rgba(139,92,246,.1)}
+.bnpl-detail-provider:last-child{border-bottom:none}
+.bnpl-detail-left{display:flex;align-items:center;gap:10px}
+.bnpl-detail-logo{height:24px;width:auto;max-width:64px;object-fit:contain;border-radius:4px;background:#fff;padding:2px 5px}
+.bnpl-detail-name{font-size:13px;color:var(--text);font-weight:500}
+.bnpl-detail-val{font-family:var(--font-price);font-size:18px;font-weight:700;color:#a78bfa}
 
 /* ══ COMING SOON ══ */
 #screen-soon{background:var(--bg);min-height:100vh;flex-direction:column;align-items:center;justify-content:center;padding:28px;text-align:center;position:relative;overflow:hidden}
@@ -670,7 +675,7 @@ const DEFAULT_PRODS = [
 const DEFAULT_DESIGN = {fontHead:"'Rajdhani',sans-serif",fontBody:"'Barlow',sans-serif",fontPrice:"'Rajdhani',sans-serif",colHeading:'#00f0a0',colBody:'#e2e8f0',colPrice:'#00f0a0',colBtnBg:'#00f0a0',colBtnText:'#080c12',colNav:'#080c12',colCard:'#111827'};
 
 let cart=[], prods=[], settings={}, design={...DEFAULT_DESIGN}, orders=[], featured=[], ejsConfig={};
-let discounts={}, bannerSlides=[], activityLog=[];
+let discounts={}, bannerSlides=[], activityLog=[], paymentMethods=[];
 let editId=null, shopFilter='All', detFrom='home', currency='Rs.';
 let toastTimer=null;
 
@@ -678,18 +683,49 @@ function priceFmt(n){
   return currency+' '+Math.round(parseFloat(n)).toLocaleString('en-LK');
 }
 
-// ══ BNPL HELPERS ══
-function bnplCardStrip(p,effectivePrice){
-  if(!p.bnpl) return '';
-  const inst=Math.round(effectivePrice/3);
-  const logos=(p.bnplLogos||[]).filter(Boolean);
-  return `<div class="bnpl-strip"><span class="bnpl-instalment">3 × ${priceFmt(inst)}</span>${logos.length?`<div class="bnpl-logos">${logos.map(l=>`<img class="bnpl-logo" src="${l}" alt="BNPL" onerror="this.style.display='none'"/>`).join('')}</div>`:''}</div>`;
+// ══ PAYMENT METHOD HELPERS ══
+function getActiveBNPLForProduct(p){
+  // Get all active BNPL methods that include this product
+  return paymentMethods.filter(m=>{
+    if(!m.active||m.type!=='bnpl') return false;
+    // Check product assignment
+    if(m.assignAll) return true;
+    if(m.categories&&m.categories.includes(p.cat)) return true;
+    if(m.products&&m.products.includes(p.id)) return true;
+    return false;
+  });
 }
-function bnplDetailBlock(p,effectivePrice){
-  if(!p.bnpl) return '';
-  const inst=Math.round(effectivePrice/3);
-  const logos=(p.bnplLogos||[]).filter(Boolean);
-  return `<div class="bnpl-detail"><div class="bnpl-detail-title">&#128179; Buy Now, Pay Later</div><div class="bnpl-detail-row"><span>Total amount</span><span class="bnpl-detail-val">${priceFmt(effectivePrice)}</span></div><div class="bnpl-detail-row"><span>3 equal instalments</span><span class="bnpl-detail-val">3 × ${priceFmt(inst)}</span></div>${logos.length?`<div class="bnpl-detail-logos">${logos.map(l=>`<img src="${l}" alt="BNPL" onerror="this.style.display='none'"/>`).join('')}</div>`:''}</div>`;
+function calcInstalment(price, feePct){
+  const total = price * (1 + (parseFloat(feePct)||0)/100);
+  return Math.round(total/3);
+}
+function bnplCardStrip(p, effectivePrice){
+  const methods = getActiveBNPLForProduct(p);
+  if(!methods.length) return '';
+  return `<div class="bnpl-strip">${methods.map(m=>{
+    const inst = calcInstalment(effectivePrice, m.fee||0);
+    const logoHtml = m.logo
+      ? `<img class="bnpl-logo" src="${m.logo}" alt="${m.name}" onerror="this.style.display='none'"/>`
+      : `<span class="bnpl-logo-placeholder">${m.name}</span>`;
+    return `<div class="bnpl-provider-row">${logoHtml}<span class="bnpl-instalment">3 × ${priceFmt(inst)}</span></div>`;
+  }).join('')}</div>`;
+}
+function bnplDetailBlock(p, effectivePrice){
+  const methods = getActiveBNPLForProduct(p);
+  if(!methods.length) return '';
+  return `<div class="bnpl-detail">
+    <div class="bnpl-detail-title">&#128179; Buy Now, Pay Later</div>
+    ${methods.map(m=>{
+      const inst = calcInstalment(effectivePrice, m.fee||0);
+      const logoHtml = m.logo
+        ? `<img class="bnpl-detail-logo" src="${m.logo}" alt="${m.name}" onerror="this.style.display='none'"/>`
+        : '';
+      return `<div class="bnpl-detail-provider">
+        <div class="bnpl-detail-left">${logoHtml}<span class="bnpl-detail-name">${m.name}</span></div>
+        <span class="bnpl-detail-val">3 × ${priceFmt(inst)}</span>
+      </div>`;
+    }).join('')}
+  </div>`;
 }
 
 // ══ SUPABASE HELPERS ══
@@ -740,6 +776,7 @@ window.addEventListener('load',async()=>{
   const sbEjs=await getSettingVal('emailjs'); ejsConfig=sbEjs||{};
   const sbDisc=await getSettingVal('discounts'); discounts=sbDisc||{};
   const sbBanner=await getSettingVal('banner'); bannerSlides=sbBanner||[];
+  const sbPM=await getSettingVal('payment_methods'); paymentMethods=sbPM||[];
   const sbAdmins=await sbGet('admins'); adminUsers=sbAdmins||[];
   if(ejsConfig.pubkey)emailjs.init(ejsConfig.pubkey);
   if(window.location.hash==='#admin'){window.location.href='admin.html';return;}

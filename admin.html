@@ -161,6 +161,7 @@ body{background:var(--bg);color:var(--text);font-family:var(--font-body);min-hei
         <button class="ctab" onclick="cmsTab('settings')">&#9881; Settings</button>
         <button class="ctab" id="tab-admins" onclick="cmsTab('admins')">&#128100; Admins</button>
         <button class="ctab" id="tab-activity" onclick="cmsTab('activity')">&#128221; Activity Log</button>
+        <button class="ctab" onclick="cmsTab('payments')">&#128179; Payment Methods</button>
         <div style="width:1px;background:var(--border);margin:4px 6px;flex-shrink:0"></div>
         <button class="ctab-steam" onclick="cmsTab('steamflex')">&#127918; SteamFlex</button>
       </div>
@@ -376,27 +377,6 @@ body{background:var(--bg);color:var(--text);font-family:var(--font-body);min-hei
             &#128336; <strong>Pre-Order mode:</strong> The "Add to Cart" button will show as <strong>"Pre-Order"</strong> on the storefront. The order flow is identical — customers complete checkout normally.
           </div>
           <div class="cf"><label>Pre-Order Release Note (optional)</label><input type="text" id="f-preorder-note" placeholder="e.g. Expected release: Q3 2026"/></div>
-        </div>
-        <!-- BNPL -->
-        <div style="background:rgba(139,92,246,.07);border:1px solid rgba(139,92,246,.2);border-radius:9px;padding:14px;margin-bottom:14px">
-          <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px">
-            <label class="toggle-wrap"><input type="checkbox" id="f-bnpl" onchange="toggleBNPLFields()"/><span class="toggle-slider"></span></label>
-            <span style="font-size:13px;font-weight:500;color:#a78bfa">Enable Buy Now, Pay Later (BNPL)</span>
-          </div>
-          <div id="bnpl-fields" style="display:none">
-            <div class="img-guide" style="margin-bottom:12px;border-color:rgba(139,92,246,.2)">
-              <strong style="color:#a78bfa">&#128444; BNPL partner logo guidelines</strong>
-              Recommended: <strong>120 × 40px</strong> · Max: <strong>100KB</strong> · Format: <strong>PNG or WebP (transparent bg preferred)</strong> · Up to 3 logos
-            </div>
-            <div class="fr3">
-              <div class="cf" style="margin:0"><label style="font-size:11px">Logo 1 URL</label><input type="url" id="f-bnpl-logo-0" placeholder="https://..." oninput="updateBNPLPreview()"/></div>
-              <div class="cf" style="margin:0"><label style="font-size:11px">Logo 2 URL</label><input type="url" id="f-bnpl-logo-1" placeholder="https://..." oninput="updateBNPLPreview()"/></div>
-              <div class="cf" style="margin:0"><label style="font-size:11px">Logo 3 URL</label><input type="url" id="f-bnpl-logo-2" placeholder="https://..." oninput="updateBNPLPreview()"/></div>
-            </div>
-            <div id="bnpl-logo-preview" style="display:flex;gap:8px;align-items:center;margin-top:10px;min-height:28px">
-              <span style="font-size:11px;color:var(--muted)">No logos yet — paste URLs above</span>
-            </div>
-          </div>
         </div>
         <div class="cf">
           <label>Product Image URL</label>
@@ -703,6 +683,84 @@ body{background:var(--bg);color:var(--text);font-family:var(--font-body);min-hei
     </div>
 
 
+    <!-- PAYMENT METHODS -->
+    <div id="cp-payments" class="cpanel">
+      <div class="ph">
+        <div class="pt">&#128179; Payment Methods</div>
+        <button class="bcms" onclick="addPaymentMethod()" style="padding:6px 16px;font-size:12px">+ Add Method</button>
+      </div>
+      <div class="toast" id="toast-payments">Payment methods saved.</div>
+
+      <div class="fcard">
+        <h3>Configure your accepted payment methods. BNPL methods will show instalment pricing on the storefront — fee is applied silently to the split.</h3>
+      </div>
+
+      <!-- METHOD LIST -->
+      <div id="pm-list"></div>
+
+      <!-- ADD / EDIT FORM -->
+      <div id="pm-form" style="display:none">
+        <div class="fcard" style="border-color:rgba(0,240,160,.2)">
+          <div class="ph" style="margin-bottom:16px">
+            <div class="pt" id="pm-form-title" style="font-size:15px">Add Payment Method</div>
+            <button class="bsm" onclick="cancelPMForm()">Cancel</button>
+          </div>
+          <div class="fr2">
+            <div class="cf"><label>Method Name</label><input type="text" id="pm-name" placeholder="e.g. Koko, Mint Pay, Visa"/></div>
+            <div class="cf"><label>Type</label>
+              <select id="pm-type" onchange="togglePMType()">
+                <option value="bnpl">BNPL (Buy Now Pay Later)</option>
+                <option value="card">Card (Visa / Mastercard / Amex)</option>
+                <option value="bank">Bank Transfer</option>
+              </select>
+            </div>
+          </div>
+          <div class="fr2">
+            <div class="cf">
+              <label>Logo URL</label>
+              <div class="img-guide"><strong>&#128444; Logo guidelines</strong>Recommended: <strong>180 × 60px</strong> &middot; Max: <strong>100KB</strong> &middot; Format: <strong>PNG with transparent background</strong></div>
+              <input type="url" id="pm-logo" placeholder="https://..." oninput="previewPMLogo()"/>
+              <div id="pm-logo-preview" style="margin-top:8px;display:none"><img id="pm-logo-img" style="height:32px;background:#fff;border-radius:4px;padding:3px 8px" onerror="this.parentElement.style.display='none'"/></div>
+            </div>
+            <div class="cf" id="pm-fee-wrap">
+              <label>BNPL Fee (%)</label>
+              <input type="number" id="pm-fee" placeholder="e.g. 5" min="0" max="100" step="0.1"/>
+              <div style="font-size:11px;color:var(--muted);margin-top:4px">Fee is factored into the instalment amount shown to customers — not displayed separately</div>
+            </div>
+          </div>
+          <!-- Active toggle -->
+          <div style="display:flex;align-items:center;gap:10px;margin-bottom:18px">
+            <label class="toggle-wrap"><input type="checkbox" id="pm-active" checked/><span class="toggle-slider"></span></label>
+            <span style="font-size:13px">Active — show on storefront</span>
+          </div>
+          <!-- BNPL product assignment -->
+          <div id="pm-assign-wrap">
+            <div class="cf">
+              <label style="font-size:13px;font-weight:500;margin-bottom:10px;display:block">Product Assignment</label>
+              <div style="display:flex;gap:10px;margin-bottom:12px;flex-wrap:wrap">
+                <button class="bsm" onclick="setPMAssign('all')" id="pm-assign-all">All Products</button>
+                <button class="bsm" onclick="setPMAssign('cat')" id="pm-assign-cat">By Category</button>
+                <button class="bsm" onclick="setPMAssign('prod')" id="pm-assign-prod">Select Products</button>
+              </div>
+              <!-- Category selection -->
+              <div id="pm-cat-picker" style="display:none">
+                <div style="font-size:12px;color:var(--muted);margin-bottom:8px">Select categories:</div>
+                <div style="display:flex;gap:8px;flex-wrap:wrap">
+                  ${['Gift Cards','Games','In-Game Currency','DLC','Subscription'].map(c=>`<label style="display:flex;align-items:center;gap:6px;font-size:13px;cursor:pointer"><input type="checkbox" class="pm-cat-cb" value="${c}" style="accent-color:var(--neon)"/> ${c}</label>`).join('')}
+                </div>
+              </div>
+              <!-- Product selection -->
+              <div id="pm-prod-picker" style="display:none">
+                <div style="font-size:12px;color:var(--muted);margin-bottom:8px">Select products:</div>
+                <div id="pm-prod-list" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:6px;max-height:200px;overflow-y:auto;background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:10px"></div>
+              </div>
+            </div>
+          </div>
+          <button class="bcms" onclick="savePMForm()">Save Payment Method</button>
+        </div>
+      </div>
+    </div>
+
   </div><!-- end cms-shell -->
 </div><!-- end screen-cms -->
 
@@ -737,7 +795,7 @@ const DEFAULT_PRODS = [
 const DEFAULT_DESIGN = {fontHead:"'Rajdhani',sans-serif",fontBody:"'Barlow',sans-serif",fontPrice:"'Rajdhani',sans-serif",colHeading:'#00f0a0',colBody:'#e2e8f0',colPrice:'#00f0a0',colBtnBg:'#00f0a0',colBtnText:'#080c12',colNav:'#080c12',colCard:'#111827'};
 
 let cart=[], prods=[], settings={}, design={...DEFAULT_DESIGN}, orders=[], featured=[], ejsConfig={};
-let discounts={}, bannerSlides=[], activityLog=[];
+let discounts={}, bannerSlides=[], activityLog=[], paymentMethods=[];
 let editId=null, shopFilter='All', detFrom='home', currency='Rs.';
 let toastTimer=null;
 
@@ -1187,6 +1245,7 @@ async function initCMSShell(){
   const sbAdmins=await sbGet('admins'); adminUsers=sbAdmins||[];
   const sbDisc=await getSettingVal('discounts'); discounts=sbDisc||{};
   const sbBan=await getSettingVal('banner'); bannerSlides=sbBan||[];
+  const sbPM=await getSettingVal('payment_methods'); paymentMethods=sbPM||[];
   const sbLog=await sbGet('activity_log'); activityLog=sbLog?sbLog.sort((a,b)=>b.ts_ms-a.ts_ms):[];
   document.getElementById('s-name').value=settings.storeName||'XPFlex';
   document.getElementById('s-hero').value=settings.hero||'';
@@ -1241,6 +1300,7 @@ function cmsTab(t){
   if(t==='banner') renderBannerCMS();
   if(t==='activity') renderActivityLog();
   if(t==='steamflex'){loadSFSettingsCMS();loadSFRequests();}
+  if(t==='payments'){loadPaymentMethods();}
 }
 
 // ══ ADMIN USERS MANAGEMENT ══
@@ -1452,8 +1512,6 @@ async function saveProd(){
   const preorderNote=document.getElementById('f-preorder-note')?.value.trim()||'';
   // Auto-mark out of stock if limit active and qty is 0
   const finalStock=(stockLimit&&stockQty===0)?'out':stockVal;
-  const bnpl=document.getElementById('f-bnpl')?.checked||false;
-  const bnplLogos=bnpl?[0,1,2].map(i=>(document.getElementById(`f-bnpl-logo-${i}`)?.value||'').trim()).filter(Boolean):[];
   const p={
     id:editId||('p'+Date.now()),name,price,
     cat:document.getElementById('f-cat').value,
@@ -1463,7 +1521,7 @@ async function saveProd(){
     description:document.getElementById('f-desc').value.trim(),
     tags:document.getElementById('f-tags').value.trim(),
     stock:finalStock,
-    stockLimit,stockQty,preorderNote,bnpl,bnplLogos,
+    stockLimit,stockQty,preorderNote,
   };
   await sbUpsert('products',p);
   const actor=currentUser?.display_name||currentUser?.displayName||currentUser?.username||'Unknown';
@@ -1493,11 +1551,6 @@ function editProd(id){
   if(sqEl)sqEl.value=p.stockQty||0;
   const pnEl=document.getElementById('f-preorder-note');
   if(pnEl)pnEl.value=p.preorderNote||'';
-  const bnplEl=document.getElementById('f-bnpl');
-  if(bnplEl){bnplEl.checked=!!p.bnpl;toggleBNPLFields();}
-  const logos=p.bnplLogos||[];
-  [0,1,2].forEach(i=>{const el=document.getElementById(`f-bnpl-logo-${i}`);if(el)el.value=logos[i]||'';});
-  if(p.bnpl)updateBNPLPreview();
   document.getElementById('add-title').textContent='Edit Product';
   toggleStockFields();
   cmsTab('add');
@@ -1515,29 +1568,14 @@ async function delProd(id){
 
 function clearForm(){
   editId=null;
-  ['f-name','f-price','f-icon','f-img','f-desc','f-tags','f-preorder-note','f-bnpl-logo-0','f-bnpl-logo-1','f-bnpl-logo-2'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
+  ['f-name','f-price','f-icon','f-img','f-desc','f-tags','f-preorder-note'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
   document.getElementById('f-cat').value='Gift Cards';
   document.getElementById('f-plat').value='Steam';
   document.getElementById('f-stock').value='in';
   const sl=document.getElementById('f-stock-limit');if(sl)sl.checked=false;
   const sq=document.getElementById('f-stock-qty');if(sq)sq.value='';
-  const bnplEl=document.getElementById('f-bnpl');if(bnplEl)bnplEl.checked=false;
   document.getElementById('add-title').textContent='Add Product';
   toggleStockFields();
-  toggleBNPLFields();
-}
-function toggleBNPLFields(){
-  const on=document.getElementById('f-bnpl')?.checked||false;
-  const fields=document.getElementById('bnpl-fields');
-  if(fields)fields.style.display=on?'block':'none';
-  if(on)updateBNPLPreview();
-}
-function updateBNPLPreview(){
-  const prev=document.getElementById('bnpl-logo-preview');if(!prev)return;
-  const logos=[0,1,2].map(i=>(document.getElementById(`f-bnpl-logo-${i}`)?.value||'').trim()).filter(Boolean);
-  prev.innerHTML=logos.length
-    ?`<span style="font-size:11px;color:var(--muted)">Preview:</span>`+logos.map(l=>`<img src="${l}" style="height:24px;max-width:60px;object-fit:contain;border-radius:4px;background:#fff;padding:2px 4px" onerror="this.style.opacity='.3'"/>`).join('')
-    :`<span style="font-size:11px;color:var(--muted)">No logos yet</span>`;
 }
 // Show/hide stock limit and pre-order fields based on stock status
 function toggleStockFields(){
@@ -2037,6 +2075,156 @@ async function updateSFStatus(id,status){
     headers:{'apikey':SB_KEY,'Authorization':`Bearer ${SB_KEY}`,'Content-Type':'application/json'},
     body:JSON.stringify({status})
   });
+}
+
+// ══ PAYMENT METHODS ══
+let paymentMethods=[];
+let editingPMId=null;
+let pmAssignMode='all';
+
+async function loadPaymentMethods(){
+  const d=await getSettingVal('payment_methods');
+  paymentMethods=d||[];
+  renderPMList();
+}
+
+async function savePaymentMethodsToSB(){
+  await setSettingVal('payment_methods',paymentMethods);
+}
+
+function renderPMList(){
+  const el=document.getElementById('pm-list');if(!el)return;
+  if(!paymentMethods.length){
+    el.innerHTML=`<div class="fcard" style="text-align:center;color:var(--muted);font-size:13px;padding:32px">No payment methods yet. Click <strong style="color:var(--neon)">+ Add Method</strong> to get started.</div>`;
+    return;
+  }
+  const typeLabel={bnpl:'BNPL',card:'Card',bank:'Bank Transfer'};
+  const typeColour={bnpl:'rgba(139,92,246,.15);color:#a78bfa;border:1px solid rgba(139,92,246,.3)',card:'rgba(0,240,160,.1);color:var(--neon);border:1px solid rgba(0,240,160,.25)',bank:'rgba(234,179,8,.1);color:#eab308;border:1px solid rgba(234,179,8,.25)'};
+  el.innerHTML=paymentMethods.map((m,i)=>`
+    <div class="fcard" style="margin-bottom:10px;padding:16px 20px">
+      <div style="display:flex;align-items:center;gap:14px;flex-wrap:wrap">
+        ${m.logo?`<img src="${m.logo}" style="height:28px;max-width:72px;object-fit:contain;background:#fff;border-radius:4px;padding:2px 6px" onerror="this.style.display='none'"/>`:
+        `<div style="background:rgba(139,92,246,.1);border:1px solid rgba(139,92,246,.25);border-radius:6px;padding:4px 10px;font-size:12px;font-weight:700;color:#a78bfa">${m.name}</div>`}
+        <span style="font-weight:600;font-size:14px;flex:1">${m.name}</span>
+        <span style="font-size:11px;padding:2px 9px;border-radius:10px;background:${typeColour[m.type]||typeColour.card}">${typeLabel[m.type]||m.type}</span>
+        ${m.type==='bnpl'?`<span style="font-size:12px;color:var(--muted)">${m.fee||0}% fee</span>`:''}
+        <span style="font-size:11px;padding:2px 9px;border-radius:10px;${m.active?'background:rgba(74,222,128,.1);color:#4ade80;border:1px solid rgba(74,222,128,.25)':'background:rgba(239,68,68,.1);color:#f87171;border:1px solid rgba(239,68,68,.25)'}">${m.active?'Active':'Inactive'}</span>
+        <div style="display:flex;gap:6px">
+          <button class="bsm" onclick="editPM(${i})" style="padding:4px 10px">&#9998; Edit</button>
+          <button class="bdanger" onclick="deletePM(${i})" style="padding:4px 10px">&#128465;</button>
+        </div>
+      </div>
+      ${m.type==='bnpl'?`<div style="font-size:11px;color:var(--muted);margin-top:8px">
+        Applied to: ${m.assignAll?'All products':m.categories&&m.categories.length?'Categories: '+m.categories.join(', '):m.products&&m.products.length?m.products.length+' products selected':'Not assigned'}
+      </div>`:''}
+    </div>`).join('');
+}
+
+function addPaymentMethod(){
+  editingPMId=null;
+  pmAssignMode='all';
+  document.getElementById('pm-form-title').textContent='Add Payment Method';
+  document.getElementById('pm-name').value='';
+  document.getElementById('pm-type').value='bnpl';
+  document.getElementById('pm-logo').value='';
+  document.getElementById('pm-fee').value='';
+  document.getElementById('pm-active').checked=true;
+  document.getElementById('pm-logo-preview').style.display='none';
+  togglePMType();
+  setPMAssign('all');
+  document.querySelectorAll('.pm-cat-cb').forEach(cb=>cb.checked=false);
+  renderPMProdList();
+  document.getElementById('pm-form').style.display='block';
+  document.getElementById('pm-form').scrollIntoView({behavior:'smooth'});
+}
+
+function editPM(i){
+  editingPMId=i;
+  const m=paymentMethods[i];
+  document.getElementById('pm-form-title').textContent='Edit Payment Method';
+  document.getElementById('pm-name').value=m.name||'';
+  document.getElementById('pm-type').value=m.type||'bnpl';
+  document.getElementById('pm-logo').value=m.logo||'';
+  document.getElementById('pm-fee').value=m.fee||'';
+  document.getElementById('pm-active').checked=!!m.active;
+  previewPMLogo();
+  togglePMType();
+  if(m.assignAll) setPMAssign('all');
+  else if(m.categories&&m.categories.length) {setPMAssign('cat');m.categories.forEach(c=>{const cb=document.querySelector(`.pm-cat-cb[value="${c}"]`);if(cb)cb.checked=true;});}
+  else {setPMAssign('prod');renderPMProdList(m.products||[]);}
+  document.getElementById('pm-form').style.display='block';
+  document.getElementById('pm-form').scrollIntoView({behavior:'smooth'});
+}
+
+function cancelPMForm(){
+  document.getElementById('pm-form').style.display='none';
+  editingPMId=null;
+}
+
+function deletePM(i){
+  if(!confirm(`Delete "${paymentMethods[i].name}"?`))return;
+  paymentMethods.splice(i,1);
+  savePaymentMethodsToSB();
+  renderPMList();
+  showCMSToast('toast-payments');
+}
+
+function togglePMType(){
+  const t=document.getElementById('pm-type').value;
+  document.getElementById('pm-fee-wrap').style.display=t==='bnpl'?'block':'none';
+  document.getElementById('pm-assign-wrap').style.display=t==='bnpl'?'block':'none';
+}
+
+function setPMAssign(mode){
+  pmAssignMode=mode;
+  document.getElementById('pm-cat-picker').style.display=mode==='cat'?'block':'none';
+  document.getElementById('pm-prod-picker').style.display=mode==='prod'?'block':'none';
+  ['all','cat','prod'].forEach(m=>{
+    const btn=document.getElementById(`pm-assign-${m}`);
+    if(btn){btn.style.borderColor=m===mode?'var(--neon)':'';btn.style.color=m===mode?'var(--neon)':'';}
+  });
+  if(mode==='prod') renderPMProdList();
+}
+
+function renderPMProdList(selected=[]){
+  const el=document.getElementById('pm-prod-list');if(!el)return;
+  el.innerHTML=prods.map(p=>`
+    <label style="display:flex;align-items:center;gap:7px;font-size:12px;cursor:pointer;padding:4px">
+      <input type="checkbox" class="pm-prod-cb" value="${p.id}" ${selected.includes(p.id)?'checked':''} style="accent-color:var(--neon)"/>
+      <span>${p.icon||'🎮'} ${p.name}</span>
+    </label>`).join('');
+}
+
+function previewPMLogo(){
+  const url=document.getElementById('pm-logo').value.trim();
+  const wrap=document.getElementById('pm-logo-preview');
+  const img=document.getElementById('pm-logo-img');
+  if(url){wrap.style.display='block';img.src=url;}
+  else{wrap.style.display='none';}
+}
+
+async function savePMForm(){
+  const name=document.getElementById('pm-name').value.trim();
+  if(!name){alert('Please enter a method name.');return;}
+  const type=document.getElementById('pm-type').value;
+  const method={
+    id:editingPMId!=null?paymentMethods[editingPMId].id:('pm_'+Date.now()),
+    name,type,
+    logo:document.getElementById('pm-logo').value.trim(),
+    fee:type==='bnpl'?parseFloat(document.getElementById('pm-fee').value)||0:0,
+    active:document.getElementById('pm-active').checked,
+    assignAll:type==='bnpl'?pmAssignMode==='all':false,
+    categories:type==='bnpl'&&pmAssignMode==='cat'?Array.from(document.querySelectorAll('.pm-cat-cb:checked')).map(cb=>cb.value):[],
+    products:type==='bnpl'&&pmAssignMode==='prod'?Array.from(document.querySelectorAll('.pm-prod-cb:checked')).map(cb=>cb.value):[],
+  };
+  if(editingPMId!=null) paymentMethods[editingPMId]=method;
+  else paymentMethods.push(method);
+  await savePaymentMethodsToSB();
+  renderPMList();
+  cancelPMForm();
+  showCMSToast('toast-payments');
+  const actor=currentUser?.display_name||currentUser?.username||'Unknown';
+  await writeLog('settings',`Payment method "${name}" ${editingPMId!=null?'updated':'added'}`,actor,{method:name,type});
 }
 
 // ══ TOAST ══
