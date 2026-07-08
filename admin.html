@@ -275,170 +275,6 @@ body{background:var(--bg);color:var(--text);font-family:var(--font-body);min-hei
 
 
 
-    <!-- CATALOG -->
-    <div id="cp-catalog" class="cpanel">
-      <!-- Sub-page switcher: list | edit -->
-      <div id="cat-sub-list">
-        <!-- Products list -->
-        <div class="ph">
-          <div class="pt">&#128218; Catalog</div>
-          <button class="bcms" onclick="catNewProd()" style="padding:6px 16px;font-size:12px">+ Add New</button>
-        </div>
-        <div class="toast" id="toast-prods">Product deleted.</div>
-        <div class="toast" id="toast-add">Product saved.</div>
-
-        <!-- Sub-nav within catalog -->
-        <div style="display:flex;gap:6px;margin-bottom:18px;border-bottom:1px solid var(--border);padding-bottom:10px">
-          <button class="bsm cat-subnav on" onclick="showCatSection('products')" id="csn-products">&#11036; Products</button>
-          <button class="bsm cat-subnav" onclick="showCatSection('featured')" id="csn-featured">&#11088; Featured</button>
-          <button class="bsm cat-subnav" onclick="showCatSection('discounts')" id="csn-discounts">&#127991; Discounts</button>
-        </div>
-
-        <!-- PRODUCTS SECTION -->
-        <div id="cat-sec-products">
-          <div class="fcard" style="padding:0;overflow:hidden"><div id="prod-tbl"></div></div>
-          <!-- Danger Zone -->
-          <div class="fcard" style="border-color:rgba(239,68,68,.3);margin-top:18px">
-            <h3 style="color:#f87171">Danger Zone</h3>
-            <div style="display:flex;align-items:center;justify-content:space-between;font-size:13px;margin-bottom:12px">
-              <span style="color:var(--muted)">Delete all products</span>
-              <button class="bdanger" onclick="nukeProds()">&#128465; Clear Products</button>
-            </div>
-            <div style="display:flex;align-items:center;justify-content:space-between;font-size:13px">
-              <span style="color:var(--muted)">Delete all orders</span>
-              <button class="bdanger" onclick="nukeOrders()">&#128465; Clear Orders</button>
-            </div>
-          </div>
-        </div>
-
-        <!-- FEATURED SECTION -->
-        <div id="cat-sec-featured" style="display:none">
-          <div class="toast" id="toast-feat">Featured products updated.</div>
-          <div class="fcard">
-            <h3>Tick the products you want to highlight in the Featured section on the homepage.</h3>
-            <div id="feat-picker"></div>
-            <button class="bcms" onclick="saveFeatured()" style="margin-top:14px">Save Featured</button>
-          </div>
-        </div>
-
-        <!-- DISCOUNTS SECTION -->
-        <div id="cat-sec-discounts" style="display:none">
-          <div class="toast" id="toast-disc">Discounts saved.</div>
-          <div class="fcard">
-            <h3>Set a discount on any product. Slash pricing and a discount badge will appear on the storefront.</h3>
-            <div id="disc-list"></div>
-            <button class="bcms" onclick="saveDiscounts()" style="margin-top:14px">Save All Discounts</button>
-          </div>
-        </div>
-      </div>
-
-      <!-- ADD / EDIT SUB-PAGE -->
-      <div id="cat-sub-edit" style="display:none">
-        <div class="ph">
-          <div class="pt" id="add-title">Add Product</div>
-          <button class="bsm" onclick="catBackToList()">&#8592; Back to Products</button>
-        </div>
-        <div class="fcard">
-          <div class="fr2">
-            <div class="cf"><label>Product Name</label><input type="text" id="f-name" placeholder="e.g. Steam Wallet Rs. 1000"/></div>
-            <div class="cf"><label>Price (Rs.)</label><input type="number" id="f-price" placeholder="0" step="1" min="0"/></div>
-          </div>
-          <div class="fr2">
-            <div class="cf"><label>Category</label>
-              <select id="f-cat"><option>Gift Cards</option><option>Games</option><option>In-Game Currency</option><option>DLC</option><option>Subscription</option></select>
-            </div>
-            <div class="cf"><label>Platform</label>
-              <select id="f-plat"><option>Steam</option><option>PSN</option><option>Xbox</option><option>Epic Games</option><option>Nintendo</option><option>Other</option></select>
-            </div>
-          </div>
-          <div class="fr2">
-            <div class="cf"><label>Icon Emoji</label><input type="text" id="f-icon" placeholder="🎮" maxlength="4"/></div>
-            <div class="cf"><label>Stock Status</label>
-              <select id="f-stock" onchange="toggleStockFields()">
-                <option value="in">In Stock</option>
-                <option value="low">Low Stock</option>
-                <option value="out">Out of Stock</option>
-                <option value="preorder">Pre-Order</option>
-              </select>
-            </div>
-          </div>
-          <!-- STOCK LIMIT -->
-          <div id="stock-limit-row" style="display:none">
-            <div style="background:rgba(0,240,160,.05);border:1px solid rgba(0,240,160,.15);border-radius:9px;padding:14px;margin-bottom:14px">
-              <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px">
-                <label class="toggle-wrap"><input type="checkbox" id="f-stock-limit" onchange="toggleStockQty()"/><span class="toggle-slider"></span></label>
-                <span style="font-size:13px;font-weight:500">Enable stock limit</span>
-                <span style="font-size:11px;color:var(--muted)">— auto-marks Out of Stock when quantity hits 0</span>
-              </div>
-              <div id="stock-qty-row" style="display:none">
-                <div class="cf" style="margin:0;max-width:180px">
-                  <label>Stock Quantity</label>
-                  <input type="number" id="f-stock-qty" min="0" step="1" placeholder="e.g. 50"/>
-                </div>
-              </div>
-            </div>
-          </div>
-          <!-- PRE-ORDER -->
-          <div id="preorder-info-row" style="display:none">
-            <div style="background:rgba(139,92,246,.07);border:1px solid rgba(139,92,246,.25);border-radius:9px;padding:12px 14px;margin-bottom:14px;font-size:12px;color:#a78bfa">
-              &#128336; <strong>Pre-Order mode:</strong> The "Add to Cart" button will show as <strong>"Pre-Order"</strong> on the storefront.
-            </div>
-            <div class="cf"><label>Pre-Order Release Note (optional)</label><input type="text" id="f-preorder-note" placeholder="e.g. Expected release: Q3 2026"/></div>
-          </div>
-          <div class="cf">
-            <label>Product Image URL</label>
-            <div class="img-guide"><strong>&#128444; Image guidelines</strong>Recommended: <strong>302×264px</strong> (product card size) &middot; Max: <strong>500KB</strong> &middot; Formats: <strong>JPG, PNG, WebP</strong><br/>Host on Imgur, Cloudinary or any public URL</div>
-            <input type="url" id="f-img" placeholder="https://example.com/product-cover.jpg"/>
-          </div>
-          <div class="cf"><label>Description</label><textarea id="f-desc" placeholder="Describe the product, platform, region, how to redeem..."></textarea></div>
-          <div class="cf"><label>Tags (comma separated)</label><input type="text" id="f-tags" placeholder="Instant Delivery, Digital Code, Global"/></div>
-          <div style="display:flex;gap:10px;margin-top:6px">
-            <button class="bcms" onclick="saveProd()">Save Product</button>
-            <button class="bsm" onclick="clearForm()">Clear</button>
-          </div>
-        </div>
-      </div>
-    </div>
-
-
-    <!-- ORDERS -->
-    <div id="cp-orders" class="cpanel">
-      <div class="ph"><div class="pt">&#128203; Orders</div></div>
-
-      <!-- Sub-nav -->
-      <div style="display:flex;gap:6px;margin-bottom:18px;border-bottom:1px solid var(--border);padding-bottom:10px">
-        <button class="bsm cat-subnav on" onclick="showOrderSection('orders')" id="osn-orders">&#128203; Store Orders</button>
-        <button class="bsm cat-subnav" onclick="showOrderSection('gamerequests')" id="osn-gamerequests">&#127918; Game Requests</button>
-      </div>
-
-      <!-- STORE ORDERS -->
-      <div id="ord-sec-orders">
-        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">
-          <span style="font-size:12px;color:var(--muted)" id="orders-count"></span>
-        </div>
-        <div class="fcard" style="padding:0;overflow:hidden"><div id="orders-tbl"></div></div>
-      </div>
-
-      <!-- GAME REQUESTS -->
-      <div id="ord-sec-gamerequests" style="display:none">
-        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">
-          <div>
-            <div style="font-size:14px;font-weight:500">SteamFlex Game Requests</div>
-            <div style="font-size:12px;color:var(--muted);margin-top:3px">Manage incoming game gifting requests</div>
-          </div>
-          <span style="font-size:12px;color:var(--muted)" id="sf-req-count"></span>
-        </div>
-        <div class="fcard" style="padding:0;overflow:hidden"><div id="sf-requests-tbl"></div></div>
-      </div>
-    </div>
-
-
-    </div>
-
-
-
-
-
     <!-- STOREFRONT -->
     <div id="cp-storefront" class="cpanel">
       <div class="ph"><div class="pt">&#127760; Storefront</div></div>
@@ -811,6 +647,172 @@ body{background:var(--bg);color:var(--text);font-family:var(--font-body);min-hei
       </div>
       <div class="fcard" style="padding:0;overflow:hidden"><div id="activity-tbl"></div></div></div>
     </div>
+
+    <!-- CATALOG -->
+    <div id="cp-catalog" class="cpanel">
+      <!-- Sub-page switcher: list | edit -->
+      <div id="cat-sub-list">
+        <!-- Products list -->
+        <div class="ph">
+          <div class="pt">&#128218; Catalog</div>
+          <button class="bcms" onclick="catNewProd()" style="padding:6px 16px;font-size:12px">+ Add New</button>
+        </div>
+        <div class="toast" id="toast-prods">Product deleted.</div>
+        <div class="toast" id="toast-add">Product saved.</div>
+
+        <!-- Sub-nav within catalog -->
+        <div style="display:flex;gap:6px;margin-bottom:18px;border-bottom:1px solid var(--border);padding-bottom:10px">
+          <button class="bsm cat-subnav on" onclick="showCatSection('products')" id="csn-products">&#11036; Products</button>
+          <button class="bsm cat-subnav" onclick="showCatSection('featured')" id="csn-featured">&#11088; Featured</button>
+          <button class="bsm cat-subnav" onclick="showCatSection('discounts')" id="csn-discounts">&#127991; Discounts</button>
+        </div>
+
+        <!-- PRODUCTS SECTION -->
+        <div id="cat-sec-products">
+          <div class="fcard" style="padding:0;overflow:hidden"><div id="prod-tbl"></div></div>
+          <!-- Danger Zone -->
+          <div class="fcard" style="border-color:rgba(239,68,68,.3);margin-top:18px">
+            <h3 style="color:#f87171">Danger Zone</h3>
+            <div style="display:flex;align-items:center;justify-content:space-between;font-size:13px;margin-bottom:12px">
+              <span style="color:var(--muted)">Delete all products</span>
+              <button class="bdanger" onclick="nukeProds()">&#128465; Clear Products</button>
+            </div>
+            <div style="display:flex;align-items:center;justify-content:space-between;font-size:13px">
+              <span style="color:var(--muted)">Delete all orders</span>
+              <button class="bdanger" onclick="nukeOrders()">&#128465; Clear Orders</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- FEATURED SECTION -->
+        <div id="cat-sec-featured" style="display:none">
+          <div class="toast" id="toast-feat">Featured products updated.</div>
+          <div class="fcard">
+            <h3>Tick the products you want to highlight in the Featured section on the homepage.</h3>
+            <div id="feat-picker"></div>
+            <button class="bcms" onclick="saveFeatured()" style="margin-top:14px">Save Featured</button>
+          </div>
+        </div>
+
+        <!-- DISCOUNTS SECTION -->
+        <div id="cat-sec-discounts" style="display:none">
+          <div class="toast" id="toast-disc">Discounts saved.</div>
+          <div class="fcard">
+            <h3>Set a discount on any product. Slash pricing and a discount badge will appear on the storefront.</h3>
+            <div id="disc-list"></div>
+            <button class="bcms" onclick="saveDiscounts()" style="margin-top:14px">Save All Discounts</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- ADD / EDIT SUB-PAGE -->
+      <div id="cat-sub-edit" style="display:none">
+        <div class="ph">
+          <div class="pt" id="add-title">Add Product</div>
+          <button class="bsm" onclick="catBackToList()">&#8592; Back to Products</button>
+        </div>
+        <div class="fcard">
+          <div class="fr2">
+            <div class="cf"><label>Product Name</label><input type="text" id="f-name" placeholder="e.g. Steam Wallet Rs. 1000"/></div>
+            <div class="cf"><label>Price (Rs.)</label><input type="number" id="f-price" placeholder="0" step="1" min="0"/></div>
+          </div>
+          <div class="fr2">
+            <div class="cf"><label>Category</label>
+              <select id="f-cat"><option>Gift Cards</option><option>Games</option><option>In-Game Currency</option><option>DLC</option><option>Subscription</option></select>
+            </div>
+            <div class="cf"><label>Platform</label>
+              <select id="f-plat"><option>Steam</option><option>PSN</option><option>Xbox</option><option>Epic Games</option><option>Nintendo</option><option>Other</option></select>
+            </div>
+          </div>
+          <div class="fr2">
+            <div class="cf"><label>Icon Emoji</label><input type="text" id="f-icon" placeholder="🎮" maxlength="4"/></div>
+            <div class="cf"><label>Stock Status</label>
+              <select id="f-stock" onchange="toggleStockFields()">
+                <option value="in">In Stock</option>
+                <option value="low">Low Stock</option>
+                <option value="out">Out of Stock</option>
+                <option value="preorder">Pre-Order</option>
+              </select>
+            </div>
+          </div>
+          <!-- STOCK LIMIT -->
+          <div id="stock-limit-row" style="display:none">
+            <div style="background:rgba(0,240,160,.05);border:1px solid rgba(0,240,160,.15);border-radius:9px;padding:14px;margin-bottom:14px">
+              <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px">
+                <label class="toggle-wrap"><input type="checkbox" id="f-stock-limit" onchange="toggleStockQty()"/><span class="toggle-slider"></span></label>
+                <span style="font-size:13px;font-weight:500">Enable stock limit</span>
+                <span style="font-size:11px;color:var(--muted)">— auto-marks Out of Stock when quantity hits 0</span>
+              </div>
+              <div id="stock-qty-row" style="display:none">
+                <div class="cf" style="margin:0;max-width:180px">
+                  <label>Stock Quantity</label>
+                  <input type="number" id="f-stock-qty" min="0" step="1" placeholder="e.g. 50"/>
+                </div>
+              </div>
+            </div>
+          </div>
+          <!-- PRE-ORDER -->
+          <div id="preorder-info-row" style="display:none">
+            <div style="background:rgba(139,92,246,.07);border:1px solid rgba(139,92,246,.25);border-radius:9px;padding:12px 14px;margin-bottom:14px;font-size:12px;color:#a78bfa">
+              &#128336; <strong>Pre-Order mode:</strong> The "Add to Cart" button will show as <strong>"Pre-Order"</strong> on the storefront.
+            </div>
+            <div class="cf"><label>Pre-Order Release Note (optional)</label><input type="text" id="f-preorder-note" placeholder="e.g. Expected release: Q3 2026"/></div>
+          </div>
+          <div class="cf">
+            <label>Product Image URL</label>
+            <div class="img-guide"><strong>&#128444; Image guidelines</strong>Recommended: <strong>302×264px</strong> (product card size) &middot; Max: <strong>500KB</strong> &middot; Formats: <strong>JPG, PNG, WebP</strong><br/>Host on Imgur, Cloudinary or any public URL</div>
+            <input type="url" id="f-img" placeholder="https://example.com/product-cover.jpg"/>
+          </div>
+          <div class="cf"><label>Description</label><textarea id="f-desc" placeholder="Describe the product, platform, region, how to redeem..."></textarea></div>
+          <div class="cf"><label>Tags (comma separated)</label><input type="text" id="f-tags" placeholder="Instant Delivery, Digital Code, Global"/></div>
+          <div style="display:flex;gap:10px;margin-top:6px">
+            <button class="bcms" onclick="saveProd()">Save Product</button>
+            <button class="bsm" onclick="clearForm()">Clear</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+
+    <!-- ORDERS -->
+    <div id="cp-orders" class="cpanel">
+      <div class="ph"><div class="pt">&#128203; Orders</div></div>
+
+      <!-- Sub-nav -->
+      <div style="display:flex;gap:6px;margin-bottom:18px;border-bottom:1px solid var(--border);padding-bottom:10px">
+        <button class="bsm cat-subnav on" onclick="showOrderSection('orders')" id="osn-orders">&#128203; Store Orders</button>
+        <button class="bsm cat-subnav" onclick="showOrderSection('gamerequests')" id="osn-gamerequests">&#127918; Game Requests</button>
+      </div>
+
+      <!-- STORE ORDERS -->
+      <div id="ord-sec-orders">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">
+          <span style="font-size:12px;color:var(--muted)" id="orders-count"></span>
+        </div>
+        <div class="fcard" style="padding:0;overflow:hidden"><div id="orders-tbl"></div></div>
+      </div>
+
+      <!-- GAME REQUESTS -->
+      <div id="ord-sec-gamerequests" style="display:none">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">
+          <div>
+            <div style="font-size:14px;font-weight:500">SteamFlex Game Requests</div>
+            <div style="font-size:12px;color:var(--muted);margin-top:3px">Manage incoming game gifting requests</div>
+          </div>
+          <span style="font-size:12px;color:var(--muted)" id="sf-req-count"></span>
+        </div>
+        <div class="fcard" style="padding:0;overflow:hidden"><div id="sf-requests-tbl"></div></div>
+      </div>
+    </div>
+
+
+    </div>
+
+
+
+
+
+
 
   </div><!-- end cms-shell -->
 </div><!-- end screen-cms -->
@@ -1351,7 +1353,7 @@ function cmsTab(t){
   document.querySelectorAll('.ctab,.ctab-steam').forEach(b=>{
     if(b.getAttribute('onclick')===`cmsTab('${t}')`) b.classList.add('on');
   });
-  window.scrollTo({top:0,behavior:'smooth'});
+  window.scrollTo({top:0,behavior:'instant'});
   if(t==='catalog'){renderCMSProds();showCatSection('products');}
   if(t==='orders'){renderCMSOrders();showOrderSection('orders');}
   if(t==='storefront'){showStorefrontSection('banner');renderBannerCMS();}
@@ -1373,13 +1375,13 @@ function catNewProd(){
   clearForm();
   document.getElementById('cat-sub-list').style.display='none';
   document.getElementById('cat-sub-edit').style.display='block';
-  window.scrollTo({top:0,behavior:'smooth'});
+  window.scrollTo({top:0,behavior:'instant'});
 }
 function catBackToList(){
   document.getElementById('cat-sub-edit').style.display='none';
   document.getElementById('cat-sub-list').style.display='block';
   renderCMSProds();
-  window.scrollTo({top:0,behavior:'smooth'});
+  window.scrollTo({top:0,behavior:'instant'});
 }
 
 // ── Orders sub-nav ──
@@ -1670,7 +1672,7 @@ function editProd(id){
   // Open edit sub-page within catalog
   document.getElementById('cat-sub-list').style.display='none';
   document.getElementById('cat-sub-edit').style.display='block';
-  window.scrollTo({top:0,behavior:'smooth'});
+  window.scrollTo({top:0,behavior:'instant'});
 }
 
 async function delProd(id){
