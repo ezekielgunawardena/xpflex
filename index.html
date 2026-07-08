@@ -1192,8 +1192,8 @@ function cmsLogin(){
   const match=adminUsers.find(a=>a.username===u&&a.password===p);
   if(match){
     currentUser=match;
-    document.getElementById('cms-login').style.display='none';
-    document.getElementById('cms-shell').classList.add('on');
+    document.getElementById('cms-login')?.style && (document.getElementById('cms-login').style.display='none');
+    document.getElementById('cms-shell')?.classList.add('on');
     initCMSShell();
     // Log the login
     const actor=match.display_name||match.displayName||match.username;
@@ -1202,12 +1202,13 @@ function cmsLogin(){
     document.getElementById('login-err').textContent='Invalid username or password.';
   }
 }
-document.getElementById('cms-pw').addEventListener('keydown',e=>{if(e.key==='Enter')cmsLogin();});
-document.getElementById('cms-un').addEventListener('keydown',e=>{if(e.key==='Enter')cmsLogin();});
+document.getElementById('cms-pw')?.addEventListener('keydown',e=>{if(e.key==='Enter')cmsLogin();});
+document.getElementById('cms-un')?.addEventListener('keydown',e=>{if(e.key==='Enter')cmsLogin();});
 function cmsLogout(){
   currentUser=null;
-  document.getElementById('cms-shell').classList.remove('on');
-  document.getElementById('cms-login').style.display='flex';
+  document.getElementById('cms-shell')?.classList.remove('on');
+  const loginEl=document.getElementById('cms-login');
+  if(loginEl) loginEl.style.display='flex';
   document.getElementById('cms-un').value='';
   document.getElementById('cms-pw').value='';
   document.getElementById('login-err').textContent='';
