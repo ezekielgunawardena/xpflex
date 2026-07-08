@@ -125,6 +125,7 @@ body{background:var(--bg);color:var(--text);font-family:var(--font-body);min-hei
   .cpanel{padding:10px}
 }
 </style>
+<script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
 </head>
 <body>
 <!-- ══════════════ CMS ══════════════ -->
@@ -246,6 +247,84 @@ body{background:var(--bg);color:var(--text);font-family:var(--font-body);min-hei
           <button class="bsm" onclick="cmsTab('orders')" style="font-size:11px">View all</button>
         </div>
         <div id="dash-orders"></div>
+      </div>
+    </div>
+
+    <!-- PAYMENT METHODS -->
+    <div id="cp-payments" class="cpanel">
+      <div class="ph">
+        <div class="pt">&#128179; Payment Methods</div>
+        <button class="bcms" onclick="addPaymentMethod()" style="padding:6px 16px;font-size:12px">+ Add Method</button>
+      </div>
+      <div class="toast" id="toast-payments">Payment methods saved.</div>
+
+      <div class="fcard">
+        <h3>Configure your accepted payment methods. BNPL methods will show instalment pricing on the storefront — fee is applied silently to the split.</h3>
+      </div>
+
+      <!-- METHOD LIST -->
+      <div id="pm-list"></div>
+
+      <!-- ADD / EDIT FORM -->
+      <div id="pm-form" style="display:none">
+        <div class="fcard" style="border-color:rgba(0,240,160,.2)">
+          <div class="ph" style="margin-bottom:16px">
+            <div class="pt" id="pm-form-title" style="font-size:15px">Add Payment Method</div>
+            <button class="bsm" onclick="cancelPMForm()">Cancel</button>
+          </div>
+          <div class="fr2">
+            <div class="cf"><label>Method Name</label><input type="text" id="pm-name" placeholder="e.g. Koko, Mint Pay, Visa"/></div>
+            <div class="cf"><label>Type</label>
+              <select id="pm-type" onchange="togglePMType()">
+                <option value="bnpl">BNPL (Buy Now Pay Later)</option>
+                <option value="card">Card (Visa / Mastercard / Amex)</option>
+                <option value="bank">Bank Transfer</option>
+              </select>
+            </div>
+          </div>
+          <div class="fr2">
+            <div class="cf">
+              <label>Logo URL</label>
+              <div class="img-guide"><strong>&#128444; Logo guidelines</strong>Recommended: <strong>180 × 60px</strong> &middot; Max: <strong>100KB</strong> &middot; Format: <strong>PNG with transparent background</strong></div>
+              <input type="url" id="pm-logo" placeholder="https://..." oninput="previewPMLogo()"/>
+              <div id="pm-logo-preview" style="margin-top:8px;display:none"><img id="pm-logo-img" style="height:32px;background:#fff;border-radius:4px;padding:3px 8px" onerror="this.parentElement.style.display='none'"/></div>
+            </div>
+            <div class="cf" id="pm-fee-wrap">
+              <label>BNPL Fee (%)</label>
+              <input type="number" id="pm-fee" placeholder="e.g. 5" min="0" max="100" step="0.1"/>
+              <div style="font-size:11px;color:var(--muted);margin-top:4px">Fee is factored into the instalment amount shown to customers — not displayed separately</div>
+            </div>
+          </div>
+          <!-- Active toggle -->
+          <div style="display:flex;align-items:center;gap:10px;margin-bottom:18px">
+            <label class="toggle-wrap"><input type="checkbox" id="pm-active" checked/><span class="toggle-slider"></span></label>
+            <span style="font-size:13px">Active — show on storefront</span>
+          </div>
+          <!-- BNPL product assignment -->
+          <div id="pm-assign-wrap">
+            <div class="cf">
+              <label style="font-size:13px;font-weight:500;margin-bottom:10px;display:block">Product Assignment</label>
+              <div style="display:flex;gap:10px;margin-bottom:12px;flex-wrap:wrap">
+                <button class="bsm" onclick="setPMAssign('all')" id="pm-assign-all">All Products</button>
+                <button class="bsm" onclick="setPMAssign('cat')" id="pm-assign-cat">By Category</button>
+                <button class="bsm" onclick="setPMAssign('prod')" id="pm-assign-prod">Select Products</button>
+              </div>
+              <!-- Category selection -->
+              <div id="pm-cat-picker" style="display:none">
+                <div style="font-size:12px;color:var(--muted);margin-bottom:8px">Select categories:</div>
+                <div style="display:flex;gap:8px;flex-wrap:wrap">
+                  ${['Gift Cards','Games','In-Game Currency','DLC','Subscription'].map(c=>`<label style="display:flex;align-items:center;gap:6px;font-size:13px;cursor:pointer"><input type="checkbox" class="pm-cat-cb" value="${c}" style="accent-color:var(--neon)"/> ${c}</label>`).join('')}
+                </div>
+              </div>
+              <!-- Product selection -->
+              <div id="pm-prod-picker" style="display:none">
+                <div style="font-size:12px;color:var(--muted);margin-bottom:8px">Select products:</div>
+                <div id="pm-prod-list" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:6px;max-height:200px;overflow-y:auto;background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:10px"></div>
+              </div>
+            </div>
+          </div>
+          <button class="bcms" onclick="savePMForm()">Save Payment Method</button>
+        </div>
       </div>
     </div>
 
@@ -683,83 +762,7 @@ body{background:var(--bg);color:var(--text);font-family:var(--font-body);min-hei
     </div>
 
 
-    <!-- PAYMENT METHODS -->
-    <div id="cp-payments" class="cpanel">
-      <div class="ph">
-        <div class="pt">&#128179; Payment Methods</div>
-        <button class="bcms" onclick="addPaymentMethod()" style="padding:6px 16px;font-size:12px">+ Add Method</button>
-      </div>
-      <div class="toast" id="toast-payments">Payment methods saved.</div>
 
-      <div class="fcard">
-        <h3>Configure your accepted payment methods. BNPL methods will show instalment pricing on the storefront — fee is applied silently to the split.</h3>
-      </div>
-
-      <!-- METHOD LIST -->
-      <div id="pm-list"></div>
-
-      <!-- ADD / EDIT FORM -->
-      <div id="pm-form" style="display:none">
-        <div class="fcard" style="border-color:rgba(0,240,160,.2)">
-          <div class="ph" style="margin-bottom:16px">
-            <div class="pt" id="pm-form-title" style="font-size:15px">Add Payment Method</div>
-            <button class="bsm" onclick="cancelPMForm()">Cancel</button>
-          </div>
-          <div class="fr2">
-            <div class="cf"><label>Method Name</label><input type="text" id="pm-name" placeholder="e.g. Koko, Mint Pay, Visa"/></div>
-            <div class="cf"><label>Type</label>
-              <select id="pm-type" onchange="togglePMType()">
-                <option value="bnpl">BNPL (Buy Now Pay Later)</option>
-                <option value="card">Card (Visa / Mastercard / Amex)</option>
-                <option value="bank">Bank Transfer</option>
-              </select>
-            </div>
-          </div>
-          <div class="fr2">
-            <div class="cf">
-              <label>Logo URL</label>
-              <div class="img-guide"><strong>&#128444; Logo guidelines</strong>Recommended: <strong>180 × 60px</strong> &middot; Max: <strong>100KB</strong> &middot; Format: <strong>PNG with transparent background</strong></div>
-              <input type="url" id="pm-logo" placeholder="https://..." oninput="previewPMLogo()"/>
-              <div id="pm-logo-preview" style="margin-top:8px;display:none"><img id="pm-logo-img" style="height:32px;background:#fff;border-radius:4px;padding:3px 8px" onerror="this.parentElement.style.display='none'"/></div>
-            </div>
-            <div class="cf" id="pm-fee-wrap">
-              <label>BNPL Fee (%)</label>
-              <input type="number" id="pm-fee" placeholder="e.g. 5" min="0" max="100" step="0.1"/>
-              <div style="font-size:11px;color:var(--muted);margin-top:4px">Fee is factored into the instalment amount shown to customers — not displayed separately</div>
-            </div>
-          </div>
-          <!-- Active toggle -->
-          <div style="display:flex;align-items:center;gap:10px;margin-bottom:18px">
-            <label class="toggle-wrap"><input type="checkbox" id="pm-active" checked/><span class="toggle-slider"></span></label>
-            <span style="font-size:13px">Active — show on storefront</span>
-          </div>
-          <!-- BNPL product assignment -->
-          <div id="pm-assign-wrap">
-            <div class="cf">
-              <label style="font-size:13px;font-weight:500;margin-bottom:10px;display:block">Product Assignment</label>
-              <div style="display:flex;gap:10px;margin-bottom:12px;flex-wrap:wrap">
-                <button class="bsm" onclick="setPMAssign('all')" id="pm-assign-all">All Products</button>
-                <button class="bsm" onclick="setPMAssign('cat')" id="pm-assign-cat">By Category</button>
-                <button class="bsm" onclick="setPMAssign('prod')" id="pm-assign-prod">Select Products</button>
-              </div>
-              <!-- Category selection -->
-              <div id="pm-cat-picker" style="display:none">
-                <div style="font-size:12px;color:var(--muted);margin-bottom:8px">Select categories:</div>
-                <div style="display:flex;gap:8px;flex-wrap:wrap">
-                  ${['Gift Cards','Games','In-Game Currency','DLC','Subscription'].map(c=>`<label style="display:flex;align-items:center;gap:6px;font-size:13px;cursor:pointer"><input type="checkbox" class="pm-cat-cb" value="${c}" style="accent-color:var(--neon)"/> ${c}</label>`).join('')}
-                </div>
-              </div>
-              <!-- Product selection -->
-              <div id="pm-prod-picker" style="display:none">
-                <div style="font-size:12px;color:var(--muted);margin-bottom:8px">Select products:</div>
-                <div id="pm-prod-list" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:6px;max-height:200px;overflow-y:auto;background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:10px"></div>
-              </div>
-            </div>
-          </div>
-          <button class="bcms" onclick="savePMForm()">Save Payment Method</button>
-        </div>
-      </div>
-    </div>
 
   </div><!-- end cms-shell -->
 </div><!-- end screen-cms -->
@@ -852,7 +855,7 @@ window.addEventListener('load',async()=>{
   const sbDisc=await getSettingVal('discounts'); discounts=sbDisc||{};
   const sbBanner=await getSettingVal('banner'); bannerSlides=sbBanner||[];
   const sbAdmins=await sbGet('admins'); adminUsers=sbAdmins||[];
-  if(ejsConfig.pubkey)emailjs.init(ejsConfig.pubkey);
+  if(ejsConfig.pubkey && typeof emailjs!=='undefined') emailjs.init(ejsConfig.pubkey);
   // Always show login screen on admin page load
   applyDesign();
   document.getElementById('cms-login').style.display='flex';
@@ -1671,7 +1674,7 @@ async function saveSettings(){
 async function saveEmailJS(){
   ejsConfig={serviceId:document.getElementById('ejs-service').value.trim(),templateId:document.getElementById('ejs-template').value.trim(),pubkey:document.getElementById('ejs-pubkey').value.trim(),adminEmail:document.getElementById('ejs-adminemail').value.trim()};
   await setSettingVal('emailjs',ejsConfig);
-  if(ejsConfig.pubkey) emailjs.init(ejsConfig.pubkey);
+  if(ejsConfig.pubkey && typeof emailjs!=='undefined') emailjs.init(ejsConfig.pubkey);
   showCMSToast('toast-settings');
 }
 
