@@ -99,7 +99,11 @@ body{background:var(--bg);color:var(--text);font-family:var(--font-body);min-hei
 .feat-toggle input[type=checkbox]{width:16px;height:16px;cursor:pointer;accent-color:var(--neon)}
 .img-guide{background:rgba(0,240,160,.05);border:1px solid rgba(0,240,160,.15);border-radius:8px;padding:10px 14px;font-size:11px;color:var(--muted);margin-bottom:10px;line-height:1.8}
 .img-guide strong{color:var(--neon);display:block;margin-bottom:3px}
-.cat-subnav{transition:.15s}
+.cms-dropdown{position:relative;flex-shrink:0}
+.cms-drop-menu{display:none;position:absolute;top:calc(100% + 4px);left:0;background:#0e1520;border:1px solid var(--border);border-radius:9px;padding:6px;min-width:160px;z-index:300;box-shadow:0 8px 24px rgba(0,0,0,.4)}
+.cms-drop-menu.open{display:block}
+.cms-drop-item{padding:8px 12px;border-radius:6px;font-size:12px;color:var(--muted);cursor:pointer;transition:.12s;white-space:nowrap}
+.cms-drop-item:hover{background:rgba(0,240,160,.08);color:var(--neon)}
 .cat-subnav.on{border-color:var(--neon)!important;color:var(--neon)!important;background:rgba(0,240,160,.08)!important}
 .toggle-wrap{position:relative;width:36px;height:20px;flex-shrink:0}
 .toggle-wrap input{opacity:0;width:0;height:0;position:absolute}
@@ -153,10 +157,41 @@ body{background:var(--bg);color:var(--text);font-family:var(--font-body);min-hei
       </div>
       <div class="cms-tabs">
         <button class="ctab on" onclick="cmsTab('dash')">&#9641; Dashboard</button>
-        <button class="ctab" onclick="cmsTab('catalog')">&#128218; Catalog</button>
-        <button class="ctab" onclick="cmsTab('orders')">&#128203; Orders</button>
-        <button class="ctab" onclick="cmsTab('storefront')">&#127760; Storefront</button>
-        <button class="ctab" onclick="cmsTab('settings')">&#9881; Settings</button>
+        <div class="cms-dropdown">
+          <button class="ctab" onclick="toggleCMSDrop('drop-catalog')">&#128218; Catalog &#9660;</button>
+          <div class="cms-drop-menu" id="drop-catalog">
+            <div class="cms-drop-item" onclick="cmsTab('catalog');showCatSection('products');closeCMSDrops()">&#11036; Products</div>
+            <div class="cms-drop-item" onclick="cmsTab('catalog');showCatSection('featured');closeCMSDrops()">&#11088; Featured</div>
+            <div class="cms-drop-item" onclick="cmsTab('catalog');showCatSection('discounts');closeCMSDrops()">&#127991; Discounts</div>
+          </div>
+        </div>
+        <div class="cms-dropdown">
+          <button class="ctab" onclick="toggleCMSDrop('drop-orders')">&#128203; Orders &#9660;</button>
+          <div class="cms-drop-menu" id="drop-orders">
+            <div class="cms-drop-item" onclick="cmsTab('orders');showOrderSection('orders');closeCMSDrops()">&#128203; Store Orders</div>
+            <div class="cms-drop-item" onclick="cmsTab('orders');showOrderSection('gamerequests');closeCMSDrops()">&#127918; Game Requests</div>
+          </div>
+        </div>
+        <div class="cms-dropdown">
+          <button class="ctab" onclick="toggleCMSDrop('drop-storefront')">&#127760; Storefront &#9660;</button>
+          <div class="cms-drop-menu" id="drop-storefront">
+            <div class="cms-drop-item" onclick="cmsTab('storefront');showStorefrontSection('banner');closeCMSDrops()">&#128444; Banner</div>
+            <div class="cms-drop-item" onclick="cmsTab('storefront');showStorefrontSection('design');closeCMSDrops()">&#127912; Design</div>
+            <div class="cms-drop-item" onclick="cmsTab('storefront');showStorefrontSection('payments');closeCMSDrops()">&#128179; Payment Methods</div>
+            <div class="cms-drop-item" onclick="cmsTab('storefront');showStorefrontSection('sfconfig');closeCMSDrops()">&#127918; SteamFlex</div>
+          </div>
+        </div>
+        <div class="cms-dropdown">
+          <button class="ctab" onclick="toggleCMSDrop('drop-settings')">&#9881; Settings &#9660;</button>
+          <div class="cms-drop-menu" id="drop-settings">
+            <div class="cms-drop-item" onclick="cmsTab('settings');showSettingsSection('store');closeCMSDrops()">&#127981; Store</div>
+            <div class="cms-drop-item" onclick="cmsTab('settings');showSettingsSection('comingsoon');closeCMSDrops()">&#9200; Coming Soon</div>
+            <div class="cms-drop-item" onclick="cmsTab('settings');showSettingsSection('og');closeCMSDrops()">&#128279; Open Graph</div>
+            <div class="cms-drop-item" onclick="cmsTab('settings');showSettingsSection('emailjs');closeCMSDrops()">&#128140; Email</div>
+            <div class="cms-drop-item" onclick="cmsTab('settings');showSettingsSection('admins');closeCMSDrops()">&#128100; Admins</div>
+            <div class="cms-drop-item" onclick="cmsTab('settings');showSettingsSection('activity');closeCMSDrops()">&#128221; Activity Log</div>
+          </div>
+        </div>
       </div>
     </div>
 
@@ -402,18 +437,6 @@ body{background:var(--bg);color:var(--text);font-family:var(--font-body);min-hei
     </div>
 
 
-      <div class="fcard" style="border-color:rgba(239,68,68,.3)">
-        <h3 style="color:#f87171">Danger Zone</h3>
-        <div style="display:flex;align-items:center;justify-content:space-between;font-size:13px;margin-bottom:12px">
-          <span style="color:var(--muted)">Delete all products</span>
-          <button class="bdanger" onclick="nukeProds()">&#128465; Clear Products</button>
-        </div>
-        <div style="display:flex;align-items:center;justify-content:space-between;font-size:13px">
-          <span style="color:var(--muted)">Delete all orders</span>
-          <button class="bdanger" onclick="nukeOrders()">&#128465; Clear Orders</button>
-        </div>
-      </div>
-      <div class="fcard"><h3>Navigation</h3><p style="font-size:13px;color:var(--muted)">Use the <strong style="color:var(--neon)">← View Store</strong> button in the top bar to return to the storefront.</p></div>
     </div>
 
 
@@ -1305,7 +1328,17 @@ async function initCMSShell(){
   document.getElementById('dash-date').textContent=new Date().toLocaleDateString('en-GB',{weekday:'long',year:'numeric',month:'long',day:'numeric'});
 }
 
-function cmsTab(t){
+function toggleCMSDrop(id){
+  const all=document.querySelectorAll('.cms-drop-menu');
+  all.forEach(m=>{if(m.id!==id)m.classList.remove('open');});
+  document.getElementById(id)?.classList.toggle('open');
+}
+function closeCMSDrops(){
+  document.querySelectorAll('.cms-drop-menu').forEach(m=>m.classList.remove('open'));
+}
+document.addEventListener('click',e=>{
+  if(!e.target.closest('.cms-dropdown')) closeCMSDrops();
+});
   if(t==='admins'&&currentUser?.role!=='superadmin'){return;}
   document.querySelectorAll('.cpanel').forEach(p=>p.classList.remove('on'));
   document.querySelectorAll('.ctab,.ctab-steam').forEach(b=>b.classList.remove('on'));
