@@ -86,7 +86,7 @@ body{background:var(--bg);color:var(--col-body);font-family:var(--font-body);min
 .banner-wrap{position:relative;width:100%;overflow:hidden;background:#000}
 .banner-track{display:flex;transition:transform .6s ease}
 .banner-slide{min-width:100%;position:relative;overflow:hidden}
-.banner-slide img{width:100%;height:340px;object-fit:cover;display:block}
+.banner-slide img{width:100%;height:340px;object-fit:cover;object-position:center center;display:block;transition:object-position .3s}
 .banner-slide .banner-overlay{position:absolute;inset:0;background:linear-gradient(90deg,rgba(8,12,18,.7) 0%,transparent 60%);display:flex;flex-direction:column;justify-content:center;padding:0 48px}
 .banner-title{font-family:var(--font-head);font-size:36px;font-weight:700;color:#fff;letter-spacing:2px;line-height:1.1;max-width:400px}
 .banner-sub{font-size:14px;color:rgba(255,255,255,.75);margin-top:8px;max-width:360px}
@@ -366,8 +366,12 @@ body{background:var(--bg);color:var(--col-body);font-family:var(--font-body);min
   .frow{grid-template-columns:1fr}
   .pgrid{grid-template-columns:repeat(auto-fill,minmax(220px,1fr))}
   .feat-grid{grid-template-columns:repeat(auto-fill,minmax(160px,1fr))}
-  .banner-slide img{height:200px}
-  .banner-placeholder{height:200px}
+  .banner-slide img{height:300px}
+  .banner-placeholder{height:260px}
+  .banner-title{font-size:22px}
+  .banner-sub{font-size:12px}
+  .banner-overlay{padding:0 20px}
+  .banner-arrow{width:32px;height:32px;font-size:16px}
 }
 
 /* ══ CMS MOBILE ══ */
@@ -864,13 +868,35 @@ document.addEventListener('click',e=>{if(!e.target.closest('#shop-drop'))closeSh
 
 // ══ CAROUSEL ══
 let bannerIdx=0,bannerTimer=null;
+// ══ CLOUDINARY AUTO-OPTIMISATION ══
+function cloudinaryTransform(url, transforms){
+  // Only transform Cloudinary URLs
+  if(!url||!url.includes('res.cloudinary.com')) return url;
+  // Insert transforms after /upload/
+  return url.replace('/upload/', `/upload/${transforms}/`);
+}
+
 function renderBanner(){
   const track=document.getElementById('banner-track');const dots=document.getElementById('banner-dots');
   if(!bannerSlides.length){
     track.innerHTML=`<div class="banner-slide"><div class="banner-placeholder"><div style="font-size:32px">🎮</div><div>Add banner images in CMS → Banner tab</div><div style="font-size:11px;margin-top:4px">Up to 5 slides · 1440×340px · JPG/PNG/WebP</div></div></div>`;
     dots.innerHTML='';return;
   }
-  track.innerHTML=bannerSlides.map(s=>`<div class="banner-slide"><img src="${s.img}" alt="Banner" style="width:100%;height:340px;object-fit:cover;display:block" onerror="this.parentElement.style.display='none'"/></div>`).join('');
+  track.innerHTML=bannerSlides.map(s=>{
+    const pos=s.focal||'center center';
+    // Auto-optimise if Cloudinary URL
+    const desktopSrc=cloudinaryTransform(s.img,'w_1440,f_auto,q_auto');
+    const mobileSrc=s.imgMobile
+      ? cloudinaryTransform(s.imgMobile,'w_600,f_auto,q_auto')
+      : cloudinaryTransform(s.img,'w_600,f_auto,q_auto,c_fill,g_auto');
+    return `<div class="banner-slide">
+      <picture>
+        <source media="(max-width:600px)" srcset="${mobileSrc}"/>
+        <img src="${desktopSrc}" alt="Banner" style="width:100%;height:340px;object-fit:cover;object-position:${pos};display:block" loading="eager" onerror="this.style.display='none'"/>
+      </picture>
+    </div>`;
+  }).join('');
+  }).join('');
   dots.innerHTML=bannerSlides.map((_,i)=>`<div class="bdot${i===0?' on':''}" onclick="bannerGo(${i})"></div>`).join('');
   bannerIdx=0;updateBannerPos();
   if(bannerTimer)clearInterval(bannerTimer);
@@ -1819,18 +1845,37 @@ function renderBannerCMS(){
   el.innerHTML=bannerSlides.map((s,i)=>bannerSlotHTML(s,i)).join('');
 }
 function bannerSlotHTML(s,i){
+  const focal=s.focal||'center center';
   return `<div style="background:#141d2b;border:1px solid var(--border);border-radius:10px;padding:14px;margin-bottom:10px">
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
       <span style="font-size:12px;font-weight:600;color:var(--neon);letter-spacing:1px">SLIDE ${i+1} <span style="color:var(--muted);font-weight:400">of ${bannerSlides.length}</span></span>
       <button class="bdanger" onclick="removeBannerSlot(${i})" style="padding:3px 10px;font-size:11px">&#128465; Remove</button>
     </div>
-    <div class="img-guide" style="margin-bottom:10px"><strong>&#128444; Image requirements</strong>Size: <strong>1440 × 340px</strong> (wide landscape) &middot; Max: <strong>1MB</strong> &middot; Format: <strong>JPG, PNG or WebP</strong><br/>Host on Imgur, Cloudinary or any public URL — paste the direct image link below</div>
-    <div class="cf" style="margin:0">
-      <label>Image URL</label>
-      <input type="url" id="bi-${i}" value="${s.img||''}" placeholder="https://i.imgur.com/yourimage.jpg" oninput="previewBannerSlot(${i})" style="width:100%"/>
+    <div class="fr2" style="gap:12px">
+      <div class="cf" style="margin:0">
+        <label style="display:flex;align-items:center;gap:6px">&#128444; Desktop Image URL <span style="font-size:10px;color:var(--muted);font-weight:400">1440×340px · JPG/PNG/WebP</span></label>
+        <input type="url" id="bi-${i}" value="${s.img||''}" placeholder="https://i.imgur.com/desktop.jpg" oninput="previewBannerSlot(${i})" style="width:100%"/>
+        <div id="bprev-${i}" style="margin-top:8px;border-radius:6px;overflow:hidden;height:70px;background:#000;display:${s.img?'block':'none'}">
+          <img id="bprevimg-${i}" src="${s.img||''}" style="width:100%;height:100%;object-fit:cover;object-position:${focal}" onerror="this.parentElement.style.display='none'"/>
+        </div>
+      </div>
+      <div class="cf" style="margin:0">
+        <label style="display:flex;align-items:center;gap:6px">&#128242; Mobile Image URL <span style="font-size:10px;color:var(--muted);font-weight:400">600×600px · square works best</span></label>
+        <input type="url" id="bm-${i}" value="${s.imgMobile||''}" placeholder="https://i.imgur.com/mobile.jpg (optional)" oninput="previewBannerMobile(${i})" style="width:100%"/>
+        <div id="bmprev-${i}" style="margin-top:8px;border-radius:6px;overflow:hidden;height:70px;background:#000;display:${s.imgMobile?'block':'none'}">
+          <img id="bmprevimg-${i}" src="${s.imgMobile||''}" style="width:100%;height:100%;object-fit:cover" onerror="this.parentElement.style.display='none'"/>
+        </div>
+      </div>
     </div>
-    <div id="bprev-${i}" style="margin-top:10px;border-radius:8px;overflow:hidden;height:90px;background:#000;display:${s.img?'block':'none'}">
-      <img id="bprevimg-${i}" src="${s.img||''}" style="width:100%;height:100%;object-fit:cover" onerror="this.parentElement.style.display='none'"/>
+    <div class="cf" style="margin-top:10px;margin-bottom:0">
+      <label>Focal Point (desktop crop)</label>
+      <select id="bf-${i}" style="background:#141d2b;border:1px solid var(--border);color:var(--text);padding:7px 12px;border-radius:8px;font-size:13px;width:100%;outline:none">
+        <option value="center center" ${focal==='center center'?'selected':''}>Centre (default)</option>
+        <option value="center top" ${focal==='center top'?'selected':''}>Top</option>
+        <option value="center bottom" ${focal==='center bottom'?'selected':''}>Bottom</option>
+        <option value="left center" ${focal==='left center'?'selected':''}>Left</option>
+        <option value="right center" ${focal==='right center'?'selected':''}>Right</option>
+      </select>
     </div>
   </div>`;
 }
@@ -1838,6 +1883,12 @@ function previewBannerSlot(i){
   const val=document.getElementById('bi-'+i)?.value||'';
   const wrap=document.getElementById('bprev-'+i);
   const img=document.getElementById('bprevimg-'+i);
+  if(wrap&&img){wrap.style.display=val?'block':'none';img.src=val;}
+}
+function previewBannerMobile(i){
+  const val=document.getElementById('bm-'+i)?.value||'';
+  const wrap=document.getElementById('bmprev-'+i);
+  const img=document.getElementById('bmprevimg-'+i);
   if(wrap&&img){wrap.style.display=val?'block':'none';img.src=val;}
 }
 function addBannerSlot(){
@@ -1852,6 +1903,8 @@ function removeBannerSlot(i){
 async function saveBanner(){
   bannerSlides=bannerSlides.map((_,i)=>({
     img:(document.getElementById('bi-'+i)?.value||'').trim(),
+    imgMobile:(document.getElementById('bm-'+i)?.value||'').trim(),
+    focal:document.getElementById('bf-'+i)?.value||'center center',
   })).filter(s=>s.img);
   await setSettingVal('banner',bannerSlides);
   renderBanner();
