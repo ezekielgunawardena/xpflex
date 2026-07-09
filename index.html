@@ -896,7 +896,6 @@ function renderBanner(){
       </picture>
     </div>`;
   }).join('');
-  }).join('');
   dots.innerHTML=bannerSlides.map((_,i)=>`<div class="bdot${i===0?' on':''}" onclick="bannerGo(${i})"></div>`).join('');
   bannerIdx=0;updateBannerPos();
   if(bannerTimer)clearInterval(bannerTimer);
