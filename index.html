@@ -87,6 +87,7 @@ body{background:var(--bg);color:var(--col-body);font-family:var(--font-body);min
 .banner-track{display:flex;transition:transform .6s ease}
 .banner-slide{min-width:100%;position:relative;overflow:hidden}
 .banner-slide img{width:100%;height:340px;object-fit:cover;object-position:center center;display:block;transition:object-position .3s}
+.banner-img{width:100%;height:340px;object-fit:cover;object-position:center center;display:block}
 .banner-slide .banner-overlay{position:absolute;inset:0;background:linear-gradient(90deg,rgba(8,12,18,.7) 0%,transparent 60%);display:flex;flex-direction:column;justify-content:center;padding:0 48px}
 .banner-title{font-family:var(--font-head);font-size:36px;font-weight:700;color:#fff;letter-spacing:2px;line-height:1.1;max-width:400px}
 .banner-sub{font-size:14px;color:rgba(255,255,255,.75);margin-top:8px;max-width:360px}
@@ -366,7 +367,7 @@ body{background:var(--bg);color:var(--col-body);font-family:var(--font-body);min
   .frow{grid-template-columns:1fr}
   .pgrid{grid-template-columns:repeat(auto-fill,minmax(220px,1fr))}
   .feat-grid{grid-template-columns:repeat(auto-fill,minmax(160px,1fr))}
-  .banner-slide img{height:300px;object-fit:contain;background:#080c12}
+  .banner-slide img,.banner-img{height:260px;object-fit:contain;background:#080c12}
   .banner-placeholder{height:260px}
   .banner-title{font-size:22px}
   .banner-sub{font-size:12px}
@@ -892,7 +893,7 @@ function renderBanner(){
     return `<div class="banner-slide">
       <picture>
         <source media="(max-width:600px)" srcset="${mobileSrc}"/>
-        <img src="${desktopSrc}" alt="Banner" style="width:100%;height:340px;object-fit:cover;object-position:${pos};display:block" loading="eager" onerror="this.style.display='none'"/>
+        <img src="${desktopSrc}" alt="Banner" class="banner-img" style="object-position:${pos}" loading="eager" onerror="this.style.display='none'"/>
       </picture>
     </div>`;
   }).join('');
