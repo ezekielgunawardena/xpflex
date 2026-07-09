@@ -366,7 +366,7 @@ body{background:var(--bg);color:var(--col-body);font-family:var(--font-body);min
   .frow{grid-template-columns:1fr}
   .pgrid{grid-template-columns:repeat(auto-fill,minmax(220px,1fr))}
   .feat-grid{grid-template-columns:repeat(auto-fill,minmax(160px,1fr))}
-  .banner-slide img{height:300px}
+  .banner-slide img{height:300px;object-fit:contain;background:#080c12}
   .banner-placeholder{height:260px}
   .banner-title{font-size:22px}
   .banner-sub{font-size:12px}
@@ -888,7 +888,7 @@ function renderBanner(){
     const desktopSrc=cloudinaryTransform(s.img,'w_1440,f_auto,q_auto');
     const mobileSrc=s.imgMobile
       ? cloudinaryTransform(s.imgMobile,'w_600,f_auto,q_auto')
-      : cloudinaryTransform(s.img,'w_600,f_auto,q_auto,c_fill,g_auto');
+      : cloudinaryTransform(s.img,'w_600,f_auto,q_auto,c_fit');
     return `<div class="banner-slide">
       <picture>
         <source media="(max-width:600px)" srcset="${mobileSrc}"/>
