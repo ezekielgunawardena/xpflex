@@ -23,7 +23,8 @@
 <meta name="twitter:image" content="https://pxsajdecyrifqwaonfpy.supabase.co/storage/v1/object/public/XPFlex%20Logo/OG%20Logo%20large.png"/>
 <link rel="preconnect" href="https://fonts.googleapis.com"/>
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
-<link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@500;700&family=Barlow:wght@400;500;600&family=Orbitron:wght@700&family=Exo+2:wght@400;500;700&family=Share+Tech+Mono&display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@500;700&family=Barlow:wght@400;500;600&family=Orbitron:wght@700&family=Exo+2:wght@400;500;700&family=Share+Tech+Mono&display=swap" rel="stylesheet" media="print" onload="this.media='all'"/>
+<noscript><link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@500;700&family=Barlow:wght@400;500;600&family=Orbitron:wght@700&family=Exo+2:wght@400;500;700&family=Share+Tech+Mono&display=swap" rel="stylesheet"/></noscript>
 <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
 <style>
 /* ── EMAILJS CONFIG — FILL THESE IN ──
@@ -87,6 +88,7 @@ body{background:var(--bg);color:var(--col-body);font-family:var(--font-body);min
 .banner-track{display:flex;transition:transform .6s ease}
 .banner-slide{min-width:100%;position:relative;overflow:hidden}
 .banner-slide img{width:100%;height:340px;object-fit:cover;object-position:center center;display:block;transition:object-position .3s}
+.banner-wrap{aspect-ratio:auto;min-height:340px}
 .banner-slide .banner-overlay{position:absolute;inset:0;background:linear-gradient(90deg,rgba(8,12,18,.7) 0%,transparent 60%);display:flex;flex-direction:column;justify-content:center;padding:0 48px}
 .banner-title{font-family:var(--font-head);font-size:36px;font-weight:700;color:#fff;letter-spacing:2px;line-height:1.1;max-width:400px}
 .banner-sub{font-size:14px;color:rgba(255,255,255,.75);margin-top:8px;max-width:360px}
@@ -174,7 +176,7 @@ body{background:var(--bg);color:var(--col-body);font-family:var(--font-body);min
 .feat-card{background:var(--col-card-bg);border:1px solid var(--col-heading);border-radius:14px;overflow:hidden;cursor:pointer;position:relative;transition:transform .15s}
 .feat-card:hover{transform:translateY(-3px)}
 .feat-ribbon{position:absolute;top:10px;left:10px;background:var(--col-heading);color:var(--col-btn-text);font-size:10px;font-weight:700;padding:3px 10px;border-radius:4px;text-transform:uppercase;letter-spacing:.8px;z-index:3}
-.feat-img{height:130px;display:flex;align-items:center;justify-content:center;font-size:48px;position:relative;overflow:hidden}
+.feat-img{height:264px;display:flex;align-items:center;justify-content:center;font-size:60px;position:relative;overflow:hidden;contain:layout paint}
 .feat-img img{width:100%;height:100%;object-fit:cover;position:absolute;inset:0;z-index:2}
 .feat-emoji{position:relative;z-index:1}
 .feat-img img:not([style*="display:none"]) ~ .feat-emoji{display:none}
@@ -193,7 +195,7 @@ body{background:var(--bg);color:var(--col-body);font-family:var(--font-body);min
 .pgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(285px,1fr));gap:20px}
 .pcard{background:var(--col-card-bg);border:1px solid var(--border);border-radius:14px;overflow:hidden;cursor:pointer;transition:border-color .15s,transform .15s}
 .pcard:hover{border-color:var(--col-heading);transform:translateY(-3px)}
-.pimg{height:264px;display:flex;align-items:center;justify-content:center;font-size:60px;position:relative;overflow:hidden}
+.pimg{height:264px;display:flex;align-items:center;justify-content:center;font-size:60px;position:relative;overflow:hidden;contain:layout paint}
 .pimg img{width:100%;height:100%;object-fit:cover;position:absolute;inset:0;z-index:2}
 .pimg .emoji-icon{position:relative;z-index:1}
 .pimg img:not([style*="display:none"]) ~ .emoji-icon{display:none}
@@ -563,6 +565,7 @@ body{background:var(--bg);color:var(--col-body);font-family:var(--font-body);min
     <div class="banner-dots" id="banner-dots"></div>
   </div>
 
+  <main id="main-content">
   <!-- HOME -->
   <div id="sv-home" class="screen active">
     <div class="hero">
@@ -581,6 +584,7 @@ body{background:var(--bg);color:var(--col-body);font-family:var(--font-body);min
       <div class="sec-title">&#11088; Featured</div>
       <div class="feat-grid" id="feat-grid"></div>
     </div>
+  </main><!-- end main-content -->
     <!-- SECRET KNOCK ZONE -->
     <div class="secret-zone" id="secret-zone"></div>
     <footer class="site-footer" id="store-footer">
@@ -959,7 +963,7 @@ function stockCountBadge(p){
 function cardHTML(p,isFeat=false){
   const dp=discountedPrice(p);const dl=discountLabel(p);
   const inCart=cart.find(x=>x.id===p.id);const qty=inCart?inCart.qty:0;
-  const img=p.img?`<img src="${p.img}" alt="${p.name}" onerror="this.style.display='none'"/>`:'' ;
+  const img=p.img?`<img src="${p.img}" alt="${p.name}" width="285" height="264" onerror="this.style.display='none'"/>`:'' ;
   const emojiHide=p.img?'style="display:none"':'';
   const isOut=p.stock==='out';
   const isPreorder=p.stock==='preorder';
