@@ -3,6 +3,7 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1"/>
+<script>if(window.location.pathname==='/index.html')window.location.replace('/');</script>
 <title>XPFlex — Don't just Play. Flex.</title>
 <meta name="description" content="Sri Lanka's first BNPL gaming platform. Steam Wallet top-ups, PSN gift cards, Xbox credits and in-game currency. Own it today, three easy payments."/>
 <!-- Open Graph -->
@@ -161,6 +162,8 @@ body{background:var(--bg);color:var(--col-body);font-family:var(--font-body);min
 .btn-p:hover{opacity:.85}
 .btn-g{background:none;border:1px solid var(--border);color:var(--col-body);padding:11px 28px;border-radius:8px;font-size:14px;cursor:pointer;transition:.15s}
 .btn-g:hover{border-color:var(--col-heading);color:var(--col-heading)}
+.nav-cta{padding:6px 14px!important;font-size:12px!important;white-space:nowrap;flex-shrink:0}
+.btn-steam.nav-cta{padding:6px 14px!important;font-size:12px!important}
 .btn-steam{background:rgba(27,156,255,.12);border:1px solid rgba(27,156,255,.35);color:#1b9cff;padding:11px 28px;border-radius:8px;font-size:14px;font-weight:600;text-decoration:none;transition:.15s;display:inline-flex;align-items:center;gap:7px}
 .btn-steam:hover{background:rgba(27,156,255,.22);color:#5bb8ff}
 
@@ -373,7 +376,7 @@ body{background:var(--bg);color:var(--col-body);font-family:var(--font-body);min
   .det-body{grid-template-columns:1fr;padding:14px 16px}
   .det-img{height:180px}
   .frow{grid-template-columns:1fr}
-  .pgrid{grid-template-columns:repeat(auto-fill,minmax(220px,1fr))}
+  .nav-cta{display:none}
   .feat-grid{grid-template-columns:repeat(auto-fill,minmax(160px,1fr))}
   .banner-slide img{height:300px;object-fit:contain;background:#080c12}
   .banner-placeholder{height:260px}
@@ -551,6 +554,8 @@ body{background:var(--bg);color:var(--col-body);font-family:var(--font-body);min
           <div class="drop-item" onclick="filterShop('All');storeGo('shop');closeShopDrop()" style="border-top:1px solid var(--border);margin-top:4px;padding-top:10px">&#128269; All Products</div>
         </div>
       </div>
+      <button class="btn-p nav-cta" onclick="filterShop('All');storeGo('shop')">Browse Store</button>
+      <a href="steamflex.html" class="btn-steam nav-cta">&#127918; SteamFlex</a>
     </div>
     <div class="nav-right">
       <button class="cart-pill" onclick="storeGo('cart')">&#128722; Cart <span class="cbadge" id="cart-count">0</span></button>
@@ -568,17 +573,6 @@ body{background:var(--bg);color:var(--col-body);font-family:var(--font-body);min
   <main id="main-content">
   <!-- HOME -->
   <div id="sv-home" class="screen active">
-    <div class="hero">
-      <div class="hero-grid"></div>
-      <h1 id="hero-title">Level Up Your<br><span>Gaming Library</span></h1>
-      <div class="hero-tagline">Don't just Play. Flex.</div>
-      <p id="hero-sub">Instant digital delivery &middot; Steam &middot; PSN &middot; Xbox &middot; Epic Games</p>
-      <div class="hero-btns">
-        <button class="btn-p" onclick="filterShop('All');storeGo('shop')">Browse Store</button>
-        <button class="btn-g" onclick="filterShop('Gift Cards');storeGo('shop')">Gift Cards</button>
-        <a href="steamflex.html" class="btn-steam">&#127918; SteamFlex</a>
-      </div>
-    </div>
     <!-- FEATURED -->
     <div class="featured-strip" id="featured-strip">
       <div class="sec-title">&#11088; Featured</div>
@@ -1200,8 +1194,8 @@ async function sendOrderEmail(order){
 // ══ SETTINGS ══
 function applySettings(){
   currency=settings.currency||'Rs.';
-  if(settings.hero) document.getElementById('hero-title').innerHTML=settings.hero;
-  if(settings.sub) document.getElementById('hero-sub').textContent=settings.sub;
+  if(settings.hero){const el=document.getElementById('hero-title');if(el)el.innerHTML=settings.hero;}
+  if(settings.sub){const el=document.getElementById('hero-sub');if(el)el.textContent=settings.sub;}
   if(settings.footer) document.getElementById('store-footer').textContent=settings.footer;
   // Launch date from CMS
   if(settings.launchDate){
