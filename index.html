@@ -114,6 +114,13 @@ body{background:var(--bg);color:var(--col-body);font-family:var(--font-body);min
 .det-save{display:inline-block;background:#f43f5e;color:#fff;font-size:12px;font-weight:700;padding:3px 10px;border-radius:4px;margin-top:6px}
 .det-price-block{margin:12px 0}
 
+/* BREADCRUMBS */
+.breadcrumb{display:flex;align-items:center;gap:6px;padding:12px 28px 4px;font-size:12px;flex-wrap:wrap}
+.breadcrumb a{color:var(--muted);text-decoration:none;cursor:pointer;transition:.15s;white-space:nowrap}
+.breadcrumb a:hover{color:var(--col-heading)}
+.breadcrumb .bc-sep{color:var(--border);font-size:10px;margin:0 1px}
+.breadcrumb .bc-active{color:var(--text);font-weight:500;cursor:default;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:180px}
+
 /* SECRET KNOCK ZONE */
 .secret-zone{width:100%;height:48px;cursor:default;background:transparent;display:block}
 
@@ -158,9 +165,8 @@ body{background:var(--bg);color:var(--col-body);font-family:var(--font-body);min
 /* CATEGORY CHIPS */
 .cat-bar{display:flex;gap:8px;padding:14px 28px;overflow-x:auto;border-bottom:1px solid var(--border);background:var(--bg2);scrollbar-width:none}
 .cat-bar::-webkit-scrollbar{display:none}
-.chip{background:var(--bg3);border:1px solid var(--border);color:var(--muted);padding:6px 18px;border-radius:20px;font-size:13px;font-weight:500;cursor:pointer;white-space:nowrap;transition:.15s}
-.chip:hover{border-color:var(--col-heading);color:var(--col-heading);background:rgba(0,240,160,.06)}
-.chip.on{border-color:var(--col-heading);color:#080c12;background:var(--col-heading);font-weight:700}
+.chip{background:var(--bg3);border:1px solid var(--border);color:var(--muted);padding:5px 16px;border-radius:20px;font-size:12px;font-weight:500;cursor:pointer;white-space:nowrap;transition:.15s}
+.chip:hover,.chip.on{border-color:var(--col-heading);color:var(--col-heading);background:rgba(0,240,160,.06)}
 
 /* FEATURED SECTION */
 .featured-strip{padding:28px 28px 0}
@@ -549,15 +555,16 @@ body{background:var(--bg);color:var(--col-body);font-family:var(--font-body);min
     </div>
   </nav>
 
+  <!-- CAROUSEL BANNER -->
+  <div class="banner-wrap" id="banner-wrap">
+    <div class="banner-track" id="banner-track"></div>
+    <button class="banner-arrow banner-prev" onclick="bannerMove(-1)">&#8249;</button>
+    <button class="banner-arrow banner-next" onclick="bannerMove(1)">&#8250;</button>
+    <div class="banner-dots" id="banner-dots"></div>
+  </div>
+
   <!-- HOME -->
   <div id="sv-home" class="screen active">
-    <!-- CAROUSEL BANNER -->
-    <div class="banner-wrap" id="banner-wrap">
-      <div class="banner-track" id="banner-track"></div>
-      <button class="banner-arrow banner-prev" onclick="bannerMove(-1)">&#8249;</button>
-      <button class="banner-arrow banner-next" onclick="bannerMove(1)">&#8250;</button>
-      <div class="banner-dots" id="banner-dots"></div>
-    </div>
     <div class="hero">
       <div class="hero-grid"></div>
       <h1 id="hero-title">Level Up Your<br><span>Gaming Library</span></h1>
@@ -584,6 +591,11 @@ body{background:var(--bg);color:var(--col-body);font-family:var(--font-body);min
 
   <!-- SHOP -->
   <div id="sv-shop" class="screen">
+    <div class="breadcrumb" id="bc-shop">
+      <a onclick="storeGo('home')">Home</a>
+      <span class="bc-sep">›</span>
+      <span class="bc-active" id="bc-shop-cat">Shop</span>
+    </div>
     <div class="cat-bar" id="shop-cats"></div>
     <div class="sec">
       <div class="sec-title" id="shop-title">All Products</div>
@@ -593,7 +605,13 @@ body{background:var(--bg);color:var(--col-body);font-family:var(--font-body);min
 
   <!-- DETAIL -->
   <div id="sv-detail" class="screen">
-    <button class="det-back" id="det-back">&#8592; Back</button>
+    <div class="breadcrumb" id="bc-detail">
+      <a onclick="storeGo('home')">Home</a>
+      <span class="bc-sep">›</span>
+      <a onclick="storeGo('shop')" id="bc-detail-cat">Shop</a>
+      <span class="bc-sep">›</span>
+      <span class="bc-active" id="bc-detail-name">Product</span>
+    </div>
     <div class="det-body">
       <div class="det-img" id="det-img"></div>
       <div class="det-right">
@@ -609,6 +627,11 @@ body{background:var(--bg);color:var(--col-body);font-family:var(--font-body);min
 
   <!-- CART -->
   <div id="sv-cart" class="screen">
+    <div class="breadcrumb">
+      <a onclick="storeGo('home')">Home</a>
+      <span class="bc-sep">›</span>
+      <span class="bc-active">Cart</span>
+    </div>
     <div class="cart-wrap">
       <div class="sec-title">Your Cart</div>
       <div id="cart-items"></div>
@@ -618,6 +641,13 @@ body{background:var(--bg);color:var(--col-body);font-family:var(--font-body);min
 
   <!-- CHECKOUT -->
   <div id="sv-checkout" class="screen">
+    <div class="breadcrumb">
+      <a onclick="storeGo('home')">Home</a>
+      <span class="bc-sep">›</span>
+      <a onclick="storeGo('cart')">Cart</a>
+      <span class="bc-sep">›</span>
+      <span class="bc-active">Checkout</span>
+    </div>
     <div class="ck-wrap">
       <h2>Checkout</h2>
       <div class="fld"><label>Full Name *</label><input type="text" id="ck-name" placeholder="John Silva"/></div>
@@ -1040,6 +1070,7 @@ function renderShop(){
   document.getElementById('shop-cats').innerHTML=cats.map(c=>`<button class="chip${c===shopFilter?' on':''}" onclick="filterShop('${c}')">${c}</button>`).join('');
   const filtered=shopFilter==='All'?prods:prods.filter(p=>p.cat===shopFilter);
   document.getElementById('shop-title').textContent=shopFilter==='All'?'All Products':shopFilter;
+  const bcCat=document.getElementById('bc-shop-cat');if(bcCat)bcCat.textContent=shopFilter==='All'?'Shop':shopFilter;
   document.getElementById('shop-grid').innerHTML=filtered.map(p=>cardHTML(p)).join('')||'<p style="color:var(--muted);font-size:13px">No products in this category.</p>';
 }
 
@@ -1070,7 +1101,11 @@ function showDetail(id){
   if(isPreorder&&p.preorderNote) descText=(p.preorderNote?`📅 ${p.preorderNote}\n\n`:'')+descText;
   document.getElementById('det-desc').textContent=descText;
   document.getElementById('det-tags').innerHTML=(p.tags||'').split(',').filter(Boolean).map(t=>`<span class="dtag">${t.trim()}</span>`).join('');
-  document.getElementById('det-back').onclick=()=>storeGo(detFrom);
+  // Update breadcrumb
+  const bcDetCat=document.getElementById('bc-detail-cat');
+  const bcDetName=document.getElementById('bc-detail-name');
+  if(bcDetCat){bcDetCat.textContent=shopFilter==='All'?'Shop':shopFilter;bcDetCat.onclick=()=>storeGo('shop');}
+  if(bcDetName)bcDetName.textContent=p.name;
   const addBtn=document.getElementById('det-add');
   if(isOut){
     addBtn.textContent='Out of Stock'; addBtn.disabled=true; addBtn.style.opacity='.5';
